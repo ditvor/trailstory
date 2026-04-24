@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import os
 from datetime import datetime
+from itertools import pairwise
 from pathlib import Path
 
 import pytest
@@ -12,6 +13,8 @@ from trailstory.photos import PhotoLoadError, load_photos
 EXIF_SUB_IFD = 0x8769
 EXIF_DATETIME_ORIGINAL = 36867
 EXIF_DATETIME = 306
+
+SAMPLE_DIR = Path(__file__).parent / "fixtures" / "sample_photos"
 
 
 def _make_jpeg(
@@ -132,6 +135,34 @@ def test_load_photos_raises_on_empty_directory(tmp_path: Path) -> None:
 def test_load_photos_raises_on_missing_directory(tmp_path: Path) -> None:
     with pytest.raises(PhotoLoadError):
         load_photos(tmp_path / "nope", tmp_path / "out")
+
+
+def test_load_photos_real_fixtures_chronological(tmp_path: Path) -> None:
+    photos = load_photos(SAMPLE_DIR, tmp_path / "out")
+
+    assert len(photos) == 5
+    assert [p.path.stem for p in photos] == [
+        "01_trailhead",
+        "02_forest",
+        "03_baby_smile",
+        "04_ridge",
+        "05_summit",
+    ]
+    assert [p.index for p in photos] == [0, 1, 2, 3, 4]
+    timestamps = [p.timestamp for p in photos]
+    assert all(a < b for a, b in pairwise(timestamps))
+    assert photos[0].timestamp == datetime(2025, 8, 15, 9, 5, 12)
+    assert photos[-1].timestamp == datetime(2025, 8, 15, 12, 40, 9)
+
+
+def test_load_photos_converts_heic_to_jpeg(tmp_path: Path) -> None:
+    photos = load_photos(SAMPLE_DIR, tmp_path / "out")
+
+    heic_origin = next(p for p in photos if p.path.stem == "04_ridge")
+    assert heic_origin.path.suffix == ".jpg"
+    with Image.open(heic_origin.path) as out:
+        assert out.format == "JPEG"
+        assert max(out.size) <= 1800
 
 
 def test_load_photos_handles_malformed_exif_datetime(tmp_path: Path) -> None:
