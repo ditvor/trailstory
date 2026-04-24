@@ -44,14 +44,10 @@ def parse_gpx(path: Path) -> GpxStats:
     duration_s = int(moving.moving_time) if moving else 0
     gain_m = float(uphill_downhill.uphill) if uphill_downhill else 0.0
     min_elev = (
-        float(extremes.minimum)
-        if extremes and extremes.minimum is not None
-        else waypoints[0].ele_m
+        float(extremes.minimum) if extremes and extremes.minimum is not None else waypoints[0].ele_m
     )
     max_elev = (
-        float(extremes.maximum)
-        if extremes and extremes.maximum is not None
-        else waypoints[0].ele_m
+        float(extremes.maximum) if extremes and extremes.maximum is not None else waypoints[0].ele_m
     )
 
     return GpxStats(
