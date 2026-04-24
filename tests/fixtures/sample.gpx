@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<gpx version="1.1" creator="trailstory-test" xmlns="http://www.topografix.com/GPX/1/1">
+  <metadata>
+    <name>Sample Munich foothills hike</name>
+    <time>2026-04-20T07:00:00Z</time>
+  </metadata>
+  <trk>
+    <name>Sample</name>
+    <trkseg>
+      <trkpt lat="47.5580" lon="11.3310"><ele>720.0</ele><time>2026-04-20T07:00:00Z</time></trkpt>
+      <trkpt lat="47.5600" lon="11.3330"><ele>760.0</ele><time>2026-04-20T07:10:00Z</time></trkpt>
+      <trkpt lat="47.5625" lon="11.3355"><ele>820.0</ele><time>2026-04-20T07:22:00Z</time></trkpt>
+      <trkpt lat="47.5650" lon="11.3390"><ele>905.0</ele><time>2026-04-20T07:36:00Z</time></trkpt>
+      <trkpt lat="47.5678" lon="11.3425"><ele>1010.0</ele><time>2026-04-20T07:54:00Z</time></trkpt>
+      <trkpt lat="47.5705" lon="11.3460"><ele>1120.0</ele><time>2026-04-20T08:15:00Z</time></trkpt>
+      <trkpt lat="47.5730" lon="11.3498"><ele>1245.0</ele><time>2026-04-20T08:40:00Z</time></trkpt>
+      <trkpt lat="47.5752" lon="11.3540"><ele>1330.0</ele><time>2026-04-20T09:05:00Z</time></trkpt>
+    </trkseg>
+  </trk>
+</gpx>
