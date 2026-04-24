@@ -1,5 +1,5 @@
 .DEFAULT_GOAL := help
-.PHONY: help dev install test lint format typecheck ci clean generate test-render
+.PHONY: help dev install install-hooks test lint format typecheck ci clean generate test-render
 
 # ── Setup ──────────────────────────────────────────────────────────────────────
 
@@ -8,6 +8,14 @@ dev:                ## Install in editable mode with all dev dependencies
 
 install:            ## Install runtime dependencies only (for production use)
 	pip install .
+
+install-hooks:      ## Symlink scripts/hooks/* into .git/hooks/ (run once after clone)
+	@mkdir -p .git/hooks
+	@for hook in scripts/hooks/*; do \
+		name=$$(basename $$hook); \
+		ln -sf ../../$$hook .git/hooks/$$name; \
+		echo "  linked $$name"; \
+	done
 
 # ── Quality ────────────────────────────────────────────────────────────────────
 
