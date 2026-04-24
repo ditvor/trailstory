@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from itertools import pairwise
 from pathlib import Path
 
 import pytest
@@ -50,7 +51,7 @@ def test_elevation_profile_shape() -> None:
 
     assert xs[0] == 0.0
     assert xs[-1] == 1.0
-    assert all(a <= b for a, b in zip(xs, xs[1:], strict=False))  # monotonically increasing
+    assert all(a <= b for a, b in pairwise(xs))  # monotonically increasing
     assert all(0.0 <= y <= 1.0 for y in ys)
 
     # Fixture is strictly ascending in elevation, so start ~0 and end ~1.

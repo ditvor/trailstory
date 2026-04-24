@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from itertools import pairwise
 from math import asin, cos, radians, sin, sqrt
 from pathlib import Path
 
@@ -77,7 +78,7 @@ def elevation_profile(stats: GpxStats, n: int = 20) -> list[tuple[float, float]]
         return [(0.0, 0.5), (1.0, 0.5)]
 
     cum: list[float] = [0.0]
-    for a, b in zip(pts, pts[1:], strict=False):
+    for a, b in pairwise(pts):
         cum.append(cum[-1] + _haversine_m(a.lat, a.lon, b.lat, b.lon))
     total = cum[-1]
     if total == 0:
