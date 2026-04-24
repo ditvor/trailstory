@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from itertools import pairwise
 from math import asin, cos, radians, sin, sqrt
 from pathlib import Path
 
@@ -43,14 +44,10 @@ def parse_gpx(path: Path) -> GpxStats:
     duration_s = int(moving.moving_time) if moving else 0
     gain_m = float(uphill_downhill.uphill) if uphill_downhill else 0.0
     min_elev = (
-        float(extremes.minimum)
-        if extremes and extremes.minimum is not None
-        else waypoints[0].ele_m
+        float(extremes.minimum) if extremes and extremes.minimum is not None else waypoints[0].ele_m
     )
     max_elev = (
-        float(extremes.maximum)
-        if extremes and extremes.maximum is not None
-        else waypoints[0].ele_m
+        float(extremes.maximum) if extremes and extremes.maximum is not None else waypoints[0].ele_m
     )
 
     return GpxStats(
@@ -77,7 +74,7 @@ def elevation_profile(stats: GpxStats, n: int = 20) -> list[tuple[float, float]]
         return [(0.0, 0.5), (1.0, 0.5)]
 
     cum: list[float] = [0.0]
-    for a, b in zip(pts, pts[1:], strict=False):
+    for a, b in pairwise(pts):
         cum.append(cum[-1] + _haversine_m(a.lat, a.lon, b.lat, b.lon))
     total = cum[-1]
     if total == 0:

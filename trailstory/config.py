@@ -25,9 +25,7 @@ def load_settings() -> Settings:
         return Settings()  # type: ignore[call-arg]
     except ValidationError as exc:
         missing = [
-            ".".join(str(p) for p in err["loc"])
-            for err in exc.errors()
-            if err["type"] == "missing"
+            ".".join(str(p) for p in err["loc"]) for err in exc.errors() if err["type"] == "missing"
         ]
         if "anthropic_api_key" in missing:
             sys.stderr.write(
