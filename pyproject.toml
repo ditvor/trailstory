@@ -15,6 +15,7 @@ dependencies = [
     "gpxpy>=1.6,<2",
     "jinja2>=3.1,<4",
     "Pillow>=10.3,<12",
+    "pillow-heif>=0.16,<1",
     "pydantic>=2.7,<3",
     "pydantic-settings>=2.3,<3",
     "rich>=13.7,<14",
