@@ -1,0 +1,13 @@
+#!/usr/bin/env bash
+# Pre-push hook: runs the same checks CI runs. Install via `make install-hooks`.
+# Skip with `git push --no-verify` (use sparingly; CI will still run).
+
+set -e
+
+if [ -z "${VIRTUAL_ENV:-}" ] && [ -f .venv/bin/activate ]; then
+    # shellcheck disable=SC1091
+    source .venv/bin/activate
+fi
+
+echo "→ pre-push: running make ci"
+make ci
