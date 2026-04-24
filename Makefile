@@ -1,7 +1,23 @@
 .DEFAULT_GOAL := help
-.PHONY: help dev install install-hooks test lint format typecheck ci clean generate test-render
+.PHONY: help setup dev install install-hooks test lint format typecheck ci clean generate test-render
+
+PYTHON ?= python3.12
+VENV   := .venv
 
 # ── Setup ──────────────────────────────────────────────────────────────────────
+
+setup:              ## One-shot: create .venv, install deps, install git hooks
+	@if [ ! -d $(VENV) ]; then \
+		echo "→ creating $(VENV) with $(PYTHON)"; \
+		$(PYTHON) -m venv $(VENV); \
+	else \
+		echo "→ $(VENV) already exists — reusing"; \
+	fi
+	@$(VENV)/bin/pip install --upgrade pip
+	@$(VENV)/bin/pip install -e ".[dev]"
+	@$(MAKE) --no-print-directory install-hooks
+	@echo ""
+	@echo "✓ setup complete. Activate with:  source $(VENV)/bin/activate"
 
 dev:                ## Install in editable mode with all dev dependencies
 	pip install -e ".[dev]"

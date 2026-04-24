@@ -44,10 +44,11 @@ The HTML page works in any browser, offline, without any CDN — which means it 
 ## Quick start
 
 ```bash
-# 1. Clone and install
+# 1. Clone and set up (creates .venv, installs deps, installs git hooks)
 git clone https://github.com/YOUR_USERNAME/trailstory.git
 cd trailstory
-make dev
+make setup
+source .venv/bin/activate
 
 # 2. Set your API key
 cp .env.example .env
@@ -102,12 +103,15 @@ Key decisions and their rationale are documented in [`docs/adr/`](docs/adr/).
 ## Development
 
 ```bash
-make dev        # install in editable mode with all dev deps
-make test       # run tests with coverage
-make lint       # ruff check
-make format     # ruff check --fix
-make ci         # full CI check (lint + type check + tests)
+make setup          # first time: creates .venv, installs deps + git hooks
+source .venv/bin/activate
+
+make format         # auto-fix lint + apply ruff format
+make ci             # full CI check: ruff + mypy + pytest (same as GitHub Actions)
+make test           # run tests with coverage HTML report
 ```
+
+**Every `git push` triggers `make ci` via the pre-push hook** (installed by `make setup`). Skip only for emergencies with `git push --no-verify` — GitHub CI still runs.
 
 See [CONTRIBUTING.md](CONTRIBUTING.md) for branching rules, commit format, and PR process.
 
