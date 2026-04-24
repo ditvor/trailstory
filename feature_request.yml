@@ -1,0 +1,43 @@
+name: Feature request
+description: Suggest a new capability or improvement
+labels: ["type: feature"]
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: What problem does this solve?
+      description: >
+        Describe the situation where this feature would be useful.
+        "As a parent after a hike, I want to..." is a good format.
+    validations:
+      required: true
+
+  - type: textarea
+    id: solution
+    attributes:
+      label: Proposed solution
+      description: What would you like to happen? Be as specific as you can.
+    validations:
+      required: true
+
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives you considered
+      description: Have you thought of other ways to solve this? Why didn't they work?
+
+  - type: dropdown
+    id: area
+    attributes:
+      label: Which area does this touch?
+      options:
+        - GPX / route data
+        - Photo processing
+        - LLM / narrative generation
+        - HTML output page
+        - Instagram export
+        - WhatsApp / sharing
+        - CLI / developer experience
+        - Other
+    validations:
+      required: true
