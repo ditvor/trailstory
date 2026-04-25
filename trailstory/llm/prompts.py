@@ -68,3 +68,9 @@ shape (every field is required):
   "selected_photo_indices": [0, 1, 2, 3, 4, 5]
 }}
 """
+
+# Suffix appended to the user prompt when the first response failed to parse
+# as JSON. ``llm/narrative.py`` retries the call once with this directive
+# attached. Kept here so every prompt string in the codebase is auditable
+# from a single file.
+USER_NARRATIVE_RETRY_SUFFIX: str = "\n\noutput only valid JSON, no prose"
