@@ -2,9 +2,16 @@
 
 > Turn a hike into a memory worth keeping — and sharing.
 
-[![CI](https://github.com/YOUR_USERNAME/trailstory/actions/workflows/ci.yml/badge.svg)](https://github.com/YOUR_USERNAME/trailstory/actions/workflows/ci.yml)
+[![CI](https://github.com/ditvor/trailstory/actions/workflows/ci.yml/badge.svg)](https://github.com/ditvor/trailstory/actions/workflows/ci.yml)
 [![Python 3.12+](https://img.shields.io/badge/python-3.12+-blue.svg)](https://www.python.org/downloads/)
 [![Ruff](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/ruff/main/assets/badge/v2.json)](https://github.com/astral-sh/ruff)
+
+> **Status — under construction.** The pipeline is being built module by module. The
+> internal layers (config, models, GPX parser, photo loader, LLM client, prompt
+> templates, narrative orchestrator) are implemented and tested. The `trailstory`
+> CLI command and the HTML / Instagram renderers are not wired up yet, so the
+> Quick Start example below describes the **target** UX. Track progress on the
+> [pull requests page](https://github.com/ditvor/trailstory/pulls?q=is%3Apr+is%3Aclosed).
 
 ---
 
@@ -45,7 +52,7 @@ The HTML page works in any browser, offline, without any CDN — which means it 
 
 ```bash
 # 1. Clone and set up (creates .venv, installs deps, installs git hooks)
-git clone https://github.com/YOUR_USERNAME/trailstory.git
+git clone https://github.com/ditvor/trailstory.git
 cd trailstory
 make setup
 source .venv/bin/activate
