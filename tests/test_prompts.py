@@ -22,7 +22,11 @@ from string import Formatter
 
 import pytest
 
-from trailstory.llm.prompts import SYSTEM_NARRATIVE, USER_NARRATIVE_TEMPLATE
+from trailstory.llm.prompts import (
+    SYSTEM_NARRATIVE,
+    USER_NARRATIVE_RETRY_SUFFIX,
+    USER_NARRATIVE_TEMPLATE,
+)
 from trailstory.models import NarrativeOutput
 
 # Every placeholder ``narrative.py`` is required to supply.
@@ -205,3 +209,23 @@ def test_user_template_asks_for_photo_selection_arc() -> None:
     text = USER_NARRATIVE_TEMPLATE.lower()
     for cue in ("opening", "effort", "landscape", "baby", "summit"):
         assert cue in text, f"selection cue missing from prompt: {cue!r}"
+
+
+# ── retry suffix ─────────────────────────────────────────────────────────────
+
+
+def test_retry_suffix_is_non_empty_string() -> None:
+    assert isinstance(USER_NARRATIVE_RETRY_SUFFIX, str)
+    assert USER_NARRATIVE_RETRY_SUFFIX.strip()
+
+
+def test_retry_suffix_demands_json_only() -> None:
+    """The directive used by ``narrative.py`` on JSON-parse-failure retries."""
+    text = USER_NARRATIVE_RETRY_SUFFIX.lower()
+    assert "json" in text
+    assert "no prose" in text
+
+
+def test_retry_suffix_has_no_placeholders() -> None:
+    """Suffix is appended verbatim — no caller-supplied substitutions."""
+    assert _placeholders(USER_NARRATIVE_RETRY_SUFFIX) == set()
