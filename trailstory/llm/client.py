@@ -22,16 +22,15 @@ from pydantic import SecretStr
 
 logger = logging.getLogger(__name__)
 
-# Default model.
+# Default model — the latest Claude Opus.
 #
-# CLAUDE.md asks us to default to ``claude-sonnet-4-6`` and to justify any use
-# of opus. The narrative is the user-facing creative output of the whole tool —
-# a single call per hike, read by family members, often translated into Russian
-# where subtle phrasing matters. The quality difference materially affects the
-# product, and the per-hike cost difference is negligible. Hence opus is the
-# default for *this* client; callers can still override via the constructor or
-# by passing ``settings.model`` from ``config.py``.
-DEFAULT_MODEL: Final[str] = "claude-opus-4-6"
+# Decision recorded in docs/adr/002-narrative-model-choice.md: the narrative is
+# the user-facing creative output of the whole tool — a single call per hike,
+# read by family members, often translated into Russian where subtle phrasing
+# matters. The quality difference materially affects the product and the
+# per-hike cost difference is negligible. Callers can still override via the
+# constructor or by passing ``settings.model`` from ``config.py``.
+DEFAULT_MODEL: Final[str] = "claude-opus-4-7"
 
 DEFAULT_MAX_TOKENS: Final[int] = 4096
 DEFAULT_MAX_RETRIES: Final[int] = 3
