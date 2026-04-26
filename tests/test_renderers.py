@@ -39,6 +39,8 @@ def _narrative() -> NarrativeOutput:
     return NarrativeOutput(
         title_en="Above the fog line",
         title_ru="Над линией тумана",
+        subtitle_en="A morning above the cloud sea",
+        subtitle_ru="Утро над морем облаков",
         paragraphs_en=[
             "We left the trailhead at first light.",
             "By the saddle the cloud was thinning.",
@@ -116,6 +118,8 @@ def test_render_includes_bilingual_narrative_content(tmp_path: Path) -> None:
 
     assert "Above the fog line" in html
     assert "Над линией тумана" in html
+    assert "A morning above the cloud sea" in html
+    assert "Утро над морем облаков" in html
     assert "First mountain hike" in html
     assert "Первый горный поход" in html
     assert "We left the trailhead at first light." in html
@@ -201,6 +205,8 @@ def test_render_escapes_html_in_narrative_fields(tmp_path: Path) -> None:
     nasty = NarrativeOutput(
         title_en="<script>alert(1)</script>",
         title_ru="x",
+        subtitle_en="x",
+        subtitle_ru="x",
         paragraphs_en=["</p><img src=x onerror=alert(1)>"],
         paragraphs_ru=["x"],
         pull_quote_en="x",
@@ -234,6 +240,8 @@ def test_render_escapes_narrative_when_emitted_into_script_block(
     nasty = NarrativeOutput(
         title_en="legit",
         title_ru="x",
+        subtitle_en="x",
+        subtitle_ru="x",
         paragraphs_en=["x"],
         paragraphs_ru=["x"],
         pull_quote_en="</script><script>alert(1)</script>",

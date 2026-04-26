@@ -31,6 +31,8 @@ def sample_narrative() -> NarrativeOutput:
     return NarrativeOutput(
         title_en="Above the fog line",
         title_ru="Над линией тумана",
+        subtitle_en="A morning above the cloud sea",
+        subtitle_ru="Утро над морем облаков",
         paragraphs_en=[
             "We left the trailhead at first light, the air sharp with damp moss.",
             "By the saddle the cloud was thinning into a soft white scarf.",

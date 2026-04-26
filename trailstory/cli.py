@@ -109,6 +109,7 @@ def generate(
                 seed_text=seed,
                 baby_name=name,
                 baby_age_months=age,
+                location_name=location,
             )
             client = AnthropicClient(settings.anthropic_api_key, model=settings.model)
             with console.status("Generating narrative…", spinner="dots"):
@@ -117,7 +118,6 @@ def generate(
                     stats,
                     photos,
                     client=client,
-                    location=location or "the trail",
                 )
             console.print(
                 f"[green]✓[/] Narrative generated "
