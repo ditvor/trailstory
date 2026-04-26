@@ -11,6 +11,9 @@ Versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ### Added
 - Initial project structure, CI pipeline, and developer tooling.
+- HTML renderer producing a self-contained, bilingual memory page with
+  photos embedded as base64 data URIs and an inline elevation-profile SVG
+  (`trailstory.renderers.html.render_html`, `templates/memory.html.j2`).
 
 ---
 
