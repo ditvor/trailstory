@@ -14,6 +14,9 @@ Versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - HTML renderer producing a self-contained, bilingual memory page with
   photos embedded as base64 data URIs and an inline elevation-profile SVG
   (`trailstory.renderers.html.render_html`, `templates/memory.html.j2`).
+- `trailstory generate` CLI: orchestrates the full pipeline (GPX → photos
+  → narrative → HTML) with Rich progress output, `--photos`, `--gpx`,
+  `--seed`, `--name`, `--age`, `--out`, and `--location` options.
 
 ---
 
