@@ -1,1 +1,320 @@
-# TODO: implement
+"""Tests for ``trailstory.renderers.html``.
+
+Per CLAUDE.md, these test the contract — what the rendered HTML contains
+and where it lands — not the Jinja2 internals. No network, no LLM: photos
+are tiny JPEGs created on the fly with Pillow.
+"""
+
+from __future__ import annotations
+
+import re
+from datetime import date, datetime
+from pathlib import Path
+
+import pytest
+from PIL import Image
+
+from trailstory.models import GpxStats, NarrativeOutput, PhotoMeta, Waypoint
+from trailstory.renderers.html import HtmlRenderError, render_html
+
+# ── fixtures ─────────────────────────────────────────────────────────────────
+
+
+def _gpx_stats() -> GpxStats:
+    return GpxStats(
+        distance_km=6.2,
+        elevation_gain_m=610,
+        duration_min=165,
+        start_elev_m=720.0,
+        summit_elev_m=1330.0,
+        waypoints=[
+            Waypoint(lat=47.55, lon=11.78, ele_m=720.0, time=None),
+            Waypoint(lat=47.555, lon=11.785, ele_m=1100.0, time=None),
+            Waypoint(lat=47.56, lon=11.79, ele_m=1330.0, time=None),
+        ],
+    )
+
+
+def _narrative() -> NarrativeOutput:
+    return NarrativeOutput(
+        title_en="Above the fog line",
+        title_ru="Над линией тумана",
+        paragraphs_en=[
+            "We left the trailhead at first light.",
+            "By the saddle the cloud was thinning.",
+        ],
+        paragraphs_ru=[
+            "Вышли на тропу с первыми лучами.",  # noqa: RUF001
+            "К седловине облака начали редеть.",  # noqa: RUF001
+        ],
+        pull_quote_en="The fog cleared just as we reached the ridge.",
+        pull_quote_ru="Туман рассеялся как раз когда мы вышли на хребет.",
+        milestone_en="First mountain hike",
+        milestone_ru="Первый горный поход",
+        selected_photo_indices=[0, 1, 2],
+    )
+
+
+def _make_photo(tmp_path: Path, idx: int, color: tuple[int, int, int]) -> PhotoMeta:
+    p = tmp_path / f"photo_{idx}.jpg"
+    Image.new("RGB", (24, 24), color).save(p, "JPEG")
+    return PhotoMeta(
+        path=p,
+        timestamp=datetime(2025, 8, 15, 9 + idx),
+        index=idx,
+    )
+
+
+# ── tests ────────────────────────────────────────────────────────────────────
+
+
+def test_render_writes_html_at_expected_path(tmp_path: Path) -> None:
+    photos = [_make_photo(tmp_path, i, (i * 40, 100, 100)) for i in range(3)]
+    out_dir = tmp_path / "out"
+
+    out_path = render_html(
+        narrative=_narrative(),
+        gpx_stats=_gpx_stats(),
+        photos=photos,
+        output_dir=out_dir,
+        slug="2025-08-15-zugspitze",
+        hike_date=date(2025, 8, 15),
+        location="Bavarian Alps",
+    )
+
+    assert out_path == out_dir / "2025-08-15-zugspitze.html"
+    assert out_path.is_file()
+
+
+def test_render_creates_missing_output_directory(tmp_path: Path) -> None:
+    photos = [_make_photo(tmp_path, 0, (50, 80, 120))]
+    nested = tmp_path / "deeply" / "nested" / "out"
+
+    out_path = render_html(
+        narrative=_narrative(),
+        gpx_stats=_gpx_stats(),
+        photos=photos,
+        output_dir=nested,
+        slug="hike",
+    )
+
+    assert out_path.is_file()
+    assert nested.is_dir()
+
+
+def test_render_includes_bilingual_narrative_content(tmp_path: Path) -> None:
+    photos = [_make_photo(tmp_path, 0, (50, 80, 120))]
+
+    out_path = render_html(
+        narrative=_narrative(),
+        gpx_stats=_gpx_stats(),
+        photos=photos,
+        output_dir=tmp_path / "out",
+        slug="hike",
+    )
+    html = out_path.read_text(encoding="utf-8")
+
+    assert "Above the fog line" in html
+    assert "Над линией тумана" in html
+    assert "First mountain hike" in html
+    assert "Первый горный поход" in html
+    assert "We left the trailhead at first light." in html
+    assert "К седловине облака начали редеть." in html  # noqa: RUF001
+    assert "The fog cleared just as we reached the ridge." in html
+
+
+def test_render_embeds_every_photo_as_jpeg_data_uri(tmp_path: Path) -> None:
+    photos = [_make_photo(tmp_path, i, (i * 40, 100, 100)) for i in range(4)]
+
+    out_path = render_html(
+        narrative=_narrative(),
+        gpx_stats=_gpx_stats(),
+        photos=photos,
+        output_dir=tmp_path / "out",
+        slug="hike",
+    )
+    html = out_path.read_text(encoding="utf-8")
+
+    assert html.count("data:image/jpeg;base64,") == 4
+
+
+def test_render_is_self_contained_no_external_resources(tmp_path: Path) -> None:
+    photos = [_make_photo(tmp_path, 0, (50, 80, 120))]
+
+    out_path = render_html(
+        narrative=_narrative(),
+        gpx_stats=_gpx_stats(),
+        photos=photos,
+        output_dir=tmp_path / "out",
+        slug="hike",
+    )
+    html = out_path.read_text(encoding="utf-8")
+
+    # No external scripts or stylesheets — everything inline.
+    assert not re.search(r"<script\s+[^>]*src=", html, flags=re.IGNORECASE)
+    assert not re.search(r'<link\s+[^>]*href=["\']https?://', html, flags=re.IGNORECASE)
+    # No images loaded from a remote URL — every <img> must use a data: URI.
+    assert not re.search(r'<img\s+[^>]*src=["\']https?://', html, flags=re.IGNORECASE)
+    img_srcs = re.findall(r'<img\s+[^>]*src=["\']([^"\']+)', html, flags=re.IGNORECASE)
+    assert img_srcs, "expected at least one <img> in output"
+    assert all(src.startswith("data:image/") for src in img_srcs)
+
+
+def test_render_includes_gpx_stats(tmp_path: Path) -> None:
+    photos = [_make_photo(tmp_path, 0, (50, 80, 120))]
+
+    out_path = render_html(
+        narrative=_narrative(),
+        gpx_stats=_gpx_stats(),
+        photos=photos,
+        output_dir=tmp_path / "out",
+        slug="hike",
+    )
+    html = out_path.read_text(encoding="utf-8")
+
+    assert "6.2" in html  # distance_km
+    assert "610" in html  # elevation_gain_m
+    assert "165" in html  # duration_min
+    assert "1330" in html  # summit_elev_m
+
+
+def test_render_emits_inline_elevation_svg(tmp_path: Path) -> None:
+    photos = [_make_photo(tmp_path, 0, (50, 80, 120))]
+
+    out_path = render_html(
+        narrative=_narrative(),
+        gpx_stats=_gpx_stats(),
+        photos=photos,
+        output_dir=tmp_path / "out",
+        slug="hike",
+    )
+    html = out_path.read_text(encoding="utf-8")
+
+    assert '<svg class="elevation"' in html
+    assert "<path " in html
+    assert "viewBox=" in html
+
+
+def test_render_escapes_html_in_narrative_fields(tmp_path: Path) -> None:
+    """LLM output is untrusted — autoescape must neutralise HTML."""
+    photos = [_make_photo(tmp_path, 0, (50, 80, 120))]
+    nasty = NarrativeOutput(
+        title_en="<script>alert(1)</script>",
+        title_ru="x",
+        paragraphs_en=["</p><img src=x onerror=alert(1)>"],
+        paragraphs_ru=["x"],
+        pull_quote_en="x",
+        pull_quote_ru="x",
+        milestone_en="x",
+        milestone_ru="x",
+        selected_photo_indices=[0],
+    )
+
+    out_path = render_html(
+        narrative=nasty,
+        gpx_stats=_gpx_stats(),
+        photos=photos,
+        output_dir=tmp_path / "out",
+        slug="hike",
+    )
+    html = out_path.read_text(encoding="utf-8")
+
+    assert "<script>alert(1)</script>" not in html
+    assert "&lt;script&gt;alert(1)&lt;/script&gt;" in html
+    # The `<img onerror>` payload must not appear as a parseable tag.
+    assert "<img src=x" not in html
+    assert "&lt;img src=x onerror=alert(1)&gt;" in html
+
+
+def test_render_escapes_narrative_when_emitted_into_script_block(
+    tmp_path: Path,
+) -> None:
+    """The share-button JS uses ``| tojson``; ``</script>`` must not survive raw."""
+    photos = [_make_photo(tmp_path, 0, (50, 80, 120))]
+    nasty = NarrativeOutput(
+        title_en="legit",
+        title_ru="x",
+        paragraphs_en=["x"],
+        paragraphs_ru=["x"],
+        pull_quote_en="</script><script>alert(1)</script>",
+        pull_quote_ru="x",
+        milestone_en="x",
+        milestone_ru="x",
+        selected_photo_indices=[0],
+    )
+
+    out_path = render_html(
+        narrative=nasty,
+        gpx_stats=_gpx_stats(),
+        photos=photos,
+        output_dir=tmp_path / "out",
+        slug="hike",
+    )
+    html = out_path.read_text(encoding="utf-8")
+
+    # `tojson` must escape `<` so the literal ``</script>`` cannot break out.
+    assert "</script><script>alert(1)</script>" not in html
+
+
+def test_render_raises_when_photos_empty(tmp_path: Path) -> None:
+    with pytest.raises(HtmlRenderError, match="at least one photo"):
+        render_html(
+            narrative=_narrative(),
+            gpx_stats=_gpx_stats(),
+            photos=[],
+            output_dir=tmp_path / "out",
+            slug="hike",
+        )
+
+
+def test_render_raises_when_slug_empty(tmp_path: Path) -> None:
+    photos = [_make_photo(tmp_path, 0, (50, 80, 120))]
+    with pytest.raises(HtmlRenderError, match="slug"):
+        render_html(
+            narrative=_narrative(),
+            gpx_stats=_gpx_stats(),
+            photos=photos,
+            output_dir=tmp_path / "out",
+            slug="",
+        )
+
+
+def test_render_raises_when_photo_file_unreadable(tmp_path: Path) -> None:
+    missing = PhotoMeta(
+        path=tmp_path / "does_not_exist.jpg",
+        timestamp=datetime(2025, 8, 15, 9),
+        index=0,
+    )
+    with pytest.raises(HtmlRenderError, match="unable to read photo"):
+        render_html(
+            narrative=_narrative(),
+            gpx_stats=_gpx_stats(),
+            photos=[missing],
+            output_dir=tmp_path / "out",
+            slug="hike",
+        )
+
+
+def test_render_meta_line_renders_only_when_provided(tmp_path: Path) -> None:
+    photos = [_make_photo(tmp_path, 0, (50, 80, 120))]
+
+    without_meta = render_html(
+        narrative=_narrative(),
+        gpx_stats=_gpx_stats(),
+        photos=photos,
+        output_dir=tmp_path / "no_meta",
+        slug="hike",
+    ).read_text(encoding="utf-8")
+    with_meta = render_html(
+        narrative=_narrative(),
+        gpx_stats=_gpx_stats(),
+        photos=photos,
+        output_dir=tmp_path / "with_meta",
+        slug="hike",
+        hike_date=date(2025, 8, 15),
+        location="Bavarian Alps",
+    ).read_text(encoding="utf-8")
+
+    assert 'class="meta"' not in without_meta
+    assert "Bavarian Alps" in with_meta
+    assert "2025-08-15" in with_meta
