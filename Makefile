@@ -3,6 +3,17 @@
 
 PYTHON ?= python3.12
 VENV   := .venv
+BIN    := $(VENV)/bin
+
+# Prefer venv-installed tools when .venv exists; fall back to whatever is on
+# PATH otherwise (for fresh checkouts and CI). This makes `make ci` work
+# right after `make setup` without needing `source .venv/bin/activate` —
+# the trap that bit during initial bring-up.
+PY         := $(if $(wildcard $(BIN)/python),$(BIN)/python,python)
+RUFF       := $(if $(wildcard $(BIN)/ruff),$(BIN)/ruff,ruff)
+MYPY       := $(if $(wildcard $(BIN)/mypy),$(BIN)/mypy,mypy)
+PYTEST     := $(if $(wildcard $(BIN)/pytest),$(BIN)/pytest,pytest)
+TRAILSTORY := $(if $(wildcard $(BIN)/trailstory),$(BIN)/trailstory,trailstory)
 
 # ── Setup ──────────────────────────────────────────────────────────────────────
 
@@ -36,28 +47,28 @@ install-hooks:      ## Symlink scripts/hooks/* into .git/hooks/ (run once after 
 # ── Quality ────────────────────────────────────────────────────────────────────
 
 lint:               ## Check code with ruff
-	ruff check .
+	$(RUFF) check .
 
 format:             ## Auto-fix lint issues and format code
-	ruff check --fix .
-	ruff format .
+	$(RUFF) check --fix .
+	$(RUFF) format .
 
 typecheck:          ## Run mypy static type checking
-	mypy trailstory/
+	$(MYPY) trailstory/
 
 test:               ## Run tests with coverage report
-	pytest --cov=trailstory --cov-report=term-missing --cov-report=html
+	$(PYTEST) --cov=trailstory --cov-report=term-missing --cov-report=html
 
 ci:                 ## Full CI check — lint, type check, tests (run before pushing)
-	ruff check .
-	ruff format --check .
-	mypy trailstory/
-	pytest --cov=trailstory --cov-fail-under=80
+	$(RUFF) check .
+	$(RUFF) format --check .
+	$(MYPY) trailstory/
+	$(PYTEST) --cov=trailstory --cov-fail-under=80
 
 # ── Development helpers ────────────────────────────────────────────────────────
 
 generate:           ## Run generator with sample fixtures (requires .env with API key)
-	trailstory generate \
+	$(TRAILSTORY) generate \
 		--photos  tests/fixtures/sample_photos \
 		--gpx     tests/fixtures/sample.gpx \
 		--seed    "The fog cleared just as we reached the ridge." \
@@ -66,7 +77,7 @@ generate:           ## Run generator with sample fixtures (requires .env with AP
 		--out     output/dev
 
 test-render:        ## Render the HTML template with fixture data (no API call)
-	python -c "from tests.conftest import render_with_fixtures; render_with_fixtures()"
+	$(PY) -c "from tests.conftest import render_with_fixtures; render_with_fixtures()"
 
 # ── Cleanup ────────────────────────────────────────────────────────────────────
 
