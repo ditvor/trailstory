@@ -36,11 +36,14 @@ class HikeInput(BaseModel):
     seed_text: str
     baby_name: str
     baby_age_months: int = Field(ge=0)
+    location_name: str | None = None
 
 
 class NarrativeOutput(BaseModel):
     title_en: str
     title_ru: str
+    subtitle_en: str
+    subtitle_ru: str
     paragraphs_en: list[str]
     paragraphs_ru: list[str]
     pull_quote_en: str
@@ -54,4 +57,4 @@ class Memory(BaseModel):
     hike_input: HikeInput
     gpx_stats: GpxStats
     narrative: NarrativeOutput
-    output_dir: Path
+    selected_photos: list[PhotoMeta]

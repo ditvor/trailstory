@@ -68,6 +68,8 @@ def _valid_response_dict(indices: list[int] | None = None) -> dict[str, object]:
     return {
         "title_en": "Above the fog line",
         "title_ru": "Над линией тумана",
+        "subtitle_en": "A morning above the cloud sea",
+        "subtitle_ru": "Утро над морем облаков",
         "paragraphs_en": [
             "We left the trailhead at first light.",
             "By the saddle the cloud was thinning.",
@@ -172,6 +174,18 @@ def test_generate_narrative_uses_default_location_when_not_supplied() -> None:
 
     sent = client.complete.call_args.kwargs["prompt"]
     assert "the trail" in sent
+
+
+def test_generate_narrative_prefers_hike_input_location_name() -> None:
+    """``HikeInput.location_name`` overrides the ``location`` kwarg fallback."""
+    client = _client(_valid_response_json())
+    hike = _hike_input().model_copy(update={"location_name": "Watzmann"})
+
+    generate_narrative(hike, _gpx_stats(), _photos(), client=client, location="ignored")
+
+    sent = client.complete.call_args.kwargs["prompt"]
+    assert "Watzmann" in sent
+    assert "ignored" not in sent
 
 
 def test_generate_narrative_passes_system_prompt() -> None:

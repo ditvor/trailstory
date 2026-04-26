@@ -76,9 +76,8 @@ def generate_narrative(
         photos: Loaded photos. The model selects 6-8 indices into this list,
             so the list must be non-empty.
         client: Anthropic client wrapper. Injected so tests can mock the LLM.
-        location: Human-readable place name. Defaults to a generic placeholder;
-            callers should supply something specific (e.g. derived from GPX
-            or user-provided) when available.
+        location: Fallback place name. ``hike_input.location_name`` wins when
+            set; this kwarg is the default the prompt sees otherwise.
 
     Returns:
         Validated ``NarrativeOutput``.
@@ -91,8 +90,9 @@ def generate_narrative(
     if not photos:
         raise NarrativeGenerationError("at least one photo is required to build a narrative")
 
+    place = hike_input.location_name or location
     base_prompt = USER_NARRATIVE_TEMPLATE.format(
-        location=location,
+        location=place,
         distance_km=gpx_stats.distance_km,
         elevation_gain_m=gpx_stats.elevation_gain_m,
         duration_min=gpx_stats.duration_min,

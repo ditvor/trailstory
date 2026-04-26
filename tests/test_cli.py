@@ -27,6 +27,8 @@ def _valid_response_json(n_photos: int = 5) -> str:
         {
             "title_en": "Above the fog line",
             "title_ru": "Над линией тумана",
+            "subtitle_en": "A morning above the cloud sea",
+            "subtitle_ru": "Утро над морем облаков",
             "paragraphs_en": [
                 "We left the trailhead at first light.",
                 "By the saddle the cloud was thinning.",

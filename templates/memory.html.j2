@@ -36,6 +36,13 @@
     line-height: 1.15;
     font-weight: 700;
   }
+  .subtitle {
+    margin: 0 0 0.75rem;
+    font-size: 1.1rem;
+    font-style: italic;
+    color: #6c6c6c;
+    font-weight: 400;
+  }
   .meta { font-size: 0.9rem; color: #6c6c6c; }
 
   /* lang toggle */
@@ -157,6 +164,10 @@
         <span class="en">{{ narrative.title_en }}</span>
         <span class="ru">{{ narrative.title_ru }}</span>
       </h1>
+      <p class="subtitle">
+        <span class="en">{{ narrative.subtitle_en }}</span>
+        <span class="ru">{{ narrative.subtitle_ru }}</span>
+      </p>
       {% if meta.location or meta.date %}
       <div class="meta">
         {% if meta.location %}{{ meta.location }}{% endif %}

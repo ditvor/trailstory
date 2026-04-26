@@ -53,6 +53,8 @@ shape (every field is required):
 {{
   "title_en": "short, evocative title (English)",
   "title_ru": "the same title rendered naturally in Russian",
+  "subtitle_en": "one short complementary line under the title (English)",
+  "subtitle_ru": "the same subtitle rendered naturally in Russian",
   "paragraphs_en": [
     "3 to 5 paragraphs of intimate prose in English",
     "..."
