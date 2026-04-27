@@ -17,6 +17,9 @@ Versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - `trailstory generate` CLI: orchestrates the full pipeline (GPX → photos
   → narrative → HTML) with Rich progress output, `--photos`, `--gpx`,
   `--seed`, `--name`, `--age`, `--out`, and `--location` options.
+- Instagram carousel renderer: `trailstory generate --instagram` writes
+  1080×1350 portrait JPEG slides under `output/{slug}/carousel/` (title +
+  N photos center-cropped to 4:5 + closing pull-quote).
 
 ---
 
