@@ -1,0 +1,65 @@
+name: Feature request
+description: Suggest a new capability or improvement
+title: "feat: <one-line summary>"
+labels: ["type: feature"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Trailstory is a family memory tool, not a fitness tracker (see CLAUDE.md
+        → "What this project does"). The strongest feature requests are the
+        ones that name a concrete user moment and the smallest change that
+        would solve it.
+
+  - type: textarea
+    id: what
+    attributes:
+      label: What
+      description: One paragraph describing the capability or improvement you want.
+      placeholder: "When the hike has no summit elevation gain (e.g. flat lake walk), the milestone field should adapt rather than say 'first summit'."
+    validations:
+      required: true
+
+  - type: textarea
+    id: why
+    attributes:
+      label: Why
+      description: |
+        What user moment does this solve? Who is the user? What do they do
+        today instead?
+      placeholder: |
+        After flat hikes I currently delete the milestone manually before
+        sharing. The "first summit" line is wrong and feels generated.
+    validations:
+      required: true
+
+  - type: textarea
+    id: non-goals
+    attributes:
+      label: Non-goals
+      description: |
+        What this is **not**. Listing non-goals up front is the cheapest way
+        to keep scope honest.
+      placeholder: |
+        - Not adding a hike-type classifier (peak / valley / loop / out-and-back).
+        - Not making milestone language user-configurable.
+
+  - type: textarea
+    id: pr-shape
+    attributes:
+      label: Suggested PR shape (optional)
+      description: |
+        If you have an opinion on how this should be implemented, sketch it.
+        Useful when the work touches the LLM contract or the HTML template.
+        See CLAUDE.md → "Common tasks".
+      placeholder: |
+        - models.py: rename `milestone_*` semantics — still required, but allow "memory" framing.
+        - llm/prompts.py: instruct the model to choose between summit-style and journey-style milestone copy.
+        - templates/memory.html.j2: no change.
+        - tests/eval/cases/: add a flat-walk fixture.
+
+  - type: textarea
+    id: notes
+    attributes:
+      label: Anything else
+      description: Optional. References, screenshots, related issues, prior art.

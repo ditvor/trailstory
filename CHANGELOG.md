@@ -10,6 +10,42 @@ Versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 ## [Unreleased]
 
 ### Added
+- Project-local Claude Code workflow under `.claude/`: a tracked
+  `settings.json` that pre-allows the read-only and project-specific Bash
+  commands the toolchain actually needs (`make ci`, `make eval`,
+  `make eval-live`, `make test-render`, `make generate`, `.venv/bin/{pytest,ruff,mypy,python,trailstory}:*`,
+  read-only `git`/`gh` queries) so the agent stops prompting for them every
+  run; plus a `PostToolUse` hook on `Edit|Write` that prints a reminder
+  whenever `llm/prompts.py` or `llm/narrative.py` is touched, telling the
+  developer to run `make eval` (and `make eval-live` for prompt changes)
+  before merging. Personal overrides still belong in
+  `.claude/settings.local.json` (gitignored).
+- Project slash commands under `.claude/commands/`:
+  - `/eval` — runs `make eval`, parses the per-case rubric output,
+    summarizes pass/fail in a Markdown table, suggests likely fixes per
+    failing check (without auto-editing prompts or goldens).
+  - `/eval-live` — runs `make eval-live`, prints rubric + judge tables
+    with per-axis golden deltas, and explicitly confirms with the user
+    before treating any new score as the new golden.
+  - `/render-test` — runs `make test-render`, prints the absolute output
+    path, suggests `open <path>` on macOS / `xdg-open` on Linux.
+  - `/ship` — sanity-checks the working tree and branch name, runs
+    `make ci`, drafts a Conventional Commits message from the diff,
+    pauses for confirmation before committing, pushing, and opening a
+    PR against `develop` using the project PR template.
+  - `/sync-develop` — fetches origin, fast-forwards local `develop`,
+    lists local branches whose tip is reachable from `origin/develop`
+    or whose remote is `gone`, and asks the user before deleting any.
+- Three structured GitHub issue templates under `.github/ISSUE_TEMPLATE/`
+  (form-based YAML, labelled and pre-titled):
+  - `narrative-quality.yml` — captures the seed text, GPX summary,
+    baby/age, the specific dimension that reads wrong, expected-vs-actual
+    snippets, writer model, cache state, and a triage checkbox to add the
+    failure as a new case under `tests/eval/cases/`.
+  - `bug.yml` — repro steps, expected vs actual, OS, Python version, and
+    the output of `pip show trailstory anthropic pydantic pillow`.
+  - `feature.yml` — what / why / non-goals / suggested PR shape.
+  Replaces the older `bug_report.yml` and `feature_request.yml`.
 - Initial project structure, CI pipeline, and developer tooling.
 - HTML renderer producing a self-contained, bilingual memory page with
   photos embedded as base64 data URIs and an inline elevation-profile SVG
@@ -69,6 +105,17 @@ Versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   tables in the PR".
 
 ### Changed
+- `CLAUDE.md` restructured to make agent-assisted work faster: new
+  top-level **Glossary** (slug, milestone, hero, narrative, subtitle, pull
+  quote, carousel, memory, eval, golden, judge), **Common tasks** recipe
+  block (add a field to `NarrativeOutput`, tune a prompt, add a renderer,
+  add an eval case, change the output page design — replaces and tightens
+  the older "How to make common changes" section while preserving the
+  Jinja2 context reference), and **Decision register** linking ADR-001
+  (base64 photos), ADR-002 (Opus writer model), and ADR-003 (eval suite),
+  with a one-liner reminder to read the relevant ADR before changing
+  anything in its area. The Getting-help section now points at the new
+  issue templates.
 - `tests/fixtures/sample_photos/` now contains twelve images instead of
   five. The narrative prompt asks the model to pick 6-8 photo indices,
   so the previous five-photo fixture made `make eval`'s `indices_valid`
