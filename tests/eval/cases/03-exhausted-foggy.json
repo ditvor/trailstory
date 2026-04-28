@@ -1,0 +1,9 @@
+{
+  "name": "03-exhausted-foggy",
+  "gpx_path": "tests/fixtures/sample.gpx",
+  "photos_dir": "tests/fixtures/sample_photos",
+  "seed_text": "The fog never lifted. Mia cried for the last hour and my shoulders burned. I was sure we'd made a mistake — until she fell asleep on the descent and I noticed the ferns underfoot.",
+  "baby_name": "Mia",
+  "baby_age_months": 5,
+  "location_name": "Bavarian Alps"
+}

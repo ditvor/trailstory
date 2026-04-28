@@ -305,9 +305,19 @@ After editing, run `make test-render` to produce a test HTML in `output/test/`.
 ### Update a prompt
 
 1. Edit the constant in `llm/prompts.py`. Leave the old version as a comment with the date.
-2. Run `make test` — the existing tests should still pass (they mock responses).
-3. If the output schema changes, update `NarrativeOutput` first (see above).
-4. Open a PR with the label `llm`. Note in the description what problem the new prompt solves.
+2. Run `make eval` to exercise the new prompt against every case in
+   `tests/eval/cases/`. This calls the real Anthropic API and costs money;
+   see `docs/adr/003-narrative-eval-suite.md` for the rationale.
+3. Inspect the per-case rubric tables. The runner exits non-zero on any
+   failure — investigate before merging. Use `--update-golden` to refresh
+   `tests/eval/golden/` once the new output is what you intend.
+4. Only merge if the rubric is **non-regressing**: every check that passed
+   on `develop` must still pass with the new prompt. If a check now fails,
+   either fix the prompt or open a PR that adjusts the rubric with
+   reasoning.
+5. If the output schema changes, update `NarrativeOutput` first (see above).
+6. Open a PR with the label `llm`. Note in the description what problem
+   the new prompt solves and paste the eval table.
 
 ---
 
