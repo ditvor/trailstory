@@ -143,19 +143,30 @@ def test_load_photos_raises_on_missing_directory(tmp_path: Path) -> None:
 def test_load_photos_real_fixtures_chronological(tmp_path: Path) -> None:
     photos = load_photos(SAMPLE_DIR, tmp_path / "out")
 
-    assert len(photos) == 5
+    # Twelve fixtures, ordered by EXIF DateTimeOriginal — not by filename.
+    # File prefixes 06-12 were appended after the original 01-05 set in
+    # chore/expand-photo-fixtures, so they sort alphabetically last on
+    # disk but interleave in time, exercising the EXIF-based sort path.
+    assert len(photos) == 12
     assert [p.path.stem for p in photos] == [
         "01_trailhead",
+        "06_meadow",
         "02_forest",
+        "07_creek",
         "03_baby_smile",
+        "08_lunch",
+        "09_baby_carrier",
+        "10_clouds",
         "04_ridge",
         "05_summit",
+        "11_descent",
+        "12_cabin",
     ]
-    assert [p.index for p in photos] == [0, 1, 2, 3, 4]
+    assert [p.index for p in photos] == list(range(12))
     timestamps = [p.timestamp for p in photos]
     assert all(a < b for a, b in pairwise(timestamps))
     assert photos[0].timestamp == datetime(2025, 8, 15, 9, 5, 12)
-    assert photos[-1].timestamp == datetime(2025, 8, 15, 12, 40, 9)
+    assert photos[-1].timestamp == datetime(2025, 8, 15, 13, 20, 48)
 
 
 def test_load_photos_converts_heic_to_jpeg(tmp_path: Path) -> None:
