@@ -9,7 +9,8 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 
 class Settings(BaseSettings):
     anthropic_api_key: SecretStr
-    model: str = "claude-sonnet-4-6"
+    # Default narrative model — see docs/adr/002-narrative-model-choice.md.
+    model: str = "claude-opus-4-7"
     output_dir: Path = Path("./output")
     log_level: str = "INFO"
 

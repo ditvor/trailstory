@@ -287,10 +287,10 @@ def test_constructor_rejects_zero_max_retries() -> None:
 
 
 def test_constructor_default_model_is_opus() -> None:
-    """Documented default: opus, justified in the client module comment."""
+    """Documented default: latest opus, recorded in ADR-002."""
     client, _ = _build_client()
     assert client.model == DEFAULT_MODEL
-    assert DEFAULT_MODEL == "claude-opus-4-6"
+    assert DEFAULT_MODEL == "claude-opus-4-7"
 
 
 def test_constructor_does_not_store_plaintext_secret() -> None:

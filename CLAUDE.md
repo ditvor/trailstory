@@ -172,9 +172,14 @@ USER_NARRATIVE_TEMPLATE: str = """..."""   # uses .format() or str.Template
 
 ### Model to use
 
-Always use `claude-sonnet-4-6` unless there is a specific reason to change.
-Never hardcode `claude-opus-4-6` without a comment explaining why the extra cost is justified.
-The model name is set in `config.py` and can be overridden via env var.
+Default is `claude-opus-4-7` — quality is the priority for the narrative, since
+it is the user-facing creative output and the per-hike cost difference vs sonnet
+is negligible. Decision and trade-offs recorded in
+[`docs/adr/002-narrative-model-choice.md`](docs/adr/002-narrative-model-choice.md).
+The model name is set in `config.py` and can be overridden per-run via the
+`MODEL` env var. Switching to a sonnet- or haiku-class model is allowed when
+quality is satisfactory and you want to reduce cost — but only by overriding
+the env var, not by changing the default without a new ADR.
 
 ### Response validation
 
@@ -240,7 +245,7 @@ No HTML strings in Python files.
 # config.py
 class Settings(BaseSettings):
     anthropic_api_key: SecretStr    # read from ANTHROPIC_API_KEY env var
-    model: str = "claude-sonnet-4-6"
+    model: str = "claude-opus-4-7"
     output_dir: Path = Path("./output")
     log_level: str = "INFO"
 
