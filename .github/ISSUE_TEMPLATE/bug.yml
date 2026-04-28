@@ -1,0 +1,80 @@
+name: Bug report
+description: Something is broken
+title: "bug: <one-line summary>"
+labels: ["type: fix"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for taking the time to report a bug. Please fill in as much as
+        you can — concrete repro steps and exact versions are the difference
+        between a fix in an hour and a fix in a week.
+
+        For narrative-quality regressions (Russian phrasing, photo selection,
+        tone), use the **Narrative quality** template instead.
+
+  - type: textarea
+    id: reproduce
+    attributes:
+      label: Steps to reproduce
+      description: The exact commands or steps that trigger the bug.
+      placeholder: |
+        1. `trailstory generate --photos ./my-photos --gpx hike.gpx --seed "..." --name Mia --age 5 --out output/dev`
+        2. Photo at index 3 is a HEIC file
+        3. See traceback below
+      render: text
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected behavior
+      placeholder: "The HEIC file should be converted to JPEG and included in the output."
+    validations:
+      required: true
+
+  - type: textarea
+    id: actual
+    attributes:
+      label: Actual behavior
+      description: What actually happened. Include the full traceback if there was one.
+      render: text
+    validations:
+      required: true
+
+  - type: input
+    id: os
+    attributes:
+      label: Operating system
+      placeholder: "macOS 15.1 / Ubuntu 24.04 / Windows 11"
+    validations:
+      required: true
+
+  - type: input
+    id: python-version
+    attributes:
+      label: Python version
+      description: Output of `python --version`.
+      placeholder: "3.12.2"
+    validations:
+      required: true
+
+  - type: textarea
+    id: pip-show
+    attributes:
+      label: Installed package versions
+      description: |
+        Paste the full output of:
+        ```
+        pip show trailstory anthropic pydantic pillow
+        ```
+      render: text
+    validations:
+      required: true
+
+  - type: textarea
+    id: notes
+    attributes:
+      label: Anything else
+      description: Optional. Screenshots, related issues, hypothesis about cause.

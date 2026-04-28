@@ -27,6 +27,45 @@ Stats (distance, elevation) appear in the output but serve the narrative, not th
 
 ---
 
+## Glossary
+
+One-liners. When in doubt, this is the meaning the codebase intends.
+
+- **slug** — url-safe hike identifier (e.g. `2025-05-tegernsee-fog`). Available
+  inside the template as `{{ meta.slug }}` and used as the output directory
+  and HTML filename.
+- **narrative** — the LLM-generated content (`NarrativeOutput`): bilingual
+  title, subtitle, paragraphs, pull quote, milestone, and selected photo
+  indices.
+- **subtitle** — the short `subtitle_en` / `subtitle_ru` line under the title.
+  Sets the emotional tone in one sentence.
+- **pull quote** — the `pull_quote_en` / `pull_quote_ru` callout rendered
+  large in the page body. Pulled from the parent's seed text or close to it.
+- **milestone** — the `milestone_en` / `milestone_ru` badge ("First mountain
+  hike", "First time above the fog").
+- **hero** — the top header block of the rendered memory page: title +
+  subtitle + meta line (date, location, distance, elevation, duration). See
+  `header.hero` in `templates/memory.html.j2`.
+- **memory** — the `Memory` model: `hike_input` + `gpx_stats` + `narrative`
+  + `selected_photos` resolved from indices. Every renderer takes a `Memory`
+  and returns a `Path`.
+- **carousel** — the Instagram output: 1080×1350 portrait JPEGs under
+  `output/{slug}/carousel/`. Produced by `trailstory.renderers.instagram` when
+  `--instagram` is passed.
+- **eval** — the narrative-quality regression suite under `tests/eval/`.
+  Programmatic rubric (always-on, paid only for the writer call) plus an
+  optional LLM-as-judge layer (paid, `--live-judge` / `make eval-live`). See
+  ADR-003.
+- **golden** — saved baseline output under `tests/eval/golden/`. Each case
+  has `<case>.json` (the writer's `NarrativeOutput`) and `<case>-judge.json`
+  (the judge's per-axis scores). Refresh deliberately with
+  `make eval-update-golden`.
+- **judge** — the LLM-as-judge layer (`tests/eval/judge.py`). Defaults to
+  `claude-sonnet-4-6` (different family from the writer to reduce same-model
+  inflation). Configurable via `EVAL_JUDGE_MODEL`.
+
+---
+
 ## Tech stack
 
 | Layer | Library | Why |
@@ -271,19 +310,76 @@ class Settings(BaseSettings):
 
 ---
 
-## How to make common changes
+## Common tasks
 
-### Add a new field to the narrative output
+Quick reference: intent → recipe. Slash-command shortcuts live in
+`.claude/commands/` (`/eval`, `/eval-live`, `/render-test`, `/ship`,
+`/sync-develop`).
 
-1. Add field to `NarrativeOutput` in `models.py` (with English and Russian variants).
-2. Update `SYSTEM_NARRATIVE` and `USER_NARRATIVE_TEMPLATE` in `llm/prompts.py` to instruct
-   the model to populate it.
-3. Add the field reference to `templates/memory.html.j2`.
-4. Add a test in `test_narrative.py` asserting the field is present in the mock response.
+### Add a field to `NarrativeOutput`
+
+1. Add the field to `NarrativeOutput` in `trailstory/models.py` (English and
+   Russian variants if it's user-facing text).
+2. Update the JSON skeleton in `llm/prompts.py` so the model is instructed to
+   produce it. Leave the previous version as a dated comment.
+3. Update mocks: `tests/test_narrative.py`, `tests/test_cli.py`,
+   `tests/test_renderers.py`, `tests/test_instagram.py`,
+   `tests/conftest.py`. The `render_with_fixtures` helper and any stub
+   `NarrativeOutput` constructor must include the new field — otherwise
+   `make ci` and `/render-test` will break.
+4. Reference the field in `templates/memory.html.j2`.
+5. If it appears in the carousel, update `trailstory/renderers/instagram.py`.
+6. `make ci` (free) → `make eval` (paid writer call). Confirm the model
+   populates the new field cleanly across every case before opening the PR.
+
+### Tune a prompt
+
+1. Edit the constant in `llm/prompts.py`. Leave the previous version as a
+   dated comment.
+2. `make eval` — programmatic rubric, paid writer call per case.
+3. `make eval-live` — adds the paid judge call per case; scores against
+   `tests/eval/golden/<case>-judge.json` with regression threshold
+   `EVAL_REGRESSION_THRESHOLD` (default `1.0`).
+4. Paste **both** score tables (rubric and judge) in the PR description. Do
+   not merge if either regressed without explicit reasoning.
+5. If the new output is the intended new baseline, refresh both narrative
+   and judge goldens with `make eval-update-golden` and explain the refresh
+   in the PR. Background and trade-offs in
+   [`docs/adr/003-narrative-eval-suite.md`](docs/adr/003-narrative-eval-suite.md).
+6. If the output schema changes, update `NarrativeOutput` first (see above).
+7. Label the PR `llm`.
+
+### Add a renderer
+
+1. Create `trailstory/renderers/<name>.py`. The public entry point takes
+   `memory: Memory` and returns the `Path` of the produced file.
+2. Wire it into `trailstory/cli.py` behind a new `--<name>` flag — off by
+   default, opt-in.
+3. Add `tests/test_<name>.py`. Use the existing `Memory` fixtures from
+   `tests/conftest.py`. Never call the real Anthropic API in unit tests.
+4. Add an entry under `### Added` in `CHANGELOG.md`.
+5. `make ci` must pass. For visual changes, run `/render-test` and eyeball
+   the output before opening the PR.
+
+### Add an eval case
+
+1. Create `tests/eval/cases/<NN>-<slug>.json`. Required fields (see existing
+   cases for the exact shape): `name`, `gpx_path`, `photos_dir`, `seed_text`,
+   `baby_name`, `baby_age_months`, `location_name`.
+2. Run
+   `python -m tests.eval.run --case <NN>-<slug> --live-judge --update-golden`
+   to produce both `tests/eval/golden/<NN>-<slug>.json` and
+   `tests/eval/golden/<NN>-<slug>-judge.json`. Paid: one writer call + one
+   judge call.
+3. Read both golden files. If anything looks wrong, tune the prompt or seed
+   text and regenerate **before committing** — once the goldens are in, the
+   regression gate compares against them.
+4. Commit the case file and both goldens together.
 
 ### Change the output page design
 
-Edit `templates/memory.html.j2`. This is a Jinja2 template. Available context variables:
+Edit `templates/memory.html.j2`. This is a Jinja2 template. Available
+context variables:
 
 ```
 {{ narrative }}     NarrativeOutput object — access as narrative.title_en etc.
@@ -293,39 +389,8 @@ Edit `templates/memory.html.j2`. This is a Jinja2 template. Available context va
 {{ meta.slug }}     url-safe hike identifier
 ```
 
-After editing, run `make test-render` to produce a test HTML in `output/test/`.
-
-### Add a new output format
-
-1. Create `trailstory/renderers/new_format.py`.
-2. It takes a `Memory` object and returns a `Path` to the output file.
-3. Register it in `cli.py` as an optional flag: `--instagram`, `--pdf`, etc.
-4. Add tests in `tests/test_renderers.py`.
-
-### Update a prompt
-
-1. Edit the constant in `llm/prompts.py`. Leave the old version as a comment with the date.
-2. Run `make eval` (free) → `make eval-live` (paid) → post both score
-   tables in the PR. `make eval` is the always-on programmatic rubric
-   and runs without an API call beyond the writer; `make eval-live`
-   adds the paid LLM-as-judge layer that scores warmth, narrative arc,
-   Russian fidelity, and photo-selection plausibility against the
-   `tests/eval/golden/<case>-judge.json` baselines. Both are documented
-   in `docs/adr/003-narrative-eval-suite.md`.
-3. Inspect the per-case rubric and judge tables. Either runner exits
-   non-zero on any failure — investigate before merging. Use
-   `make eval-update-golden` to refresh both narrative and judge
-   goldens once the new output is what you intend.
-4. Only merge if the rubric is **non-regressing** AND the judge is
-   non-regressing: every rubric check that passed on `develop` must
-   still pass, and no judge axis may drop by ≥ `EVAL_REGRESSION_THRESHOLD`
-   (default `1.0`) vs golden. If a check now fails, either fix the
-   prompt or open a PR that adjusts the rubric / refreshes the goldens
-   with reasoning.
-5. If the output schema changes, update `NarrativeOutput` first (see above).
-6. Open a PR with the label `llm`. Note in the description what problem
-   the new prompt solves and paste both score tables (programmatic
-   rubric + judge).
+After editing, run `make test-render` (or `/render-test`) to produce a test
+HTML in `output/test/` and open it in a browser before opening the PR.
 
 ---
 
@@ -345,8 +410,39 @@ After editing, run `make test-render` to produce a test HTML in `output/test/`.
 
 ---
 
+## Decision register
+
+Architecture Decision Records live under [`docs/adr/`](docs/adr/). The *why*
+behind each load-bearing decision is recorded there so future contributors
+don't relitigate them.
+
+1. [ADR-001 — embed photos as base64 data URIs](docs/adr/001-base64-photo-embedding.md):
+   the HTML output must work offline and over messengers; relative image
+   paths break that. Don't switch to relative paths without a new ADR.
+2. [ADR-002 — narrative writer model is `claude-opus-4-7`](docs/adr/002-narrative-model-choice.md):
+   quality wins over per-call cost for the user-facing creative output.
+   Override per-run via the `MODEL` env var; never change the default
+   without a new ADR.
+3. [ADR-003 — narrative-quality eval is a programmatic rubric, with a paid
+   LLM-judge layer added separately](docs/adr/003-narrative-eval-suite.md):
+   one always-on rubric for structural failures (unit tests run free in
+   `make ci`; `make eval` adds the paid writer calls) plus an opt-in paid
+   judge layer for taste-level axes (`make eval-live`). Goldens under
+   `tests/eval/golden/` are the regression baseline; refresh deliberately
+   and explain in the PR.
+
+If you're about to do something that touches an area covered by an existing
+ADR, **read the ADR first**. If the change is incompatible with the recorded
+decision, open a new ADR rather than silently overriding it.
+
+---
+
 ## Getting help
 
 - Architecture questions → open a `docs/` PR with a proposed ADR in `docs/adr/`.
-- Prompt quality issues → open an issue with label `llm` including the failing seed text and GPX stats.
-- Design questions about the HTML template → open an issue with label `type: feature`.
+- Prompt quality issues → open an issue using the **Narrative quality**
+  template (label `llm`) — it captures the seed text, GPX summary, and the
+  expected-vs-actual snippet the rubric/judge will need.
+- Bugs → use the **Bug report** template (label `type: fix`).
+- Design questions about the HTML template → use the **Feature request**
+  template (label `type: feature`).

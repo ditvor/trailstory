@@ -1,0 +1,54 @@
+{
+  "$schema": "https://json.schemastore.org/claude-code-settings.json",
+  "permissions": {
+    "allow": [
+      "Bash(make ci)",
+      "Bash(make ci *)",
+      "Bash(make eval)",
+      "Bash(make eval *)",
+      "Bash(make eval-live)",
+      "Bash(make eval-live *)",
+      "Bash(make test-render)",
+      "Bash(make test-render *)",
+      "Bash(make generate)",
+      "Bash(make generate *)",
+      "Bash(make lint)",
+      "Bash(make typecheck)",
+      "Bash(make test)",
+      "Bash(make format)",
+      "Bash(make help)",
+      "Bash(.venv/bin/pytest:*)",
+      "Bash(.venv/bin/ruff:*)",
+      "Bash(.venv/bin/mypy:*)",
+      "Bash(.venv/bin/python:*)",
+      "Bash(.venv/bin/trailstory:*)",
+      "Bash(git status)",
+      "Bash(git status *)",
+      "Bash(git log:*)",
+      "Bash(git diff:*)",
+      "Bash(git fetch:*)",
+      "Bash(git branch)",
+      "Bash(git branch --show-current)",
+      "Bash(git remote -v)",
+      "Bash(gh pr list:*)",
+      "Bash(gh pr view:*)",
+      "Bash(gh pr diff:*)",
+      "Bash(gh pr checks:*)",
+      "Bash(gh issue list:*)",
+      "Bash(gh issue view:*)"
+    ]
+  },
+  "hooks": {
+    "PostToolUse": [
+      {
+        "matcher": "Edit|Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "FILE_PATH=$(jq -r '.tool_input.file_path // empty' 2>/dev/null); if [ -n \"$FILE_PATH\" ] && echo \"$FILE_PATH\" | grep -qE '(^|/)(llm/(prompts|narrative)\\.py)$'; then printf '\\n[trailstory] You touched %s — run `make eval` (and `make eval-live` for prompt changes) before merging. See CLAUDE.md → \"Update a prompt\".\\n' \"$FILE_PATH\" >&2; fi"
+          }
+        ]
+      }
+    ]
+  }
+}

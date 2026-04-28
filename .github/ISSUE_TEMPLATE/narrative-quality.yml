@@ -1,0 +1,121 @@
+name: Narrative quality
+description: The generated story reads wrong (Russian phrasing, photo selection, tone, length, etc.)
+title: "narrative: <one-line summary of what reads wrong>"
+labels: ["llm", "type: fix"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Use this template when the LLM-generated narrative — or its photo selection
+        — feels off. The more concrete the input, the more useful the eval case
+        we can derive from it. See `docs/adr/003-narrative-eval-suite.md` and
+        the "Update a prompt" section of `CLAUDE.md`.
+
+  - type: textarea
+    id: seed-text
+    attributes:
+      label: Seed text used
+      description: The exact `--seed` string the parent provided to `trailstory generate`.
+      placeholder: "The fog cleared just as we reached the ridge. Mia slept the whole way up."
+      render: text
+    validations:
+      required: true
+
+  - type: textarea
+    id: gpx-summary
+    attributes:
+      label: GPX summary
+      description: |
+        Distance, total elevation gain, and duration from the GPX. Pull from
+        `trailstory generate` console output or run `gpxinfo` if you have it.
+      placeholder: |
+        distance: 8.4 km
+        elevation gain: 620 m
+        duration: 3h 45m
+      render: text
+    validations:
+      required: true
+
+  - type: input
+    id: baby-context
+    attributes:
+      label: Baby name and age
+      description: Helps reproduce — the prompt uses both.
+      placeholder: "Mia, 5 months"
+    validations:
+      required: true
+
+  - type: dropdown
+    id: dimension
+    attributes:
+      label: What specifically reads wrong?
+      description: Pick the closest match. If multiple, file separate issues.
+      options:
+        - Russian phrasing / fluency
+        - English phrasing / fluency
+        - Photo selection (wrong photos, wrong order, wrong count)
+        - Tone (too clinical, too florid, off-register)
+        - Paragraph count / length
+        - Title / subtitle / pull quote
+        - Milestone field
+        - JSON validation failure
+        - Other (describe below)
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected-snippet
+    attributes:
+      label: Expected snippet
+      description: |
+        A short example of what you would have expected to see — even rough is
+        fine. This becomes the rubric assertion or the judge prompt note.
+      placeholder: "Russian paragraphs should not contain ASCII fragments like ' km' or ' min'."
+    validations:
+      required: true
+
+  - type: textarea
+    id: actual-snippet
+    attributes:
+      label: Actual snippet
+      description: |
+        Paste the relevant fragment of the generated narrative (or the full
+        `NarrativeOutput` JSON if it's small). Redact any sensitive details.
+      render: text
+    validations:
+      required: true
+
+  - type: input
+    id: model
+    attributes:
+      label: Writer model
+      description: Value of the `MODEL` env var or the default if unset.
+      placeholder: "claude-opus-4-7"
+    validations:
+      required: true
+
+  - type: input
+    id: cache-state
+    attributes:
+      label: Was the cache disabled?
+      description: |
+        `trailstory generate --no-cache` produces a fresh call. If the output
+        came from a cached run (default), say so — same hike will produce the
+        same narrative every time.
+      placeholder: "yes (--no-cache) / no (cached)"
+    validations:
+      required: true
+
+  - type: checkboxes
+    id: add-eval-case
+    attributes:
+      label: Triage hint
+      options:
+        - label: Add this as a case to `tests/eval/cases/` so the rubric/judge guard against the regression in future runs.
+          required: false
+
+  - type: textarea
+    id: notes
+    attributes:
+      label: Anything else
+      description: Optional. Stack trace, screenshot, hypothesis about cause, etc.
