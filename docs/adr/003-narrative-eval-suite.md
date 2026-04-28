@@ -153,9 +153,83 @@ that lands a prompt regression is therefore visible at PR time.
 
 ### Follow-up
 
-- `feat/eval-judge`: paid LLM-as-judge layer scoring taste-level
-  quality. Lives in its own runner under `tests/eval/judge.py` (or
-  similar) and its own Makefile target. Out of scope for this PR.
 - After ~10 real hikes generated under the rubric, revisit thresholds:
   any check that has fired only on regressions stays; any check that
   has fired on legitimately good output gets relaxed.
+
+---
+
+## Paid judge layer
+
+**Status:** Added in `feat/eval-judge`, 2026-04.
+
+The deferred LLM-as-judge layer is now wired up at
+[`tests/eval/judge.py`](../../tests/eval/judge.py) and exposed through
+`make eval-live` (rubric + judge) and `make eval-update-golden` (refresh
+both narrative and judge goldens).
+
+### What it scores
+
+Four taste-level axes on a 0-5 float scale, validated by Pydantic
+(`JudgeScore` in `tests/eval/judge.py`):
+
+| Axis | What it captures |
+|---|---|
+| `warmth` | Personal voice; specific sensory detail; absence of sporty / achievement framing. |
+| `narrative_arc` | Opening → effort → landscape → baby-detail → summit shape, evenly weighted. |
+| `russian_fidelity` | Natural, equivalent-register Russian; no back-translation, no English left in. |
+| `photo_selection_plausibility` | Selected indices look like a coherent 6-8 frame story given the prose. |
+
+The judge also returns a free-form `notes` string of 2-4 sentences. When
+an axis regresses, the notes tell the human reviewing the PR *why* —
+otherwise the delta number alone is hard to act on.
+
+### Why a different model than the writer
+
+The writer is `claude-opus-4-7`. The judge defaults to
+`claude-sonnet-4-6` and is configurable via `EVAL_JUDGE_MODEL`. Two
+reasons:
+
+1. **Score inflation.** Same-family judging tends to agree with its own
+   stylistic choices; a different model produces a more honest second
+   opinion.
+2. **Cost.** Sonnet costs materially less per call than Opus, and the
+   judge runs on every `make eval-live`. The judge's job (pattern
+   matching against a fixed rubric, comparing two language strings) is
+   well within Sonnet's capability.
+
+### Regression gate
+
+When `tests/eval/golden/<case>-judge.json` exists, the runner prints the
+per-axis delta and exits non-zero if any axis dropped by at least
+`EVAL_REGRESSION_THRESHOLD` (default `1.0`) vs golden. Threshold picked
+as a "noticeable but not catastrophic" gap on the 0-5 scale; pilot runs
+showed a single missed paragraph or one flat axis as a 1-1.5 swing.
+
+The judge is **sampled, not deterministic** — re-running the same
+narrative on the same prompt produces scores within ~0.5 of each other
+in pilot runs. The 1.0 threshold absorbs that noise; tightening it
+would produce false-positive regressions on noise alone.
+
+### Workflow
+
+`make eval` (free, programmatic rubric only) stays the cheap inner
+loop. `make eval-live` (paid, rubric + judge) is the gate before
+merging a prompt change. The CLAUDE.md "Update a prompt" recipe
+reflects the split: rubric first, then judge, post both score tables in
+the PR.
+
+### Trade-offs accepted
+
+- **Per-cycle cost rises** by one Sonnet call per case. With three
+  cases, this is small change — but worth being explicit about, since
+  it shows up on the bill alongside the writer call.
+- **Two prompt files to keep in sync.** `trailstory/llm/prompts.py` is
+  the writer's; `tests/eval/judge_prompts.py` is the judge's. Drift
+  tests in `tests/test_prompts.py` and
+  `tests/test_eval_judge_prompts.py` enforce that each prompt's JSON
+  skeleton matches its target Pydantic model.
+- **Sampling noise above 0.5 per axis** can mask real regressions
+  smaller than the 1.0 threshold. Mitigation if it bites: re-run the
+  failing case 3× and median, or tighten the threshold once we have
+  enough runs to characterise variance honestly.

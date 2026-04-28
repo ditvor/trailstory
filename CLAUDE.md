@@ -305,19 +305,27 @@ After editing, run `make test-render` to produce a test HTML in `output/test/`.
 ### Update a prompt
 
 1. Edit the constant in `llm/prompts.py`. Leave the old version as a comment with the date.
-2. Run `make eval` to exercise the new prompt against every case in
-   `tests/eval/cases/`. This calls the real Anthropic API and costs money;
-   see `docs/adr/003-narrative-eval-suite.md` for the rationale.
-3. Inspect the per-case rubric tables. The runner exits non-zero on any
-   failure — investigate before merging. Use `--update-golden` to refresh
-   `tests/eval/golden/` once the new output is what you intend.
-4. Only merge if the rubric is **non-regressing**: every check that passed
-   on `develop` must still pass with the new prompt. If a check now fails,
-   either fix the prompt or open a PR that adjusts the rubric with
-   reasoning.
+2. Run `make eval` (free) → `make eval-live` (paid) → post both score
+   tables in the PR. `make eval` is the always-on programmatic rubric
+   and runs without an API call beyond the writer; `make eval-live`
+   adds the paid LLM-as-judge layer that scores warmth, narrative arc,
+   Russian fidelity, and photo-selection plausibility against the
+   `tests/eval/golden/<case>-judge.json` baselines. Both are documented
+   in `docs/adr/003-narrative-eval-suite.md`.
+3. Inspect the per-case rubric and judge tables. Either runner exits
+   non-zero on any failure — investigate before merging. Use
+   `make eval-update-golden` to refresh both narrative and judge
+   goldens once the new output is what you intend.
+4. Only merge if the rubric is **non-regressing** AND the judge is
+   non-regressing: every rubric check that passed on `develop` must
+   still pass, and no judge axis may drop by ≥ `EVAL_REGRESSION_THRESHOLD`
+   (default `1.0`) vs golden. If a check now fails, either fix the
+   prompt or open a PR that adjusts the rubric / refreshes the goldens
+   with reasoning.
 5. If the output schema changes, update `NarrativeOutput` first (see above).
 6. Open a PR with the label `llm`. Note in the description what problem
-   the new prompt solves and paste the eval table.
+   the new prompt solves and paste both score tables (programmatic
+   rubric + judge).
 
 ---
 
