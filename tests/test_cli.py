@@ -127,6 +127,48 @@ def test_generate_surfaces_domain_errors_as_exit_one(
     assert "error:" in result.output
 
 
+def test_generate_with_instagram_flag_writes_carousel(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    monkeypatch.setenv("ANTHROPIC_API_KEY", "sk-test-fake")
+
+    fake_client = MagicMock(spec=AnthropicClient)
+    fake_client.complete.return_value = _valid_response_json()
+    monkeypatch.setattr("trailstory.cli.AnthropicClient", lambda *a, **kw: fake_client)
+
+    out_dir = tmp_path / "out"
+    runner = CliRunner()
+    result = runner.invoke(
+        cli,
+        [
+            "generate",
+            "--photos",
+            str(FIXTURES / "sample_photos"),
+            "--gpx",
+            str(FIXTURES / "sample.gpx"),
+            "--seed",
+            "irrelevant",
+            "--out",
+            str(out_dir),
+            "--location",
+            "Bavarian Alps",
+            "--instagram",
+        ],
+        catch_exceptions=False,
+    )
+
+    assert result.exit_code == 0, result.output
+    assert "Carousel rendered" in result.output
+
+    carousel_dirs = list(out_dir.glob("*/carousel"))
+    assert len(carousel_dirs) == 1
+    slides = sorted(carousel_dirs[0].glob("*.jpg"))
+    # 1 title + 5 fixture photos + 1 quote
+    assert len(slides) == 7
+    assert slides[0].name == "00_title.jpg"
+    assert slides[-1].name.endswith("_quote.jpg")
+
+
 def test_generate_requires_anthropic_api_key(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:

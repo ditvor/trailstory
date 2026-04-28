@@ -30,6 +30,7 @@ from trailstory.llm.narrative import NarrativeGenerationError, generate_narrativ
 from trailstory.models import GpxStats, HikeInput, PhotoMeta
 from trailstory.photos import PhotoLoadError, load_photos
 from trailstory.renderers.html import HtmlRenderError, render_html
+from trailstory.renderers.instagram import InstagramRenderError, render_instagram_carousel
 
 console = Console()
 
@@ -73,6 +74,12 @@ def cli() -> None:
     default=None,
     help="Optional human-readable location, e.g. 'Bavarian Alps'.",
 )
+@click.option(
+    "--instagram",
+    is_flag=True,
+    default=False,
+    help="Also generate a 1080x1350 Instagram carousel under {out}/{slug}/carousel/.",
+)
 def generate(
     photos_path: Path,
     gpx_path: Path,
@@ -81,6 +88,7 @@ def generate(
     age: int,
     out_dir_arg: Path | None,
     location: str | None,
+    instagram: bool,
 ) -> None:
     """Generate a shareable HTML memory page from a hike."""
     settings = load_settings()
@@ -141,13 +149,31 @@ def generate(
                     hike_date=hike_date,
                     location=location,
                 )
-        console.print(f"[green]✓[/] Page rendered → {out_path}")
+            console.print(f"[green]✓[/] Page rendered → {out_path}")
+
+            if instagram:
+                # Carousel reads the resized JPEGs, so it must run inside the
+                # TemporaryDirectory context.
+                with console.status("Rendering Instagram carousel…", spinner="dots"):
+                    carousel_paths = render_instagram_carousel(
+                        narrative=narrative,
+                        photos=selected,
+                        output_dir=out_dir,
+                        slug=slug,
+                        hike_date=hike_date,
+                        location=location,
+                    )
+                console.print(
+                    f"[green]✓[/] Carousel rendered ({len(carousel_paths)} slides) "
+                    f"→ {carousel_paths[0].parent}"
+                )
         console.print(f"\n  open in any browser: file://{out_path.resolve()}")
     except (
         GpxParseError,
         PhotoLoadError,
         NarrativeGenerationError,
         HtmlRenderError,
+        InstagramRenderError,
     ) as exc:
         _abort(str(exc))
 
