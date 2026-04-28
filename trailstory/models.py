@@ -40,6 +40,12 @@ class HikeInput(BaseModel):
 
 
 class NarrativeOutput(BaseModel):
+    # Bump when the shape of NarrativeOutput changes in a way that would
+    # invalidate cached entries (added/removed/renamed field, semantic
+    # change to an existing one). The narrative cache (see
+    # ``trailstory.llm.cache``) refuses to return entries whose
+    # ``schema_version`` differs from the current value.
+    schema_version: int = 1
     title_en: str
     title_ru: str
     subtitle_en: str

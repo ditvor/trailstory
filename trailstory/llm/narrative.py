@@ -35,6 +35,7 @@ from typing import Any
 
 from pydantic import ValidationError
 
+from trailstory.llm import cache as narrative_cache
 from trailstory.llm.client import (
     AnthropicClient,
     LLMResponseError,
@@ -67,6 +68,7 @@ def generate_narrative(
     *,
     client: AnthropicClient,
     location: str = "the trail",
+    use_cache: bool = True,
 ) -> NarrativeOutput:
     """Generate a bilingual narrative from hike inputs.
 
@@ -78,6 +80,10 @@ def generate_narrative(
         client: Anthropic client wrapper. Injected so tests can mock the LLM.
         location: Fallback place name. ``hike_input.location_name`` wins when
             set; this kwarg is the default the prompt sees otherwise.
+        use_cache: When ``True`` (the default), check the on-disk cache
+            first and write any newly generated narrative back to it.
+            Set to ``False`` for tests that need to assert call counts on
+            the mocked client, and from the CLI's ``--no-cache`` flag.
 
     Returns:
         Validated ``NarrativeOutput``.
@@ -89,6 +95,15 @@ def generate_narrative(
     """
     if not photos:
         raise NarrativeGenerationError("at least one photo is required to build a narrative")
+
+    key: str | None = None
+    if use_cache:
+        key = narrative_cache.cache_key(hike_input, gpx_stats, photos, client.model)
+        cached = narrative_cache.get(key)
+        if cached is not None:
+            logger.info("narrative cache hit for key %s", key)
+            return cached
+        logger.info("narrative cache miss for key %s", key)
 
     place = hike_input.location_name or location
     base_prompt = USER_NARRATIVE_TEMPLATE.format(
@@ -114,11 +129,15 @@ def generate_narrative(
             raise NarrativeGenerationError("Model returned non-JSON output on both attempts.")
 
     try:
-        return NarrativeOutput.model_validate(parsed)
+        narrative = NarrativeOutput.model_validate(parsed)
     except ValidationError as exc:
         raise NarrativeGenerationError(
             f"LLM JSON did not match NarrativeOutput schema: {exc}"
         ) from exc
+
+    if key is not None:
+        narrative_cache.put(key, narrative)
+    return narrative
 
 
 # -- internal helpers ---------------------------------------------------------

@@ -80,6 +80,13 @@ def cli() -> None:
     default=False,
     help="Also generate a 1080x1350 Instagram carousel under {out}/{slug}/carousel/.",
 )
+@click.option(
+    "--no-cache",
+    "no_cache",
+    is_flag=True,
+    default=False,
+    help="Skip the on-disk narrative cache for this run (forces a fresh LLM call).",
+)
 def generate(
     photos_path: Path,
     gpx_path: Path,
@@ -89,6 +96,7 @@ def generate(
     out_dir_arg: Path | None,
     location: str | None,
     instagram: bool,
+    no_cache: bool,
 ) -> None:
     """Generate a shareable HTML memory page from a hike."""
     settings = load_settings()
@@ -126,6 +134,7 @@ def generate(
                     stats,
                     photos,
                     client=client,
+                    use_cache=not no_cache,
                 )
             console.print(
                 f"[green]✓[/] Narrative generated "

@@ -26,6 +26,7 @@ from trailstory.renderers.instagram import (
 
 def _narrative() -> NarrativeOutput:
     return NarrativeOutput(
+        schema_version=1,
         title_en="Above the fog line",
         title_ru="Над линией тумана",
         subtitle_en="A morning above the cloud sea",

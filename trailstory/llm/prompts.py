@@ -51,6 +51,7 @@ Output only JSON — no markdown fences, no commentary — matching this exact
 shape (every field is required):
 
 {{
+  "schema_version": 1,
   "title_en": "short, evocative title (English)",
   "title_ru": "the same title rendered naturally in Russian",
   "subtitle_en": "one short complementary line under the title (English)",
