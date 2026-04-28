@@ -7,10 +7,13 @@ from pathlib import Path
 
 import pytest
 from PIL import Image
+from PIL.TiffImagePlugin import IFDRational
 
 from trailstory.photos import PhotoLoadError, load_photos
 
+EXIF_ORIENTATION = 0x0112
 EXIF_SUB_IFD = 0x8769
+EXIF_GPS_IFD = 0x8825
 EXIF_DATETIME_ORIGINAL = 36867
 EXIF_DATETIME = 306
 
@@ -176,3 +179,57 @@ def test_load_photos_handles_malformed_exif_datetime(tmp_path: Path) -> None:
     [photo] = load_photos(src, tmp_path / "out")
 
     assert photo.timestamp == datetime.fromtimestamp(fixed)
+
+
+def test_load_photos_strips_gps_and_applies_exif_transpose(tmp_path: Path) -> None:
+    """A photo with GPS coordinates and a non-default orientation tag must be
+    written out with no GPS IFD (privacy) and with orientation baked into the
+    pixels (so iPhone portraits don't display sideways)."""
+    src = tmp_path / "src"
+    src.mkdir()
+    p = src / "iphone.jpg"
+
+    # 200x100 landscape image. Top-left 50x50 corner is bright red so we can
+    # tell where the original "up" was after orientation is applied.
+    img = Image.new("RGB", (200, 100), (50, 80, 120))
+    for x in range(50):
+        for y in range(50):
+            img.putpixel((x, y), (255, 0, 0))
+
+    exif = img.getexif()
+    # Orientation 6 = "rotate 90° CW for display"; that's how iPhone portraits
+    # are stored on disk (sensor is landscape, EXIF says rotate).
+    exif[EXIF_ORIENTATION] = 6
+    sub_ifd = exif.get_ifd(EXIF_SUB_IFD)
+    sub_ifd[EXIF_DATETIME_ORIGINAL] = "2025:08:15 10:30:00"
+
+    gps_ifd = exif.get_ifd(EXIF_GPS_IFD)
+    # Munich-ish: 47 deg 33' N, 11 deg 47' E. Real-shaped GPS tags so the
+    # test reflects what an actual iPhone photo would carry.
+    gps_ifd[1] = "N"
+    gps_ifd[2] = (IFDRational(47, 1), IFDRational(33, 1), IFDRational(0, 1))
+    gps_ifd[3] = "E"
+    gps_ifd[4] = (IFDRational(11, 1), IFDRational(47, 1), IFDRational(0, 1))
+
+    img.save(p, format="JPEG", quality=85, exif=exif.tobytes())
+
+    [photo] = load_photos(src, tmp_path / "out")
+
+    with Image.open(photo.path) as out:
+        # (a) GPS is gone — no coordinates leak via the embedded JPEG.
+        assert out.getexif().get_ifd(EXIF_GPS_IFD) == {}
+
+        # Camera/timestamp metadata is preserved (only GPS is stripped).
+        assert out.getexif().get_ifd(EXIF_SUB_IFD).get(EXIF_DATETIME_ORIGINAL) == (
+            "2025:08:15 10:30:00"
+        )
+
+        # (b) Orientation has been baked into pixels: the 200x100 landscape
+        # source with orientation=6 should now be saved as a 100x200 portrait,
+        # which is what a viewer that respects EXIF would already be showing.
+        assert out.size == (100, 200)
+        # The original top-left red square ended up in the new top-right
+        # after a 90 deg CW rotation. Sample well inside that region.
+        rgb = out.convert("RGB")
+        r, g, b = rgb.getpixel((95, 25))
+        assert r > 200 and g < 60 and b < 60
