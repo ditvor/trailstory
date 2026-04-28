@@ -3,7 +3,7 @@ from __future__ import annotations
 import sys
 from pathlib import Path
 
-from pydantic import SecretStr, ValidationError
+from pydantic import Field, SecretStr, ValidationError
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -13,6 +13,33 @@ class Settings(BaseSettings):
     model: str = "claude-opus-4-7"
     output_dir: Path = Path("./output")
     log_level: str = "INFO"
+
+    photo_max_edge: int = Field(
+        default=1800,
+        description=(
+            "Longest edge in pixels for resized photos. Sets the upper bound "
+            "for HTML-embedded base64 JPEGs."
+        ),
+    )
+    photo_quality: int = Field(
+        default=90,
+        description="JPEG quality (1-95) used when re-encoding resized photos.",
+    )
+    instagram_quality: int = Field(
+        default=90,
+        description="JPEG quality (1-95) used when writing Instagram carousel slides.",
+    )
+    narrative_max_tokens: int = Field(
+        default=4096,
+        description="Upper bound on tokens requested for the narrative completion.",
+    )
+    narrative_max_retries: int = Field(
+        default=3,
+        description=(
+            "Total Anthropic API attempts (including the first) before "
+            "giving up on rate-limit retries."
+        ),
+    )
 
     model_config = SettingsConfigDict(
         env_file=".env",
