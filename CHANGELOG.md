@@ -20,6 +20,14 @@ Versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - Instagram carousel renderer: `trailstory generate --instagram` writes
   1080×1350 portrait JPEG slides under `output/{slug}/carousel/` (title +
   N photos center-cropped to 4:5 + closing pull-quote).
+- Content-addressed narrative cache (`trailstory.llm.cache`): the LLM
+  call is keyed on the SHA-256 of the GPX bytes, the per-photo bytes,
+  the parent's seed/baby/location inputs, and the model identifier, then
+  stored under `~/.cache/trailstory/narratives/<key>.json`. Iterating on
+  the HTML or Instagram renderer no longer re-spends an Opus call per
+  run. New `--no-cache` flag on `trailstory generate` forces a fresh
+  call. `NarrativeOutput.schema_version` (defaults to `1`) lets the
+  cache auto-invalidate stale shapes after a model evolution.
 
 ### Fixed
 - **Privacy:** `trailstory.photos.load_photos` now strips the GPS sub-IFD

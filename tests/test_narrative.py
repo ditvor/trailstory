@@ -66,6 +66,7 @@ def _photos(n: int = 12) -> list[PhotoMeta]:
 
 def _valid_response_dict(indices: list[int] | None = None) -> dict[str, object]:
     return {
+        "schema_version": 1,
         "title_en": "Above the fog line",
         "title_ru": "Над линией тумана",
         "subtitle_en": "A morning above the cloud sea",
@@ -99,7 +100,19 @@ def _client(*responses: str | Exception) -> MagicMock:
     """Build a mocked client whose ``.complete`` yields each item in turn."""
     mock = MagicMock(spec=AnthropicClient)
     mock.complete.side_effect = list(responses)
+    # ``cache_key`` reads ``client.model``; with spec=AnthropicClient that
+    # would be a MagicMock and json.dumps would fail. Pin it to a string
+    # so any test that does opt into the cache still works.
+    mock.model = "claude-opus-4-7-test"
     return mock
+
+
+# Every test in this module exercises the LLM orchestration path with
+# ``use_cache=False``: we're testing prompt assembly, parse/retry, and
+# validation, not the cache. Cache behaviour is covered separately in
+# ``tests/test_cache.py``. Disabling here also avoids hashing the fake
+# ``/tmp/hike.gpx`` paths that these fixtures use.
+_NO_CACHE: dict[str, bool] = {"use_cache": False}
 
 
 # ── happy path ───────────────────────────────────────────────────────────────
@@ -108,7 +121,7 @@ def _client(*responses: str | Exception) -> MagicMock:
 def test_generate_narrative_happy_path() -> None:
     client = _client(_valid_response_json())
 
-    out = generate_narrative(_hike_input(), _gpx_stats(), _photos(), client=client)
+    out = generate_narrative(_hike_input(), _gpx_stats(), _photos(), client=client, **_NO_CACHE)
 
     assert isinstance(out, NarrativeOutput)
     assert out.title_en == "Above the fog line"
@@ -122,7 +135,7 @@ def test_generate_narrative_strips_markdown_fences() -> None:
     fenced = "```json\n" + _valid_response_json() + "\n```"
     client = _client(fenced)
 
-    out = generate_narrative(_hike_input(), _gpx_stats(), _photos(), client=client)
+    out = generate_narrative(_hike_input(), _gpx_stats(), _photos(), client=client, **_NO_CACHE)
 
     assert out.title_en == "Above the fog line"
     # Fenced response parsed on the first attempt — no retry needed.
@@ -133,7 +146,7 @@ def test_generate_narrative_strips_bare_triple_backtick_fence() -> None:
     fenced = "```\n" + _valid_response_json() + "\n```"
     client = _client(fenced)
 
-    out = generate_narrative(_hike_input(), _gpx_stats(), _photos(), client=client)
+    out = generate_narrative(_hike_input(), _gpx_stats(), _photos(), client=client, **_NO_CACHE)
 
     assert out.milestone_en == "First mountain hike"
     assert client.complete.call_count == 1
@@ -151,6 +164,7 @@ def test_generate_narrative_passes_hike_data_to_prompt() -> None:
         _photos(n=8),
         client=client,
         location="Tegernsee, Bavaria",
+        **_NO_CACHE,
     )
 
     sent = client.complete.call_args.kwargs["prompt"]
@@ -170,7 +184,7 @@ def test_generate_narrative_passes_hike_data_to_prompt() -> None:
 def test_generate_narrative_uses_default_location_when_not_supplied() -> None:
     client = _client(_valid_response_json())
 
-    generate_narrative(_hike_input(), _gpx_stats(), _photos(), client=client)
+    generate_narrative(_hike_input(), _gpx_stats(), _photos(), client=client, **_NO_CACHE)
 
     sent = client.complete.call_args.kwargs["prompt"]
     assert "the trail" in sent
@@ -181,7 +195,9 @@ def test_generate_narrative_prefers_hike_input_location_name() -> None:
     client = _client(_valid_response_json())
     hike = _hike_input().model_copy(update={"location_name": "Watzmann"})
 
-    generate_narrative(hike, _gpx_stats(), _photos(), client=client, location="ignored")
+    generate_narrative(
+        hike, _gpx_stats(), _photos(), client=client, location="ignored", **_NO_CACHE
+    )
 
     sent = client.complete.call_args.kwargs["prompt"]
     assert "Watzmann" in sent
@@ -191,7 +207,7 @@ def test_generate_narrative_prefers_hike_input_location_name() -> None:
 def test_generate_narrative_passes_system_prompt() -> None:
     client = _client(_valid_response_json())
 
-    generate_narrative(_hike_input(), _gpx_stats(), _photos(), client=client)
+    generate_narrative(_hike_input(), _gpx_stats(), _photos(), client=client, **_NO_CACHE)
 
     system = client.complete.call_args.kwargs["system"]
     assert "warm" in system.lower() or "memories" in system.lower()
@@ -204,7 +220,7 @@ def test_generate_narrative_retries_on_invalid_json_then_succeeds() -> None:
     prose = "Sure! Here's the memory you asked for: it was a beautiful day..."
     client = _client(prose, _valid_response_json())
 
-    out = generate_narrative(_hike_input(), _gpx_stats(), _photos(), client=client)
+    out = generate_narrative(_hike_input(), _gpx_stats(), _photos(), client=client, **_NO_CACHE)
 
     assert out.title_en == "Above the fog line"
     assert client.complete.call_count == 2
@@ -213,7 +229,7 @@ def test_generate_narrative_retries_on_invalid_json_then_succeeds() -> None:
 def test_generate_narrative_retry_appends_json_only_directive() -> None:
     client = _client("not json at all", _valid_response_json())
 
-    generate_narrative(_hike_input(), _gpx_stats(), _photos(), client=client)
+    generate_narrative(_hike_input(), _gpx_stats(), _photos(), client=client, **_NO_CACHE)
 
     first_prompt = client.complete.call_args_list[0].kwargs["prompt"]
     second_prompt = client.complete.call_args_list[1].kwargs["prompt"]
@@ -224,7 +240,7 @@ def test_generate_narrative_raises_after_two_invalid_json_attempts() -> None:
     client = _client("first prose", "second prose")
 
     with pytest.raises(NarrativeGenerationError, match="non-JSON output on both"):
-        generate_narrative(_hike_input(), _gpx_stats(), _photos(), client=client)
+        generate_narrative(_hike_input(), _gpx_stats(), _photos(), client=client, **_NO_CACHE)
     assert client.complete.call_count == 2
 
 
@@ -233,7 +249,7 @@ def test_generate_narrative_treats_json_array_as_parse_failure() -> None:
     object — should trigger the retry path, not a validation error."""
     client = _client("[1, 2, 3]", _valid_response_json())
 
-    out = generate_narrative(_hike_input(), _gpx_stats(), _photos(), client=client)
+    out = generate_narrative(_hike_input(), _gpx_stats(), _photos(), client=client, **_NO_CACHE)
 
     assert out.title_en == "Above the fog line"
     assert client.complete.call_count == 2
@@ -249,7 +265,7 @@ def test_generate_narrative_raises_on_validation_error() -> None:
     client = _client(incomplete)
 
     with pytest.raises(NarrativeGenerationError, match="schema"):
-        generate_narrative(_hike_input(), _gpx_stats(), _photos(), client=client)
+        generate_narrative(_hike_input(), _gpx_stats(), _photos(), client=client, **_NO_CACHE)
     assert client.complete.call_count == 1
 
 
@@ -261,7 +277,7 @@ def test_generate_narrative_does_not_retry_on_validation_error() -> None:
     client = _client(incomplete, second)
 
     with pytest.raises(NarrativeGenerationError):
-        generate_narrative(_hike_input(), _gpx_stats(), _photos(), client=client)
+        generate_narrative(_hike_input(), _gpx_stats(), _photos(), client=client, **_NO_CACHE)
     assert client.complete.call_count == 1
 
 
@@ -272,14 +288,14 @@ def test_generate_narrative_translates_llm_response_error() -> None:
     client = _client(LLMResponseError("empty response"))
 
     with pytest.raises(NarrativeGenerationError, match="LLM call failed"):
-        generate_narrative(_hike_input(), _gpx_stats(), _photos(), client=client)
+        generate_narrative(_hike_input(), _gpx_stats(), _photos(), client=client, **_NO_CACHE)
 
 
 def test_generate_narrative_translates_llm_retry_exhausted() -> None:
     client = _client(LLMRetryExhaustedError("rate-limited 3x"))
 
     with pytest.raises(NarrativeGenerationError, match="LLM call failed"):
-        generate_narrative(_hike_input(), _gpx_stats(), _photos(), client=client)
+        generate_narrative(_hike_input(), _gpx_stats(), _photos(), client=client, **_NO_CACHE)
 
 
 def test_generate_narrative_does_not_retry_on_llm_error() -> None:
@@ -288,7 +304,7 @@ def test_generate_narrative_does_not_retry_on_llm_error() -> None:
     client = _client(LLMResponseError("boom"), _valid_response_json())
 
     with pytest.raises(NarrativeGenerationError):
-        generate_narrative(_hike_input(), _gpx_stats(), _photos(), client=client)
+        generate_narrative(_hike_input(), _gpx_stats(), _photos(), client=client, **_NO_CACHE)
     assert client.complete.call_count == 1
 
 
@@ -299,7 +315,7 @@ def test_generate_narrative_rejects_empty_photo_list() -> None:
     client = _client()  # should never be called
 
     with pytest.raises(NarrativeGenerationError, match="at least one photo"):
-        generate_narrative(_hike_input(), _gpx_stats(), [], client=client)
+        generate_narrative(_hike_input(), _gpx_stats(), [], client=client, **_NO_CACHE)
     client.complete.assert_not_called()
 
 
@@ -307,7 +323,7 @@ def test_generate_narrative_photo_count_matches_photos() -> None:
     """``n_photos`` placeholder reflects the actual list length."""
     client = _client(_valid_response_json())
 
-    generate_narrative(_hike_input(), _gpx_stats(), _photos(n=4), client=client)
+    generate_narrative(_hike_input(), _gpx_stats(), _photos(n=4), client=client, **_NO_CACHE)
 
     sent = client.complete.call_args.kwargs["prompt"]
     assert "Photos available: 4 (indexed 0-3)" in sent
@@ -327,7 +343,7 @@ def test_generate_narrative_supplies_every_template_placeholder() -> None:
 
     # If any placeholder is unsupplied, .format() inside generate_narrative
     # raises KeyError, which propagates (not wrapped in NarrativeGenerationError).
-    generate_narrative(_hike_input(), _gpx_stats(), _photos(), client=client)
+    generate_narrative(_hike_input(), _gpx_stats(), _photos(), client=client, **_NO_CACHE)
     sent = client.complete.call_args.kwargs["prompt"]
 
     # Sanity check: no remaining {placeholder} tokens.

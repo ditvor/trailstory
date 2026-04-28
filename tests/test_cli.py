@@ -22,9 +22,32 @@ from trailstory.models import GpxStats, PhotoMeta, Waypoint
 FIXTURES = Path(__file__).parent / "fixtures"
 
 
+@pytest.fixture(autouse=True)
+def _isolated_narrative_cache(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    """Point the narrative cache at a per-test temp directory.
+
+    Without this every CLI test would share ``~/.cache/trailstory`` and
+    a previous run's cached entry would silently turn the next run's
+    "first call" into a cache hit, breaking ``call_count`` assertions.
+    """
+    monkeypatch.setenv("TRAILSTORY_CACHE_DIR", str(tmp_path / "narrative-cache"))
+
+
+def _make_fake_client() -> MagicMock:
+    """Mocked Anthropic client whose ``.model`` is a real string.
+
+    The cache key includes ``client.model``, and ``MagicMock(spec=...)``
+    would expose ``.model`` as a MagicMock that ``json.dumps`` chokes on.
+    """
+    fake = MagicMock(spec=AnthropicClient)
+    fake.model = "claude-opus-4-7-test"
+    return fake
+
+
 def _valid_response_json(n_photos: int = 5) -> str:
     return json.dumps(
         {
+            "schema_version": 1,
             "title_en": "Above the fog line",
             "title_ru": "Над линией тумана",
             "subtitle_en": "A morning above the cloud sea",
@@ -52,7 +75,7 @@ def _valid_response_json(n_photos: int = 5) -> str:
 def test_generate_happy_path(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setenv("ANTHROPIC_API_KEY", "sk-test-fake")
 
-    fake_client = MagicMock(spec=AnthropicClient)
+    fake_client = _make_fake_client()
     fake_client.complete.return_value = _valid_response_json()
     monkeypatch.setattr("trailstory.cli.AnthropicClient", lambda *a, **kw: fake_client)
 
@@ -132,7 +155,7 @@ def test_generate_with_instagram_flag_writes_carousel(
 ) -> None:
     monkeypatch.setenv("ANTHROPIC_API_KEY", "sk-test-fake")
 
-    fake_client = MagicMock(spec=AnthropicClient)
+    fake_client = _make_fake_client()
     fake_client.complete.return_value = _valid_response_json()
     monkeypatch.setattr("trailstory.cli.AnthropicClient", lambda *a, **kw: fake_client)
 
@@ -167,6 +190,80 @@ def test_generate_with_instagram_flag_writes_carousel(
     assert len(slides) == 7
     assert slides[0].name == "00_title.jpg"
     assert slides[-1].name.endswith("_quote.jpg")
+
+
+def test_generate_second_run_uses_cache_and_skips_llm_call(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """The whole point of the cache: a repeat run with identical inputs
+    must serve the prior narrative from disk and not call the LLM again."""
+    monkeypatch.setenv("ANTHROPIC_API_KEY", "sk-test-fake")
+
+    fake_client = _make_fake_client()
+    fake_client.complete.return_value = _valid_response_json()
+    monkeypatch.setattr("trailstory.cli.AnthropicClient", lambda *a, **kw: fake_client)
+
+    out_dir = tmp_path / "out"
+    args = [
+        "generate",
+        "--photos",
+        str(FIXTURES / "sample_photos"),
+        "--gpx",
+        str(FIXTURES / "sample.gpx"),
+        "--seed",
+        "The fog cleared just as we reached the ridge.",
+        "--name",
+        "Mia",
+        "--age",
+        "5",
+        "--out",
+        str(out_dir),
+        "--location",
+        "Bavarian Alps",
+    ]
+    runner = CliRunner()
+    first = runner.invoke(cli, args, catch_exceptions=False)
+    second = runner.invoke(cli, args, catch_exceptions=False)
+
+    assert first.exit_code == 0, first.output
+    assert second.exit_code == 0, second.output
+    # Second run must hit the cache — no new client call.
+    assert fake_client.complete.call_count == 1
+    # The HTML must still be produced both times (rendering is not cached).
+    assert list(out_dir.glob("*.html"))
+
+
+def test_generate_no_cache_flag_forces_fresh_llm_call(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """``--no-cache`` must force a fresh LLM call even when a cached
+    entry would otherwise satisfy the request."""
+    monkeypatch.setenv("ANTHROPIC_API_KEY", "sk-test-fake")
+
+    fake_client = _make_fake_client()
+    fake_client.complete.return_value = _valid_response_json()
+    monkeypatch.setattr("trailstory.cli.AnthropicClient", lambda *a, **kw: fake_client)
+
+    out_dir = tmp_path / "out"
+    args = [
+        "generate",
+        "--photos",
+        str(FIXTURES / "sample_photos"),
+        "--gpx",
+        str(FIXTURES / "sample.gpx"),
+        "--seed",
+        "The fog cleared just as we reached the ridge.",
+        "--out",
+        str(out_dir),
+        "--location",
+        "Bavarian Alps",
+    ]
+    runner = CliRunner()
+    runner.invoke(cli, args, catch_exceptions=False)
+    # Same inputs but with --no-cache: must bypass the cache entirely.
+    runner.invoke(cli, [*args, "--no-cache"], catch_exceptions=False)
+
+    assert fake_client.complete.call_count == 2
 
 
 def test_generate_requires_anthropic_api_key(

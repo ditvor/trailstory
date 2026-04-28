@@ -29,6 +29,7 @@ SAMPLE_PHOTOS = FIXTURES_DIR / "sample_photos"
 def sample_narrative() -> NarrativeOutput:
     """Hand-built NarrativeOutput in the same shape an LLM would return."""
     return NarrativeOutput(
+        schema_version=1,
         title_en="Above the fog line",
         title_ru="Над линией тумана",
         subtitle_en="A morning above the cloud sea",
