@@ -45,6 +45,16 @@ Versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   the CLAUDE.md "Update a prompt" recipe now requires running the
   eval before merging a prompt change.
 
+### Changed
+- `tests/fixtures/sample_photos/` now contains twelve images instead of
+  five. The narrative prompt asks the model to pick 6-8 photo indices,
+  so the previous five-photo fixture made `make eval`'s `indices_valid`
+  rubric check unsatisfiable by construction. The seven new entries
+  (`06_meadow`, `07_creek`, `08_lunch`, `09_baby_carrier`, `10_clouds`,
+  `11_descent`, `12_cabin`) interleave with the original five in EXIF
+  time, so the chronological-sort path is still exercised. Regenerate
+  with `python scripts/generate_sample_photos.py`.
+
 ### Fixed
 - **Privacy:** `trailstory.photos.load_photos` now strips the GPS sub-IFD
   (EXIF tag `0x8825`) from every resized JPEG and bakes EXIF orientation
