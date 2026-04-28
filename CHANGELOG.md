@@ -28,6 +28,22 @@ Versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   run. New `--no-cache` flag on `trailstory generate` forces a fresh
   call. `NarrativeOutput.schema_version` (defaults to `1`) lets the
   cache auto-invalidate stale shapes after a model evolution.
+- Programmatic narrative-quality regression suite (`tests/eval/`): a
+  pure-Python rubric (`tests/eval/rubric.py`) that checks schema
+  round-trip, paragraph counts, Cyrillic coverage with an ASCII-run
+  guard against mid-paragraph English fallbacks, EN/RU word-count
+  ratio, title/subtitle/milestone length caps, photo-index validity,
+  and pull-quote overlap with the body. Three fixture cases
+  (baseline, joyful, exhausted/foggy) drive a CLI runner
+  (`python -m tests.eval.run --all`, also wired up as `make eval`)
+  that calls the real Anthropic API with the cache disabled, applies
+  the rubric, prints a per-case table, and exits non-zero on any
+  failure. Unit tests (`tests/test_eval_rubric.py`) exercise every
+  rubric function on hand-built fixtures and run in `make ci` for
+  free. Design recorded in
+  [`docs/adr/003-narrative-eval-suite.md`](docs/adr/003-narrative-eval-suite.md);
+  the CLAUDE.md "Update a prompt" recipe now requires running the
+  eval before merging a prompt change.
 
 ### Fixed
 - **Privacy:** `trailstory.photos.load_photos` now strips the GPS sub-IFD

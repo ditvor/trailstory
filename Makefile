@@ -1,5 +1,5 @@
 .DEFAULT_GOAL := help
-.PHONY: help setup dev install install-hooks test lint format typecheck ci clean generate test-render
+.PHONY: help setup dev install install-hooks test lint format typecheck ci clean generate test-render eval
 
 PYTHON ?= python3.12
 VENV   := .venv
@@ -78,6 +78,9 @@ generate:           ## Run generator with sample fixtures (requires .env with AP
 
 test-render:        ## Render the HTML template with fixture data (no API call)
 	$(PY) -c "from tests.conftest import render_with_fixtures; render_with_fixtures()"
+
+eval:               ## Run narrative rubric against every eval case (PAID — calls real Anthropic API)
+	$(PY) -m tests.eval.run --all
 
 # ── Cleanup ────────────────────────────────────────────────────────────────────
 

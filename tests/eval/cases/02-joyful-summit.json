@@ -1,0 +1,9 @@
+{
+  "name": "02-joyful-summit",
+  "gpx_path": "tests/fixtures/sample.gpx",
+  "photos_dir": "tests/fixtures/sample_photos",
+  "seed_text": "Mia laughed the whole way up — every bird, every stream, every gust of wind. We sat at the summit eating apples and she clapped her hands at the wide blue.",
+  "baby_name": "Mia",
+  "baby_age_months": 5,
+  "location_name": "Bavarian Alps"
+}
