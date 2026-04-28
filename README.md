@@ -6,11 +6,14 @@
 [![Python 3.12+](https://img.shields.io/badge/python-3.12+-blue.svg)](https://www.python.org/downloads/)
 [![Ruff](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/ruff/main/assets/badge/v2.json)](https://github.com/astral-sh/ruff)
 
-> **Status — under construction.** The pipeline is being built module by module. The
-> internal layers (config, models, GPX parser, photo loader, LLM client, prompt
-> templates, narrative orchestrator) are implemented and tested. The `trailstory`
-> CLI command and the HTML / Instagram renderers are not wired up yet, so the
-> Quick Start example below describes the **target** UX. Track progress on the
+> **Status — early but usable.** The end-to-end pipeline is wired up: `trailstory
+> generate` produces a self-contained HTML page and (with `--instagram`) a 1080×1350
+> carousel from real GPX + photos + a seed sentence. The narrative is content-cached
+> so iterating on the renderer doesn't re-spend an Opus call. Quality is guarded by a
+> two-layer eval suite — a free programmatic rubric and a paid LLM-as-judge — covered
+> in the [Quality](#quality--how-we-keep-the-prose-good) section below. Rough edges
+> remain (location auto-detection, WhatsApp draft generation, real-hike fixture
+> coverage); track progress on the
 > [pull requests page](https://github.com/ditvor/trailstory/pulls?q=is%3Apr+is%3Aclosed).
 
 ---
@@ -107,6 +110,60 @@ Key decisions and their rationale are documented in [`docs/adr/`](docs/adr/).
 
 ---
 
+## Quality — how we keep the prose good
+
+The narrative is the user-facing product. A regression in tone or translation hurts real readers — family in Russia who can't file a bug report. So Trailstory ships with a two-layer evaluation harness in [`tests/eval/`](tests/eval/):
+
+| Layer | What it checks | Cost | Where it runs |
+|---|---|---|---|
+| **Programmatic rubric** | Schema round-trip, paragraph counts, Cyrillic coverage with a mid-paragraph English-fallback guard, EN/RU word-count ratio, length caps on titles and milestones, photo-index validity, and pull-quote provenance vs the body. | Free | `make ci` (unit tests) and `make eval` (rubric against real writer output, paid writer call) |
+| **LLM-as-judge** | Scores `warmth`, `narrative_arc`, `russian_fidelity`, and `photo_selection_plausibility` on a 0–5 scale, plus 2–4 sentences of free-form `notes` justifying each score. | Paid | `make eval-live` only |
+
+The judge runs on **a different model from the writer** — `claude-sonnet-4-6` judging `claude-opus-4-7` output by default, configurable via `EVAL_JUDGE_MODEL`. Same-family judging inflates scores; a different perspective is more honest, and Sonnet is cheaper than Opus for the pattern-matching-against-rubric task.
+
+### The regression gate
+
+Each fixture case in [`tests/eval/cases/`](tests/eval/cases/) has a saved baseline at `tests/eval/golden/<case>-judge.json`. When you change a prompt and run `make eval-live`, the runner compares the fresh judge scores against the baseline per axis. If any axis drops by **≥ 1.0** (override with `EVAL_REGRESSION_THRESHOLD`), the runner exits non-zero and CI is red. The 1.0 default is generous enough to absorb typical sampling jitter (~0.5 per axis) without masking real regressions.
+
+```
+                                              ┌─────────────────────┐
+                                              │  golden judge file  │
+                                              │  warmth         5.0 │
+                                              │  arc            5.0 │ ← saved
+                                              │  ru_fidelity    4.5 │   from a
+                                              │  photo          4.5 │   prior run
+                                              └──────────┬──────────┘
+                                                         │
+   you edit a prompt                                     │ compare
+        │                                                ▼
+        ▼                                       ┌──────────────────┐
+   ┌─────────┐    narrative   ┌─────────┐  fresh│   per-axis Δ     │
+   │ WRITER  │ ─────────────► │  JUDGE  │ ─────►│                  │
+   │  Opus   │                │ Sonnet  │ scores│  any axis -1.0?  │
+   └─────────┘                └─────────┘       └─────────┬────────┘
+                                                          │
+                                                          ▼
+                                                ┌──────────────────┐
+                                                │ yes → ✗ fail PR  │
+                                                │ no  → ✓ pass PR  │
+                                                └──────────────────┘
+```
+
+### Workflow when changing a prompt
+
+```bash
+make eval                # free-ish: rubric vs real writer output
+make eval-live           # paid: rubric + judge with golden delta gate
+make eval-update-golden  # paid: refresh narrative AND judge goldens
+                         # (run only when a stylistic shift is intentional)
+```
+
+When the gate fails, read the judge's `notes` column — they cite specific phrases ("sentences 2–3 use English word order", "summit beat is missing"), which turns an abstract delta into something actionable. Post both score tables in the PR description; the [`Update a prompt`](CLAUDE.md#update-a-prompt) recipe in `CLAUDE.md` walks through it.
+
+Full design and trade-offs (why two layers, why a different judge model, what failure modes to expect) are in [`docs/adr/003-narrative-eval-suite.md`](docs/adr/003-narrative-eval-suite.md).
+
+---
+
 ## Development
 
 ```bash
@@ -116,6 +173,12 @@ source .venv/bin/activate
 make format         # auto-fix lint + apply ruff format
 make ci             # full CI check: ruff + mypy + pytest (same as GitHub Actions)
 make test           # run tests with coverage HTML report
+
+# Narrative-quality gates — see the Quality section above.
+# These call the real Anthropic API and cost money; do not run in CI.
+make eval                # rubric vs real writer output (paid)
+make eval-live           # rubric + LLM-as-judge with golden delta gate (paid)
+make eval-update-golden  # refresh narrative AND judge goldens (paid)
 ```
 
 **Every `git push` triggers `make ci` via the pre-push hook** (installed by `make setup`). Skip only for emergencies with `git push --no-verify` — GitHub CI still runs.
