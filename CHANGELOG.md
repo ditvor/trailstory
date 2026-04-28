@@ -21,6 +21,19 @@ Versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   1080×1350 portrait JPEG slides under `output/{slug}/carousel/` (title +
   N photos center-cropped to 4:5 + closing pull-quote).
 
+### Fixed
+- **Privacy:** `trailstory.photos.load_photos` now strips the GPS sub-IFD
+  (EXIF tag `0x8825`) from every resized JPEG and bakes EXIF orientation
+  into pixels via `PIL.ImageOps.exif_transpose`. Previously the resized
+  photos preserved EXIF wholesale, and the HTML renderer base64-embeds
+  those JPEGs verbatim — meaning every shareable `.html` produced before
+  this fix carries the precise GPS coordinates of every selected photo.
+  Camera make/model, lens, and timestamp tags are kept; only GPS is
+  removed. **Previously-rendered `.html` files still contain the leaked
+  GPS data** — if location privacy matters, re-render those memories from
+  source and re-share the new files; the originals already in recipients'
+  inboxes cannot be recalled.
+
 ---
 
 <!-- Template for new releases:

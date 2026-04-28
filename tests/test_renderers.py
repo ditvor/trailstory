@@ -7,15 +7,23 @@ are tiny JPEGs created on the fly with Pillow.
 
 from __future__ import annotations
 
+import base64
+import io
 import re
 from datetime import date, datetime
 from pathlib import Path
 
 import pytest
 from PIL import Image
+from PIL.TiffImagePlugin import IFDRational
 
 from trailstory.models import GpxStats, NarrativeOutput, PhotoMeta, Waypoint
+from trailstory.photos import load_photos
 from trailstory.renderers.html import HtmlRenderError, render_html
+
+EXIF_SUB_IFD = 0x8769
+EXIF_GPS_IFD = 0x8825
+EXIF_DATETIME_ORIGINAL = 36867
 
 # ── fixtures ─────────────────────────────────────────────────────────────────
 
@@ -326,3 +334,41 @@ def test_render_meta_line_renders_only_when_provided(tmp_path: Path) -> None:
     assert 'class="meta"' not in without_meta
     assert "Bavarian Alps" in with_meta
     assert "2025-08-15" in with_meta
+
+
+def test_render_does_not_embed_gps_exif_after_load_photos(tmp_path: Path) -> None:
+    """End-to-end privacy guarantee: a source photo carrying GPS coordinates
+    must not produce an embedded data URI with GPS in the rendered HTML.
+    Goes through the real ``load_photos → render_html`` pipeline."""
+    src_dir = tmp_path / "src"
+    src_dir.mkdir()
+    src_path = src_dir / "with_gps.jpg"
+
+    img = Image.new("RGB", (200, 150), (50, 80, 120))
+    exif = img.getexif()
+    sub_ifd = exif.get_ifd(EXIF_SUB_IFD)
+    sub_ifd[EXIF_DATETIME_ORIGINAL] = "2025:08:15 10:30:00"
+    gps_ifd = exif.get_ifd(EXIF_GPS_IFD)
+    gps_ifd[1] = "N"
+    gps_ifd[2] = (IFDRational(47, 1), IFDRational(33, 1), IFDRational(0, 1))
+    gps_ifd[3] = "E"
+    gps_ifd[4] = (IFDRational(11, 1), IFDRational(47, 1), IFDRational(0, 1))
+    img.save(src_path, format="JPEG", quality=85, exif=exif.tobytes())
+
+    photos = load_photos(src_dir, tmp_path / "resized")
+
+    out_path = render_html(
+        narrative=_narrative(),
+        gpx_stats=_gpx_stats(),
+        photos=photos,
+        output_dir=tmp_path / "out",
+        slug="hike",
+    )
+    html = out_path.read_text(encoding="utf-8")
+
+    match = re.search(r"data:image/jpeg;base64,([A-Za-z0-9+/=]+)", html)
+    assert match is not None, "expected an embedded JPEG data URI"
+    embedded_bytes = base64.b64decode(match.group(1))
+
+    with Image.open(io.BytesIO(embedded_bytes)) as embedded:
+        assert embedded.getexif().get_ifd(EXIF_GPS_IFD) == {}
