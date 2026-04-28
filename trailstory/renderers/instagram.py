@@ -31,7 +31,7 @@ logger = logging.getLogger(__name__)
 
 SLIDE_W: Final[int] = 1080
 SLIDE_H: Final[int] = 1350
-JPEG_QUALITY: Final[int] = 90
+DEFAULT_JPEG_QUALITY: Final[int] = 90
 
 # Palette mirrors templates/memory.html.j2 so the carousel feels of a piece
 # with the HTML page.
@@ -68,6 +68,7 @@ def render_instagram_carousel(
     slug: str,
     hike_date: date | None = None,
     location: str | None = None,
+    quality: int = DEFAULT_JPEG_QUALITY,
 ) -> list[Path]:
     """Render the Instagram carousel for one hike.
 
@@ -80,6 +81,9 @@ def render_instagram_carousel(
         slug: URL-safe identifier; matches the HTML output filename.
         hike_date: Optional date shown on the title slide footer.
         location: Optional location shown on the title slide footer.
+        quality: JPEG quality (1-95) used when writing each slide. Defaults
+            to :data:`DEFAULT_JPEG_QUALITY`; the CLI passes
+            ``settings.instagram_quality`` here.
 
     Returns:
         Paths in display order: title, photos…, quote.
@@ -99,16 +103,16 @@ def render_instagram_carousel(
     paths: list[Path] = []
 
     title_path = target / "00_title.jpg"
-    _save_jpeg(_render_title_slide(narrative, hike_date, location), title_path)
+    _save_jpeg(_render_title_slide(narrative, hike_date, location), title_path, quality=quality)
     paths.append(title_path)
 
     for n, photo in enumerate(photos, start=1):
         path = target / f"{n:02d}_photo.jpg"
-        _save_jpeg(_render_photo_slide(photo), path)
+        _save_jpeg(_render_photo_slide(photo), path, quality=quality)
         paths.append(path)
 
     quote_path = target / f"{len(photos) + 1:02d}_quote.jpg"
-    _save_jpeg(_render_quote_slide(narrative), quote_path)
+    _save_jpeg(_render_quote_slide(narrative), quote_path, quality=quality)
     paths.append(quote_path)
 
     return paths
@@ -285,5 +289,5 @@ def _draw_centered_block(
 # ── I/O ──────────────────────────────────────────────────────────────────────
 
 
-def _save_jpeg(img: Image.Image, path: Path) -> None:
-    img.save(path, format="JPEG", quality=JPEG_QUALITY, optimize=True)
+def _save_jpeg(img: Image.Image, path: Path, *, quality: int = DEFAULT_JPEG_QUALITY) -> None:
+    img.save(path, format="JPEG", quality=quality, optimize=True)

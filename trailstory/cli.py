@@ -116,7 +116,12 @@ def generate(
         # so they can vanish once the HTML is written.
         with TemporaryDirectory(prefix="trailstory-resized-") as tmp:
             with console.status("Loading photos…", spinner="dots"):
-                photos = load_photos(photos_path, Path(tmp))
+                photos = load_photos(
+                    photos_path,
+                    Path(tmp),
+                    max_edge=settings.photo_max_edge,
+                    quality=settings.photo_quality,
+                )
             console.print(f"[green]✓[/] {len(photos)} photos found")
 
             hike_input = HikeInput(
@@ -127,7 +132,12 @@ def generate(
                 baby_age_months=age,
                 location_name=location,
             )
-            client = AnthropicClient(settings.anthropic_api_key, model=settings.model)
+            client = AnthropicClient(
+                settings.anthropic_api_key,
+                model=settings.model,
+                max_tokens=settings.narrative_max_tokens,
+                max_retries=settings.narrative_max_retries,
+            )
             with console.status("Generating narrative…", spinner="dots"):
                 narrative = generate_narrative(
                     hike_input,
@@ -171,6 +181,7 @@ def generate(
                         slug=slug,
                         hike_date=hike_date,
                         location=location,
+                        quality=settings.instagram_quality,
                     )
                 console.print(
                     f"[green]✓[/] Carousel rendered ({len(carousel_paths)} slides) "

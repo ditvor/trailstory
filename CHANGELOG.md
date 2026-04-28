@@ -10,6 +10,21 @@ Versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 ## [Unreleased]
 
 ### Added
+- Five new `Settings` fields covering output preferences that were
+  previously hardcoded: `photo_max_edge` (`PHOTO_MAX_EDGE`, default
+  `1800`), `photo_quality` (`PHOTO_QUALITY`, default `90`),
+  `instagram_quality` (`INSTAGRAM_QUALITY`, default `90`),
+  `narrative_max_tokens` (`NARRATIVE_MAX_TOKENS`, default `4096`), and
+  `narrative_max_retries` (`NARRATIVE_MAX_RETRIES`, default `3`). The
+  CLI plumbs each value into `load_photos`,
+  `render_instagram_carousel`, and `AnthropicClient` so a hike can be
+  re-rendered with smaller embedded JPEGs or a longer retry budget
+  without code changes. Module-level `DEFAULT_*` constants in
+  `trailstory/photos.py`, `trailstory/renderers/instagram.py`, and
+  `trailstory/llm/client.py` continue to back direct construction
+  outside the CLI. `.env.example` documents each new variable, and
+  `tests/test_config.py` covers env-var → field round-trips plus an
+  end-to-end check that `PHOTO_MAX_EDGE=400` produces 400px-edge JPEGs.
 - Project-local Claude Code workflow under `.claude/`: a tracked
   `settings.json` that pre-allows the read-only and project-specific Bash
   commands the toolchain actually needs (`make ci`, `make eval`,

@@ -12,6 +12,7 @@ register_heif_opener()
 
 SUPPORTED_EXTENSIONS = frozenset({".jpg", ".jpeg", ".heic", ".heif"})
 DEFAULT_MAX_EDGE = 1800
+DEFAULT_QUALITY = 90
 
 _EXIF_SUB_IFD_TAG = 0x8769
 _EXIF_GPS_IFD_TAG = 0x8825
@@ -30,6 +31,7 @@ def load_photos(
     resize_dir: Path,
     *,
     max_edge: int = DEFAULT_MAX_EDGE,
+    quality: int = DEFAULT_QUALITY,
 ) -> list[PhotoMeta]:
     """Load supported images from photos_dir, sort by capture time, resize.
 
@@ -76,9 +78,9 @@ def load_photos(
             out_path = resize_dir / f"{src.stem}.jpg"
             rgb = img.convert("RGB")
             if len(exif):
-                rgb.save(out_path, format="JPEG", quality=90, exif=exif.tobytes())
+                rgb.save(out_path, format="JPEG", quality=quality, exif=exif.tobytes())
             else:
-                rgb.save(out_path, format="JPEG", quality=90)
+                rgb.save(out_path, format="JPEG", quality=quality)
         items.append((timestamp, out_path))
 
     items.sort(key=lambda t: t[0])
