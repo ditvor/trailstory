@@ -44,6 +44,29 @@ Versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   [`docs/adr/003-narrative-eval-suite.md`](docs/adr/003-narrative-eval-suite.md);
   the CLAUDE.md "Update a prompt" recipe now requires running the
   eval before merging a prompt change.
+- Paid LLM-as-judge layer on top of the rubric
+  (`tests/eval/judge.py`, `tests/eval/judge_prompts.py`). Scores
+  every generated narrative on four taste-level axes — `warmth`,
+  `narrative_arc`, `russian_fidelity`, `photo_selection_plausibility`
+  — plus free-form `notes`, validated through a `JudgeScore` Pydantic
+  model. Judge defaults to `claude-sonnet-4-6` (different family from
+  the writer to reduce same-model score inflation) and is
+  configurable via the `EVAL_JUDGE_MODEL` env var. New runner flag
+  `python -m tests.eval.run --all --live-judge` and Makefile target
+  `make eval-live` chain rubric + judge; `make eval-update-golden`
+  rewrites both narrative and judge goldens in one paid run. When a
+  `tests/eval/golden/<case>-judge.json` exists, the runner prints
+  per-axis deltas and exits non-zero if any axis dropped by
+  `EVAL_REGRESSION_THRESHOLD` (default `1.0`) vs golden. Drift-guard
+  tests (`tests/test_eval_judge_prompts.py`) keep the prompt's JSON
+  skeleton in sync with `JudgeScore`; unit tests
+  (`tests/test_eval_judge.py`) exercise the happy path, both retry
+  paths, and bounds-validation against a mocked client and run in
+  `make ci` for free. Rationale and tradeoffs added to
+  [`docs/adr/003-narrative-eval-suite.md`](docs/adr/003-narrative-eval-suite.md);
+  the CLAUDE.md "Update a prompt" recipe now reads
+  "`make eval` (free) → `make eval-live` (paid) → post both score
+  tables in the PR".
 
 ### Changed
 - `tests/fixtures/sample_photos/` now contains twelve images instead of

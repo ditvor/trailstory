@@ -1,5 +1,5 @@
 .DEFAULT_GOAL := help
-.PHONY: help setup dev install install-hooks test lint format typecheck ci clean generate test-render eval
+.PHONY: help setup dev install install-hooks test lint format typecheck ci clean generate test-render eval eval-live eval-update-golden
 
 PYTHON ?= python3.12
 VENV   := .venv
@@ -81,6 +81,12 @@ test-render:        ## Render the HTML template with fixture data (no API call)
 
 eval:               ## Run narrative rubric against every eval case (PAID — calls real Anthropic API)
 	$(PY) -m tests.eval.run --all
+
+eval-live:          ## Rubric + paid LLM-as-judge layer (PAID — writer + judge calls per case)
+	$(PY) -m tests.eval.run --all --live-judge
+
+eval-update-golden: ## Rewrite narrative AND judge goldens from a fresh paid run (PAID)
+	$(PY) -m tests.eval.run --all --live-judge --update-golden
 
 # ── Cleanup ────────────────────────────────────────────────────────────────────
 
