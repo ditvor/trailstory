@@ -1,0 +1,49 @@
+version: 2
+
+updates:
+  # Python dependencies declared in pyproject.toml. All minor and patch bumps
+  # land in a single grouped PR per week to keep review noise low; majors are
+  # opened individually so they get a dedicated `chore/` PR per CONTRIBUTING.md.
+  - package-ecosystem: "pip"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "06:00"
+      timezone: "Europe/Berlin"
+    open-pull-requests-limit: 5
+    target-branch: "develop"
+    labels:
+      - "type: chore"
+    commit-message:
+      prefix: "chore(deps)"
+      include: "scope"
+    groups:
+      python-minor-patch:
+        applies-to: version-updates
+        update-types:
+          - "minor"
+          - "patch"
+
+  # GitHub Actions workflow versions. Minor + patch grouped weekly; majors
+  # individually so each action upgrade is reviewed on its own.
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "06:00"
+      timezone: "Europe/Berlin"
+    open-pull-requests-limit: 5
+    target-branch: "develop"
+    labels:
+      - "type: chore"
+    commit-message:
+      prefix: "chore(ci)"
+      include: "scope"
+    groups:
+      actions-minor-patch:
+        applies-to: version-updates
+        update-types:
+          - "minor"
+          - "patch"

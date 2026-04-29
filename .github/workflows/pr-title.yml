@@ -1,0 +1,36 @@
+name: PR title
+
+on:
+  pull_request:
+    types: [opened, edited, synchronize, reopened]
+
+permissions:
+  pull-requests: read
+
+jobs:
+  conventional-commits:
+    name: Validate Conventional Commits prefix
+    runs-on: ubuntu-latest
+    timeout-minutes: 2
+
+    steps:
+      - name: Check title against allowed types
+        uses: amannn/action-semantic-pull-request@v5
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          # Allowed types — must stay in sync with CONTRIBUTING.md "Commit messages".
+          types: |
+            feat
+            fix
+            chore
+            docs
+            test
+            refactor
+            perf
+            style
+          requireScope: false
+          subjectPattern: ^[^A-Z].+$
+          subjectPatternError: |
+            The subject "{subject}" must start with a lowercase letter
+            (Conventional Commits style — see CONTRIBUTING.md).

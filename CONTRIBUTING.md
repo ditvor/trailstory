@@ -266,6 +266,31 @@ make test       # pytest --cov=trailstory
 make ci         # all of the above in sequence
 ```
 
+### Pre-commit hooks
+
+`make setup` installs `pre-commit` and registers the hooks defined in
+[`.pre-commit-config.yaml`](.pre-commit-config.yaml) — `ruff` (with
+auto-fix), `ruff-format`, `detect-secrets` against `.secrets.baseline`,
+and a 1 MB cap on newly-added files. The setup target is idempotent;
+re-running it is the supported way to refresh hook environments after
+pulling new versions.
+
+```bash
+make setup                      # one-shot: venv + deps + git hooks + pre-commit
+pre-commit run --all-files      # run every hook against the whole repo
+make ci                         # CI-equivalent (lint, format, typecheck, tests)
+```
+
+The hooks run on `git commit` against staged files only; `make ci`
+remains the authoritative pre-push gate. If `detect-secrets` flags a
+new finding that is in fact safe (e.g. a fixture-only fake token),
+update the baseline with
+`detect-secrets scan --baseline .secrets.baseline` and commit the
+refreshed baseline alongside the change.
+
+Hook versions are pinned in `.pre-commit-config.yaml` and bumped
+weekly by Dependabot — see [`.github/dependabot.yml`](.github/dependabot.yml).
+
 ---
 
 ## Dependency management
