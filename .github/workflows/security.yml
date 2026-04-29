@@ -67,7 +67,13 @@ jobs:
           fi
           # --skip-editable: trailstory itself is installed editable from a
           # local checkout and is not published to PyPI; pip-audit would
-          # otherwise abort with "Dependency not found on PyPI" under --strict.
-          # Only the editable package is skipped — every third-party dep in the
+          # otherwise abort with "Dependency not found on PyPI". Only the
+          # editable package is skipped — every third-party dep in the
           # resolved environment is still audited.
-          pip-audit --strict --skip-editable --progress-spinner off "${ignore_args[@]}"
+          #
+          # No --strict here: --strict treats every skipped dep as a fatal
+          # error, which would re-raise the editable skip into a failure.
+          # Without --strict, pip-audit still exits non-zero when real CVEs
+          # are found (the signal we actually want); --strict only adds the
+          # skip-warning escalation, which we explicitly do not want.
+          pip-audit --skip-editable --progress-spinner off "${ignore_args[@]}"
