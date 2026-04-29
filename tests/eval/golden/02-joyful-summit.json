@@ -1,27 +1,45 @@
 {
-  "schema_version": 1,
-  "title_en": "The Day Mia Met the Mountains",
-  "title_ru": "День, когда Мия познакомилась с горами",
-  "subtitle_en": "A small girl, a wide blue sky, and apples at the top of the world",
-  "subtitle_ru": "Маленькая девочка, бескрайнее синее небо и яблоки на вершине мира",
-  "paragraphs_en": [
-    "We carried her up slowly, the path winding through Bavarian pines that smelled of warm resin and old summers. She was tucked against us in the carrier, her cheek pressed to a shoulder, her eyes wide as saucers. At five months, the world is still mostly a rumor — and that morning the rumor became real.",
-    "Mia laughed the whole way up. She laughed at a bird that startled out of the underbrush, at a stream chattering over stones, at a gust of wind that lifted the hair from her forehead and made her gasp with delight. We laughed too, because how could we not — her joy was so unguarded, so entirely without reason, that it rearranged the morning around it.",
-    "The climb was steep in places, and we paused often, more for the pleasure of looking than from any real tiredness. Light fell through the branches in soft coins. A cowbell sounded somewhere below us, impossibly far already. We whispered to her the names of things, knowing she didn't need the words, only the music of our voices going on and on.",
-    "At the summit we sat on a flat warm stone and ate apples. The valley spread out beneath us in long green folds, and above us the sky was that particular Alpine blue that feels less like a color than a kind of silence. Mia looked up, blinked once, and clapped her small hands together — as if she had been waiting all her short life to applaud something this large.",
-    "We stayed a long time. She fell asleep on the way down, heavy and trusting against my chest, and I thought: she will not remember this. But somewhere inside her, the wind and the birds and the wide blue are already at work, becoming the shape of who she will be."
-  ],
-  "paragraphs_ru": [
-    "Мы несли её наверх медленно, по тропе, петляющей среди баварских сосен, пахнущих тёплой смолой и давними летами. Она сидела в переноске, прижавшись щекой к плечу, и глаза у неё были круглые, как блюдца. В пять месяцев мир ещё почти слух — и в то утро слух стал явью.",
-    "Мия смеялась всю дорогу наверх. Смеялась птице, выпорхнувшей из кустов, ручью, болтающему по камням, порыву ветра, что поднял волосы с её лба и заставил ахнуть от восторга. Мы смеялись тоже — ну как иначе: её радость была такой беззащитной, такой беспричинной, что вокруг неё перестроилось всё утро.",
-    "Подъём местами был крутым, и мы часто останавливались — больше ради удовольствия смотреть, чем от усталости. Свет падал сквозь ветви мягкими монетками. Где-то далеко внизу звякнул колокольчик коровы, уже невероятно далеко. Мы шептали ей названия вещей, зная, что слова ей не нужны — только музыка наших голосов, длящаяся и длящаяся.",
-    "На вершине мы сели на плоский тёплый камень и ели яблоки. Долина расстилалась под нами длинными зелёными складками, а над нами стояло то самое альпийское синее небо, которое кажется не цветом, а особенной тишиной. Мия подняла глаза, моргнула один раз и хлопнула в свои маленькие ладошки — будто всю свою короткую жизнь ждала, чтобы аплодировать чему-то такому огромному.",
-    "Мы долго оставались наверху. На обратном пути она уснула, тяжёлая и доверчивая, у меня на груди, и я подумала: она этого не запомнит. Но где-то внутри неё ветер, птицы и широкое синее уже работают — становятся формой того, кем она будет."
-  ],
-  "pull_quote_en": "She blinked once and clapped her small hands together — as if she had been waiting all her short life to applaud something this large.",
-  "pull_quote_ru": "Она моргнула один раз и хлопнула в свои маленькие ладошки — будто всю свою короткую жизнь ждала, чтобы аплодировать чему-то такому огромному.",
-  "milestone_en": "First mountain hike",
-  "milestone_ru": "Первый поход в горы",
+  "schema_version": 2,
+  "title": {
+    "en": "Mia and the Wide Blue",
+    "ru": "Мия и большая синева",
+    "de": "Mia und das weite Blau"
+  },
+  "subtitle": {
+    "en": "A small climb in the Bavarian Alps, measured in laughter",
+    "ru": "Маленький подъём в Баварских Альпах, измеренный смехом",
+    "de": "Ein kleiner Aufstieg in den Bayerischen Alpen, gemessen in Lachen"
+  },
+  "paragraphs": {
+    "en": [
+      "We started slowly, the way you have to start when the world is still new to someone. The path lifted gently into the trees, and Mia found a reason to laugh at almost every step — a bird hidden somewhere overhead, a stream stitching its way through the stones, a sudden gust that lifted the hair off her forehead and seemed, to her, like a small private joke.",
+      "The climb was steeper than the map suggested. Six hundred metres up in barely two kilometres — the kind of slope that quiets grown-ups and turns conversation into breathing. But Mia kept up her commentary the whole way, narrating the forest as if it had been arranged for her arrival. I carried the apples, and the water, and the strange light feeling that comes from being trusted entirely by a small person.",
+      "At the summit, just over thirteen hundred metres, we sat down on the warm rock and ate. She held her apple with both hands the way children do, taking enormous, serious bites. And then she looked up — really looked — at the valley falling away beneath us and the sky opening above, and she clapped. Just once, then again, applauding the wide blue as if it had performed for her.",
+      "I will remember that sound longer than I will remember the climb."
+    ],
+    "ru": [
+      "Мы начали медленно — так, как нужно начинать, когда мир для кого-то ещё совсем новый. Тропа мягко уходила в лес, и Мия находила повод рассмеяться почти на каждом шагу: птица, спрятавшаяся где-то в кронах, ручей, прошивающий камни, внезапный порыв ветра, поднявший ей чёлку и показавшийся ей какой-то маленькой, только её, шуткой.",
+      "Подъём оказался круче, чем обещала карта. Шестьсот метров вверх всего за два километра — такой склон, от которого взрослые замолкают и разговор превращается в дыхание. А Мия всю дорогу комментировала лес, будто его расставили специально к её приходу. Я нёс яблоки, воду и то странное лёгкое чувство, которое возникает, когда тебе полностью доверяет маленький человек.",
+      "На вершине, чуть выше тысячи трёхсот метров, мы сели на тёплый камень и стали есть. Она держала яблоко двумя руками, как держат дети, и откусывала огромными, серьёзными кусками. А потом подняла голову — по-настоящему подняла — посмотрела на долину, уходящую вниз, на небо, раскрывшееся над нами, и захлопала в ладоши. Один раз, потом ещё — будто аплодировала большой синеве за то, что та выступила для неё.",
+      "Этот звук я буду помнить дольше, чем сам подъём."
+    ],
+    "de": [
+      "Wir sind langsam losgegangen, so wie man losgehen muss, wenn die Welt für jemanden noch ganz neu ist. Der Weg stieg sanft in den Wald hinein, und Mia fand fast bei jedem Schritt einen Grund zum Lachen — einen Vogel irgendwo über uns, einen Bach, der sich durch die Steine fädelte, einen plötzlichen Windstoß, der ihr die Haare aus der Stirn hob und ihr wie ein kleiner, ganz persönlicher Scherz vorkam.",
+      "Der Anstieg war steiler, als die Karte vermuten ließ. Sechshundert Höhenmeter auf knapp zwei Kilometern — so ein Hang, bei dem die Erwachsenen still werden und Gespräche zu Atem werden. Aber Mia hat den ganzen Weg über weiterkommentiert, als wäre der Wald eigens für ihre Ankunft hergerichtet worden. Ich trug die Äpfel, das Wasser und dieses seltsam leichte Gefühl, das entsteht, wenn ein kleiner Mensch einem vollkommen vertraut.",
+      "Oben, knapp über dreizehnhundert Metern, setzten wir uns auf den warmen Fels und aßen. Sie hielt ihren Apfel mit beiden Händen, so wie Kinder das tun, und nahm riesige, ernsthafte Bissen. Und dann hob sie den Kopf — richtig hob sie ihn — schaute hinunter ins Tal, das unter uns wegfiel, und hinauf in den weit geöffneten Himmel, und klatschte in die Hände. Einmal, dann noch einmal, als applaudierte sie dem weiten Blau dafür, dass es eigens für sie aufgetreten war.",
+      "Dieses Geräusch werde ich länger im Ohr behalten als den ganzen Aufstieg."
+    ]
+  },
+  "pull_quote": {
+    "en": "She clapped, just once, then again, applauding the wide blue as if it had performed for her.",
+    "ru": "Она захлопала в ладоши — один раз, потом ещё — будто аплодировала большой синеве за то, что та выступила для неё.",
+    "de": "Sie klatschte einmal, dann noch einmal, als applaudierte sie dem weiten Blau dafür, dass es eigens für sie aufgetreten war."
+  },
+  "milestone": {
+    "en": "Mia's first summit",
+    "ru": "Первая вершина Мии",
+    "de": "Mias erster Gipfel"
+  },
   "selected_photo_indices": [
     0,
     2,

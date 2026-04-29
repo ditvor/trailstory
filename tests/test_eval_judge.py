@@ -27,7 +27,12 @@ from trailstory.llm.client import (
     LLMResponseError,
     LLMRetryExhaustedError,
 )
-from trailstory.models import HikeInput, NarrativeOutput
+from trailstory.models import (
+    HikeInput,
+    LocalizedParagraphs,
+    LocalizedString,
+    NarrativeOutput,
+)
 
 # ── fixtures ─────────────────────────────────────────────────────────────────
 
@@ -37,32 +42,49 @@ def _hike_input() -> HikeInput:
         gpx_path=Path("/tmp/hike.gpx"),
         photos_dir=Path("/tmp/photos"),
         seed_text="The fog cleared just as we reached the ridge.",
-        baby_name="Mia",
-        baby_age_months=5,
     )
 
 
 def _narrative() -> NarrativeOutput:
     return NarrativeOutput(
-        schema_version=1,
-        title_en="Above the fog line",
-        title_ru="Над линией тумана",
-        subtitle_en="A morning above the cloud sea",
-        subtitle_ru="Утро над морем облаков",
-        paragraphs_en=[
-            "We left the trailhead at first light.",
-            "By the saddle the cloud was thinning.",
-            "Mia slept the whole climb.",
-        ],
-        paragraphs_ru=[
-            "Вышли на тропу с первыми лучами.",  # noqa: RUF001
-            "К седловине облака начали редеть.",  # noqa: RUF001
-            "Мия проспала весь подъём.",
-        ],
-        pull_quote_en="The fog cleared just as we reached the ridge.",
-        pull_quote_ru="Туман рассеялся как раз когда мы вышли на хребет.",
-        milestone_en="First mountain hike",
-        milestone_ru="Первый горный поход",
+        schema_version=2,
+        title=LocalizedString(
+            en="Above the fog line",
+            ru="Над линией тумана",
+            de="Über der Nebelgrenze",
+        ),
+        subtitle=LocalizedString(
+            en="A morning above the cloud sea",
+            ru="Утро над морем облаков",
+            de="Ein Morgen über dem Wolkenmeer",
+        ),
+        paragraphs=LocalizedParagraphs(
+            en=[
+                "We left the trailhead at first light.",
+                "By the saddle the cloud was thinning.",
+                "Mia slept the whole climb.",
+            ],
+            ru=[
+                "Вышли на тропу с первыми лучами.",  # noqa: RUF001
+                "К седловине облака начали редеть.",  # noqa: RUF001
+                "Мия проспала весь подъём.",
+            ],
+            de=[
+                "Bei erstem Licht brachen wir auf.",
+                "Am Sattel begann die Wolke sich zu lichten.",
+                "Mia schlief den ganzen Aufstieg.",
+            ],
+        ),
+        pull_quote=LocalizedString(
+            en="The fog cleared just as we reached the ridge.",
+            ru="Туман рассеялся как раз когда мы вышли на хребет.",
+            de="Der Nebel lichtete sich, gerade als wir den Grat erreichten.",
+        ),
+        milestone=LocalizedString(
+            en="First mountain hike",
+            ru="Первый горный поход",
+            de="Erste Bergwanderung",
+        ),
         selected_photo_indices=[0, 2, 4, 6, 8, 10],
     )
 
@@ -138,9 +160,7 @@ def test_judge_narrative_passes_hike_context_to_prompt() -> None:
     judge_narrative(_narrative(), _hike_input(), client=client)
 
     sent = client.complete.call_args.kwargs["prompt"]
-    assert "Mia" in sent
     assert "fog cleared" in sent  # seed_text
-    assert "5" in sent  # baby_age_months
 
 
 def test_judge_narrative_embeds_full_narrative_json_in_prompt() -> None:

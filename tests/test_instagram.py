@@ -12,7 +12,16 @@ from pathlib import Path
 import pytest
 from PIL import Image, ImageDraw, ImageFont
 
-from trailstory.models import GpxStats, HikeInput, Memory, NarrativeOutput, PhotoMeta, Waypoint
+from trailstory.models import (
+    GpxStats,
+    HikeInput,
+    LocalizedParagraphs,
+    LocalizedString,
+    Memory,
+    NarrativeOutput,
+    PhotoMeta,
+    Waypoint,
+)
 from trailstory.renderers.instagram import (
     SLIDE_H,
     SLIDE_W,
@@ -29,17 +38,32 @@ from trailstory.renderers.instagram import (
 
 def _narrative() -> NarrativeOutput:
     return NarrativeOutput(
-        schema_version=1,
-        title_en="Above the fog line",
-        title_ru="Над линией тумана",
-        subtitle_en="A morning above the cloud sea",
-        subtitle_ru="Утро над морем облаков",
-        paragraphs_en=["First.", "Second."],
-        paragraphs_ru=["Первый.", "Второй."],
-        pull_quote_en="The fog cleared just as we reached the ridge.",
-        pull_quote_ru="Туман рассеялся как раз когда мы вышли на хребет.",
-        milestone_en="First mountain hike",
-        milestone_ru="Первый горный поход",
+        schema_version=2,
+        title=LocalizedString(
+            en="Above the fog line",
+            ru="Над линией тумана",
+            de="Über der Nebelgrenze",
+        ),
+        subtitle=LocalizedString(
+            en="A morning above the cloud sea",
+            ru="Утро над морем облаков",
+            de="Ein Morgen über dem Wolkenmeer",
+        ),
+        paragraphs=LocalizedParagraphs(
+            en=["First.", "Second."],
+            ru=["Первый.", "Второй."],
+            de=["Erstens.", "Zweitens."],
+        ),
+        pull_quote=LocalizedString(
+            en="The fog cleared just as we reached the ridge.",
+            ru="Туман рассеялся как раз когда мы вышли на хребет.",
+            de="Der Nebel lichtete sich, gerade als wir den Grat erreichten.",
+        ),
+        milestone=LocalizedString(
+            en="First mountain hike",
+            ru="Первый горный поход",
+            de="Erste Bergwanderung",
+        ),
         selected_photo_indices=[0, 1, 2],
     )
 
@@ -83,8 +107,6 @@ def _memory(
             gpx_path=Path("/fixtures/sample.gpx"),
             photos_dir=Path("/fixtures/sample_photos"),
             seed_text="The fog cleared just as we reached the ridge.",
-            baby_name="Mia",
-            baby_age_months=5,
             location_name="Bavarian Alps",
         ),
         gpx_stats=_gpx_stats(),
@@ -236,7 +258,8 @@ def test_carousel_title_stays_within_slide_bounds(tmp_path: Path, word_count: in
     every drawn glyph stays inside the slide.
     """
     title = " ".join(_LONG_TITLE_WORDS[:word_count])
-    narrative = _narrative().model_copy(update={"title_en": title})
+    base = _narrative()
+    narrative = base.model_copy(update={"title": base.title.model_copy(update={"en": title})})
     photos = [_make_photo(tmp_path, 0, (50, 80, 120))]
 
     paths = render_instagram_carousel(

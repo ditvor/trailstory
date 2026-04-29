@@ -17,7 +17,16 @@ import pytest
 from PIL import Image
 from PIL.TiffImagePlugin import IFDRational
 
-from trailstory.models import GpxStats, HikeInput, Memory, NarrativeOutput, PhotoMeta, Waypoint
+from trailstory.models import (
+    GpxStats,
+    HikeInput,
+    LocalizedParagraphs,
+    LocalizedString,
+    Memory,
+    NarrativeOutput,
+    PhotoMeta,
+    Waypoint,
+)
 from trailstory.photos import load_photos
 from trailstory.renderers.html import HtmlRenderError, render_html
 
@@ -45,23 +54,41 @@ def _gpx_stats() -> GpxStats:
 
 def _narrative() -> NarrativeOutput:
     return NarrativeOutput(
-        schema_version=1,
-        title_en="Above the fog line",
-        title_ru="Над линией тумана",
-        subtitle_en="A morning above the cloud sea",
-        subtitle_ru="Утро над морем облаков",
-        paragraphs_en=[
-            "We left the trailhead at first light.",
-            "By the saddle the cloud was thinning.",
-        ],
-        paragraphs_ru=[
-            "Вышли на тропу с первыми лучами.",  # noqa: RUF001
-            "К седловине облака начали редеть.",  # noqa: RUF001
-        ],
-        pull_quote_en="The fog cleared just as we reached the ridge.",
-        pull_quote_ru="Туман рассеялся как раз когда мы вышли на хребет.",
-        milestone_en="First mountain hike",
-        milestone_ru="Первый горный поход",
+        schema_version=2,
+        title=LocalizedString(
+            en="Above the fog line",
+            ru="Над линией тумана",
+            de="Über der Nebelgrenze",
+        ),
+        subtitle=LocalizedString(
+            en="A morning above the cloud sea",
+            ru="Утро над морем облаков",
+            de="Ein Morgen über dem Wolkenmeer",
+        ),
+        paragraphs=LocalizedParagraphs(
+            en=[
+                "We left the trailhead at first light.",
+                "By the saddle the cloud was thinning.",
+            ],
+            ru=[
+                "Вышли на тропу с первыми лучами.",  # noqa: RUF001
+                "К седловине облака начали редеть.",  # noqa: RUF001
+            ],
+            de=[
+                "Bei erstem Licht brachen wir auf.",
+                "Am Sattel begann die Wolke sich zu lichten.",
+            ],
+        ),
+        pull_quote=LocalizedString(
+            en="The fog cleared just as we reached the ridge.",
+            ru="Туман рассеялся как раз когда мы вышли на хребет.",
+            de="Der Nebel lichtete sich, gerade als wir den Grat erreichten.",
+        ),
+        milestone=LocalizedString(
+            en="First mountain hike",
+            ru="Первый горный поход",
+            de="Erste Bergwanderung",
+        ),
         selected_photo_indices=[0, 1, 2],
     )
 
@@ -88,13 +115,25 @@ def _memory(
             gpx_path=Path("/fixtures/sample.gpx"),
             photos_dir=Path("/fixtures/sample_photos"),
             seed_text="The fog cleared just as we reached the ridge.",
-            baby_name="Mia",
-            baby_age_months=5,
             location_name="Bavarian Alps",
         ),
         gpx_stats=gpx_stats if gpx_stats is not None else _gpx_stats(),
         narrative=narrative if narrative is not None else _narrative(),
         selected_photos=photos,
+    )
+
+
+def _flat_string(en: str = "x", ru: str = "x", de: str = "x") -> LocalizedString:
+    return LocalizedString(en=en, ru=ru, de=de)
+
+
+def _flat_paragraphs(
+    *, en: list[str] | None = None, ru: list[str] | None = None, de: list[str] | None = None
+) -> LocalizedParagraphs:
+    return LocalizedParagraphs(
+        en=en if en is not None else ["x"],
+        ru=ru if ru is not None else ["x"],
+        de=de if de is not None else ["x"],
     )
 
 
@@ -131,7 +170,7 @@ def test_render_creates_missing_output_directory(tmp_path: Path) -> None:
     assert nested.is_dir()
 
 
-def test_render_includes_bilingual_narrative_content(tmp_path: Path) -> None:
+def test_render_includes_trilingual_narrative_content(tmp_path: Path) -> None:
     photos = [_make_photo(tmp_path, 0, (50, 80, 120))]
 
     out_path = render_html(
@@ -143,12 +182,16 @@ def test_render_includes_bilingual_narrative_content(tmp_path: Path) -> None:
 
     assert "Above the fog line" in html
     assert "Над линией тумана" in html
+    assert "Über der Nebelgrenze" in html
     assert "A morning above the cloud sea" in html
     assert "Утро над морем облаков" in html
+    assert "Ein Morgen über dem Wolkenmeer" in html
     assert "First mountain hike" in html
     assert "Первый горный поход" in html
+    assert "Erste Bergwanderung" in html
     assert "We left the trailhead at first light." in html
     assert "К седловине облака начали редеть." in html  # noqa: RUF001
+    assert "Am Sattel begann die Wolke sich zu lichten." in html
     assert "The fog cleared just as we reached the ridge." in html
 
 
@@ -220,17 +263,12 @@ def test_render_escapes_html_in_narrative_fields(tmp_path: Path) -> None:
     """LLM output is untrusted — autoescape must neutralise HTML."""
     photos = [_make_photo(tmp_path, 0, (50, 80, 120))]
     nasty = NarrativeOutput(
-        schema_version=1,
-        title_en="<script>alert(1)</script>",
-        title_ru="x",
-        subtitle_en="x",
-        subtitle_ru="x",
-        paragraphs_en=["</p><img src=x onerror=alert(1)>"],
-        paragraphs_ru=["x"],
-        pull_quote_en="x",
-        pull_quote_ru="x",
-        milestone_en="x",
-        milestone_ru="x",
+        schema_version=2,
+        title=_flat_string(en="<script>alert(1)</script>"),
+        subtitle=_flat_string(),
+        paragraphs=_flat_paragraphs(en=["</p><img src=x onerror=alert(1)>"]),
+        pull_quote=_flat_string(),
+        milestone=_flat_string(),
         selected_photo_indices=[0],
     )
 
@@ -254,17 +292,12 @@ def test_render_escapes_narrative_when_emitted_into_script_block(
     """The share-button JS uses ``| tojson``; ``</script>`` must not survive raw."""
     photos = [_make_photo(tmp_path, 0, (50, 80, 120))]
     nasty = NarrativeOutput(
-        schema_version=1,
-        title_en="legit",
-        title_ru="x",
-        subtitle_en="x",
-        subtitle_ru="x",
-        paragraphs_en=["x"],
-        paragraphs_ru=["x"],
-        pull_quote_en="</script><script>alert(1)</script>",
-        pull_quote_ru="x",
-        milestone_en="x",
-        milestone_ru="x",
+        schema_version=2,
+        title=_flat_string(en="legit"),
+        subtitle=_flat_string(),
+        paragraphs=_flat_paragraphs(),
+        pull_quote=_flat_string(en="</script><script>alert(1)</script>"),
+        milestone=_flat_string(),
         selected_photo_indices=[0],
     )
 

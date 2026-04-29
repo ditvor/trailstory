@@ -70,10 +70,10 @@ def generate_narrative(
     location: str = "the trail",
     use_cache: bool = True,
 ) -> NarrativeOutput:
-    """Generate a bilingual narrative from hike inputs.
+    """Generate a tri-lingual narrative from hike inputs.
 
     Args:
-        hike_input: Parent's seed text, baby info, and source paths.
+        hike_input: Hiker's seed text and source paths.
         gpx_stats: Parsed GPX stats (distance, elevation, duration, summit).
         photos: Loaded photos. The model selects 6-8 indices into this list,
             so the list must be non-empty.
@@ -115,8 +115,6 @@ def generate_narrative(
         n_photos=len(photos),
         n_photos_minus_1=len(photos) - 1,
         seed_text=hike_input.seed_text,
-        baby_name=hike_input.baby_name,
-        baby_age_months=hike_input.baby_age_months,
     )
 
     parsed = _call_and_parse(client, base_prompt)

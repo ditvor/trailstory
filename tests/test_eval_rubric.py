@@ -16,7 +16,11 @@ import pytest
 
 from tests.eval import rubric
 from tests.eval.rubric import RubricResult
-from trailstory.models import NarrativeOutput
+from trailstory.models import (
+    LocalizedParagraphs,
+    LocalizedString,
+    NarrativeOutput,
+)
 
 
 def _good_narrative() -> NarrativeOutput:
@@ -27,29 +31,67 @@ def _good_narrative() -> NarrativeOutput:
     thing the assertion is responding to.
     """
     return NarrativeOutput(
-        schema_version=1,
-        title_en="Above the fog line",
-        title_ru="Над линией тумана",
-        subtitle_en="A quiet morning above the cloud sea",
-        subtitle_ru="Тихое утро над морем облаков",
-        paragraphs_en=[
-            "We left the trailhead at first light, the air sharp with damp moss.",
-            "By the saddle the cloud was thinning into a soft white scarf.",
-            "Mia slept the whole climb, her cheek warm against the carrier.",
-            "At the ridge the fog cleared and the valley opened beneath us.",
-        ],
-        paragraphs_ru=[
-            "Вышли на тропу с первыми лучами; воздух пах мхом и хвоей.",  # noqa: RUF001
-            "К седловине облака уже редели, превращаясь в белый шарф.",  # noqa: RUF001
-            "Мия проспала весь подъём, прижавшись щекой к переноске.",
-            "На хребте туман рассеялся, и долина раскинулась под нами.",  # noqa: RUF001
-        ],
-        pull_quote_en="The fog cleared and the valley opened beneath us.",
-        pull_quote_ru="Туман рассеялся, и долина раскинулась под нами.",
-        milestone_en="First mountain hike",
-        milestone_ru="Первый горный поход",
+        schema_version=2,
+        title=LocalizedString(
+            en="Above the fog line",
+            ru="Над линией тумана",
+            de="Über der Nebelgrenze",
+        ),
+        subtitle=LocalizedString(
+            en="A quiet morning above the cloud sea",
+            ru="Тихое утро над морем облаков",
+            de="Ein stiller Morgen über dem Wolkenmeer",
+        ),
+        paragraphs=LocalizedParagraphs(
+            en=[
+                "We left the trailhead at first light, the air sharp with damp moss.",
+                "By the saddle the cloud was thinning into a soft white scarf.",
+                "Mia slept the whole climb, her cheek warm against the carrier.",
+                "At the ridge the fog cleared and the valley opened beneath us.",
+            ],
+            ru=[
+                "Вышли на тропу с первыми лучами; воздух пах мхом и хвоей.",  # noqa: RUF001
+                "К седловине облака уже редели, превращаясь в белый шарф.",  # noqa: RUF001
+                "Мия проспала весь подъём, прижавшись щекой к переноске.",
+                "На хребте туман рассеялся, и долина раскинулась под нами.",  # noqa: RUF001
+            ],
+            de=[
+                "Bei erstem Licht brachen wir auf, die Luft scharf von feuchtem Moos.",
+                "Am Sattel zog die Wolke sich zu einem weichen weißen Schal zusammen.",
+                "Mia schlief den ganzen Aufstieg, die Wange warm an der Trage.",
+                "Am Grat lichtete sich der Nebel und das Tal öffnete sich unter uns.",
+            ],
+        ),
+        pull_quote=LocalizedString(
+            en="The fog cleared and the valley opened beneath us.",
+            ru="Туман рассеялся, и долина раскинулась под нами.",
+            de="Der Nebel lichtete sich und das Tal öffnete sich unter uns.",
+        ),
+        milestone=LocalizedString(
+            en="First mountain hike",
+            ru="Первый горный поход",
+            de="Erste Bergwanderung",
+        ),
         selected_photo_indices=[0, 1, 2, 3, 4, 5],
     )
+
+
+def _replace(
+    narrative: NarrativeOutput,
+    *,
+    field: str,
+    lang: str,
+    value: object,
+) -> NarrativeOutput:
+    """Return a copy of ``narrative`` with one localized leaf swapped.
+
+    e.g. ``_replace(n, field="title", lang="en", value="x")`` changes
+    only ``narrative.title.en``. Saves a lot of repetitive
+    ``model_copy(update={...})`` boilerplate in the per-field tests.
+    """
+    container = getattr(narrative, field)
+    updated_container = container.model_copy(update={lang: value})
+    return narrative.model_copy(update={field: updated_container})
 
 
 # ── schema_validates ────────────────────────────────────────────────────────
@@ -67,7 +109,7 @@ def test_schema_validates_fails_when_field_type_is_corrupted() -> None:
     # ``model_copy(update=...)`` does not re-validate — we use it here to
     # simulate the corrupted-state failure mode the check exists to detect.
     corrupted = _good_narrative().model_copy(
-        update={"paragraphs_en": "not a list of strings"},
+        update={"paragraphs": "not a LocalizedParagraphs at all"},
     )
     result = rubric.schema_validates(corrupted)
     assert result.passed is False
@@ -83,9 +125,9 @@ def test_paragraph_count_passes_when_each_lang_in_range() -> None:
 
 
 def test_paragraph_count_fails_when_en_too_few() -> None:
-    narrative = _good_narrative().model_copy(
-        update={"paragraphs_en": _good_narrative().paragraphs_en[:2]},
-    )
+    base = _good_narrative()
+    paragraphs = base.paragraphs.model_copy(update={"en": base.paragraphs.en[:2]})
+    narrative = base.model_copy(update={"paragraphs": paragraphs})
     result = rubric.paragraph_count_3_to_5_each_lang(narrative)
     assert result.passed is False
     assert "en=2" in result.detail
@@ -93,12 +135,21 @@ def test_paragraph_count_fails_when_en_too_few() -> None:
 
 def test_paragraph_count_fails_when_ru_too_many() -> None:
     extra = ["Лишний абзац."] * 3
-    narrative = _good_narrative().model_copy(
-        update={"paragraphs_ru": _good_narrative().paragraphs_ru + extra},
-    )
+    base = _good_narrative()
+    paragraphs = base.paragraphs.model_copy(update={"ru": base.paragraphs.ru + extra})
+    narrative = base.model_copy(update={"paragraphs": paragraphs})
     result = rubric.paragraph_count_3_to_5_each_lang(narrative)
     assert result.passed is False
     assert "ru=7" in result.detail
+
+
+def test_paragraph_count_fails_when_de_too_few() -> None:
+    base = _good_narrative()
+    paragraphs = base.paragraphs.model_copy(update={"de": base.paragraphs.de[:2]})
+    narrative = base.model_copy(update={"paragraphs": paragraphs})
+    result = rubric.paragraph_count_3_to_5_each_lang(narrative)
+    assert result.passed is False
+    assert "de=2" in result.detail
 
 
 # ── russian_actually_cyrillic ────────────────────────────────────────────────
@@ -110,9 +161,11 @@ def test_russian_actually_cyrillic_passes_on_pure_cyrillic() -> None:
 
 
 def test_russian_actually_cyrillic_fails_when_paragraph_has_no_cyrillic() -> None:
-    paragraphs = list(_good_narrative().paragraphs_ru)
-    paragraphs[1] = "This whole paragraph stayed in English by mistake."
-    narrative = _good_narrative().model_copy(update={"paragraphs_ru": paragraphs})
+    base = _good_narrative()
+    paragraphs_ru = list(base.paragraphs.ru)
+    paragraphs_ru[1] = "This whole paragraph stayed in English by mistake."
+    new_paragraphs = base.paragraphs.model_copy(update={"ru": paragraphs_ru})
+    narrative = base.model_copy(update={"paragraphs": new_paragraphs})
     result = rubric.russian_actually_cyrillic(narrative)
     assert result.passed is False
     assert "no Cyrillic" in result.detail
@@ -120,9 +173,11 @@ def test_russian_actually_cyrillic_fails_when_paragraph_has_no_cyrillic() -> Non
 
 def test_russian_actually_cyrillic_fails_on_long_ascii_run_inside_cyrillic_paragraph() -> None:
     """Cyrillic prefix, then a 6+ word English clause — the failure mode this catches."""
-    paragraphs = list(_good_narrative().paragraphs_ru)
-    paragraphs[2] = "Тропа. We then walked back down the long stony path."
-    narrative = _good_narrative().model_copy(update={"paragraphs_ru": paragraphs})
+    base = _good_narrative()
+    paragraphs_ru = list(base.paragraphs.ru)
+    paragraphs_ru[2] = "Тропа. We then walked back down the long stony path."
+    new_paragraphs = base.paragraphs.model_copy(update={"ru": paragraphs_ru})
+    narrative = base.model_copy(update={"paragraphs": new_paragraphs})
     result = rubric.russian_actually_cyrillic(narrative)
     assert result.passed is False
     assert "ASCII" in result.detail
@@ -130,9 +185,11 @@ def test_russian_actually_cyrillic_fails_on_long_ascii_run_inside_cyrillic_parag
 
 def test_russian_actually_cyrillic_tolerates_short_ascii_inserts() -> None:
     """A few ASCII words ('5 km', a name) inside a Cyrillic paragraph is fine."""
-    paragraphs = list(_good_narrative().paragraphs_ru)
-    paragraphs[0] = "Прошли 5 km вдоль ручья — Mia спала."
-    narrative = _good_narrative().model_copy(update={"paragraphs_ru": paragraphs})
+    base = _good_narrative()
+    paragraphs_ru = list(base.paragraphs.ru)
+    paragraphs_ru[0] = "Прошли 5 km вдоль ручья — Mia спала."
+    new_paragraphs = base.paragraphs.model_copy(update={"ru": paragraphs_ru})
+    narrative = base.model_copy(update={"paragraphs": new_paragraphs})
     result = rubric.russian_actually_cyrillic(narrative)
     assert result.passed is True
 
@@ -146,18 +203,37 @@ def test_word_count_ratio_passes_when_balanced() -> None:
 
 
 def test_word_count_ratio_fails_when_ru_far_shorter_than_en() -> None:
-    narrative = _good_narrative().model_copy(
-        update={"paragraphs_ru": ["Коротко.", "Очень.", "Тихо."]},
-    )
+    base = _good_narrative()
+    new_paragraphs = base.paragraphs.model_copy(update={"ru": ["Коротко.", "Очень.", "Тихо."]})
+    narrative = base.model_copy(update={"paragraphs": new_paragraphs})
     result = rubric.word_count_ratio_en_ru_in_0_7_to_1_4(narrative)
     assert result.passed is False
     assert "ratio=" in result.detail
 
 
 def test_word_count_ratio_fails_when_en_paragraphs_have_no_words() -> None:
-    narrative = _good_narrative().model_copy(update={"paragraphs_en": ["", "", ""]})
+    base = _good_narrative()
+    new_paragraphs = base.paragraphs.model_copy(update={"en": ["", "", ""]})
+    narrative = base.model_copy(update={"paragraphs": new_paragraphs})
     result = rubric.word_count_ratio_en_ru_in_0_7_to_1_4(narrative)
     assert result.passed is False
+
+
+# ── word_count_ratio_en_de_in_0_7_to_1_4 ─────────────────────────────────────
+
+
+def test_word_count_ratio_en_de_passes_when_balanced() -> None:
+    result = rubric.word_count_ratio_en_de_in_0_7_to_1_4(_good_narrative())
+    assert result.passed is True
+
+
+def test_word_count_ratio_en_de_fails_when_de_far_shorter_than_en() -> None:
+    base = _good_narrative()
+    new_paragraphs = base.paragraphs.model_copy(update={"de": ["Kurz.", "Sehr.", "Still."]})
+    narrative = base.model_copy(update={"paragraphs": new_paragraphs})
+    result = rubric.word_count_ratio_en_de_in_0_7_to_1_4(narrative)
+    assert result.passed is False
+    assert "ratio=" in result.detail
 
 
 # ── title / subtitle / milestone length checks ──────────────────────────────
@@ -169,17 +245,24 @@ def test_title_under_60_chars_passes_under_limit() -> None:
 
 
 def test_title_under_60_chars_fails_when_en_too_long() -> None:
-    narrative = _good_narrative().model_copy(update={"title_en": "x" * 61})
+    narrative = _replace(_good_narrative(), field="title", lang="en", value="x" * 61)
     result = rubric.title_under_60_chars(narrative)
     assert result.passed is False
-    assert "title_en=61" in result.detail
+    assert "title.en=61" in result.detail
 
 
 def test_title_under_60_chars_fails_at_exactly_the_limit() -> None:
     """Limit is exclusive — len == 60 is too long."""
-    narrative = _good_narrative().model_copy(update={"title_en": "x" * 60})
+    narrative = _replace(_good_narrative(), field="title", lang="en", value="x" * 60)
     result = rubric.title_under_60_chars(narrative)
     assert result.passed is False
+
+
+def test_title_under_60_chars_fails_when_de_too_long() -> None:
+    narrative = _replace(_good_narrative(), field="title", lang="de", value="x" * 61)
+    result = rubric.title_under_60_chars(narrative)
+    assert result.passed is False
+    assert "title.de=61" in result.detail
 
 
 def test_subtitle_under_90_chars_passes_under_limit() -> None:
@@ -188,10 +271,10 @@ def test_subtitle_under_90_chars_passes_under_limit() -> None:
 
 
 def test_subtitle_under_90_chars_fails_when_ru_too_long() -> None:
-    narrative = _good_narrative().model_copy(update={"subtitle_ru": "ы" * 91})
+    narrative = _replace(_good_narrative(), field="subtitle", lang="ru", value="ы" * 91)
     result = rubric.subtitle_under_90_chars(narrative)
     assert result.passed is False
-    assert "subtitle_ru=91" in result.detail
+    assert "subtitle.ru=91" in result.detail
 
 
 def test_milestone_under_30_chars_passes_under_limit() -> None:
@@ -200,8 +283,11 @@ def test_milestone_under_30_chars_passes_under_limit() -> None:
 
 
 def test_milestone_under_30_chars_fails_when_too_long() -> None:
-    narrative = _good_narrative().model_copy(
-        update={"milestone_en": "First mountain hike with the baby and the dog"}
+    narrative = _replace(
+        _good_narrative(),
+        field="milestone",
+        lang="en",
+        value="First mountain hike with the baby and the dog",
     )
     result = rubric.milestone_under_30_chars(narrative)
     assert result.passed is False
@@ -268,8 +354,11 @@ def test_pull_quote_passes_when_substring_of_paragraph() -> None:
 
 
 def test_pull_quote_fails_when_words_not_in_any_paragraph() -> None:
-    narrative = _good_narrative().model_copy(
-        update={"pull_quote_en": "Entirely synthetic phrase nobody wrote."},
+    narrative = _replace(
+        _good_narrative(),
+        field="pull_quote",
+        lang="en",
+        value="Entirely synthetic phrase nobody wrote.",
     )
     result = rubric.pull_quote_drawn_from_body(narrative)
     assert result.passed is False
@@ -277,7 +366,7 @@ def test_pull_quote_fails_when_words_not_in_any_paragraph() -> None:
 
 
 def test_pull_quote_fails_on_empty_quote() -> None:
-    narrative = _good_narrative().model_copy(update={"pull_quote_en": ""})
+    narrative = _replace(_good_narrative(), field="pull_quote", lang="en", value="")
     result = rubric.pull_quote_drawn_from_body(narrative)
     assert result.passed is False
     assert "no words" in result.detail
@@ -293,6 +382,7 @@ def test_apply_rubric_returns_one_result_per_check_in_order() -> None:
         "paragraph_count_3_to_5_each_lang",
         "russian_actually_cyrillic",
         "word_count_ratio_en_ru_in_0_7_to_1_4",
+        "word_count_ratio_en_de_in_0_7_to_1_4",
         "title_under_60_chars",
         "subtitle_under_90_chars",
         "milestone_under_30_chars",
@@ -309,15 +399,31 @@ def test_apply_rubric_all_pass_for_well_formed_narrative() -> None:
 
 
 @pytest.mark.parametrize(
-    "field,value,expected_failing_check",
+    "field,lang,value,expected_failing_check",
     [
-        ("title_en", "x" * 70, "title_under_60_chars"),
-        ("subtitle_ru", "ы" * 100, "subtitle_under_90_chars"),
-        ("selected_photo_indices", [0, 1, 2], "indices_valid"),
-        ("pull_quote_en", "Wholly disjoint synthetic words.", "pull_quote_drawn_from_body"),
+        ("title", "en", "x" * 70, "title_under_60_chars"),
+        ("subtitle", "ru", "ы" * 100, "subtitle_under_90_chars"),
     ],
 )
-def test_apply_rubric_surfaces_targeted_failure(
+def test_apply_rubric_surfaces_targeted_localized_failure(
+    field: str,
+    lang: str,
+    value: object,
+    expected_failing_check: str,
+) -> None:
+    narrative = _replace(_good_narrative(), field=field, lang=lang, value=value)
+    results = rubric.apply_rubric(narrative, n_photos=12)
+    by_name = {r.name: r for r in results}
+    assert by_name[expected_failing_check].passed is False
+
+
+@pytest.mark.parametrize(
+    "field,value,expected_failing_check",
+    [
+        ("selected_photo_indices", [0, 1, 2], "indices_valid"),
+    ],
+)
+def test_apply_rubric_surfaces_top_level_failure(
     field: str,
     value: object,
     expected_failing_check: str,
@@ -326,3 +432,15 @@ def test_apply_rubric_surfaces_targeted_failure(
     results = rubric.apply_rubric(narrative, n_photos=12)
     by_name = {r.name: r for r in results}
     assert by_name[expected_failing_check].passed is False
+
+
+def test_apply_rubric_surfaces_disjoint_pull_quote() -> None:
+    narrative = _replace(
+        _good_narrative(),
+        field="pull_quote",
+        lang="en",
+        value="Wholly disjoint synthetic words.",
+    )
+    results = rubric.apply_rubric(narrative, n_photos=12)
+    by_name = {r.name: r for r in results}
+    assert by_name["pull_quote_drawn_from_body"].passed is False

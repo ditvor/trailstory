@@ -91,8 +91,8 @@ def judge_narrative(
     Args:
         narrative: The narrative to score (already validated by the
             writer pipeline).
-        hike_input: Source ``HikeInput``; the seed text and baby info
-            are interpolated into the user prompt as context.
+        hike_input: Source ``HikeInput``; the seed text is interpolated
+            into the user prompt as context.
         client: Anthropic client wrapper. Caller is responsible for
             constructing this with the configured judge model
             (see :data:`DEFAULT_JUDGE_MODEL` and ``EVAL_JUDGE_MODEL``).
@@ -112,8 +112,6 @@ def judge_narrative(
     )
     base_prompt = USER_JUDGE_TEMPLATE.format(
         seed_text=hike_input.seed_text,
-        baby_name=hike_input.baby_name,
-        baby_age_months=hike_input.baby_age_months,
         narrative_json=narrative_json,
     )
 

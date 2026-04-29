@@ -18,48 +18,78 @@ When you change a prompt:
 
 from __future__ import annotations
 
-# System message — judge persona and output discipline. No placeholders.
+# ── SYSTEM_JUDGE ─────────────────────────────────────────────────────────────
 #
-# The judge is deliberately distinct from the writer: a different model
-# (``claude-sonnet-4-6`` by default) and a different instruction frame.
-# Same-model judging inflates scores — the judge agrees with its own
-# stylistic choices. See the "Paid judge layer" section in
-# ``docs/adr/003-narrative-eval-suite.md``.
+# Previous version (pre-2026-04). Bilingual EN/RU framing.
+# Kept for revertability while the tri-lingual variant settles.
+#
+# SYSTEM_JUDGE = """\
+# You are a strict literary critic scoring family hiking memories on a fixed rubric.
+# You read English and Russian fluently and can compare a translation to its source.
+# Score each axis on the 0-5 scale defined in the user message; do not invent axes.
+# Be conservative: 5 is reserved for output you would publish without edits.
+# Always output valid JSON matching the JudgeScore schema. No prose, no markdown fences.
+# """
+#
+# Current version (2026-04). Tri-lingual narratives — judge still scores
+# EN+RU on `russian_fidelity`; DE is eyeballed manually for v0
+# (see ADR-005 follow-up).
 SYSTEM_JUDGE: str = """\
-You are a strict literary critic scoring family hiking memories on a fixed rubric.
+You are a strict literary critic scoring hiking memories on a fixed rubric.
 You read English and Russian fluently and can compare a translation to its source.
+The narrative also includes a German variant; you are not asked to score it on this rubric.
 Score each axis on the 0-5 scale defined in the user message; do not invent axes.
 Be conservative: 5 is reserved for output you would publish without edits.
 Always output valid JSON matching the JudgeScore schema. No prose, no markdown fences.
 """
 
-# User message template. ``judge.py`` calls ``.format(**fields)`` on this.
+# ── USER_JUDGE_TEMPLATE ──────────────────────────────────────────────────────
+#
+# Previous version (pre-2026-04). Inlined ``baby_name`` / ``baby_age_months``
+# placeholders. Replaced under ADR-004 (drop baby fields) and ADR-005
+# (LocalizedString shape — narrative_json is now hierarchical).
+# Kept for revertability.
+#
+# USER_JUDGE_TEMPLATE = """\
+# You are scoring a bilingual hiking-memory narrative produced by another model
+# for a family with a young baby. The reader is a grandparent in Russia or a
+# friend abroad.
+#
+# Hike context:
+# - Parent's seed text: "{seed_text}"
+# - Baby: {baby_name}, {baby_age_months} months old
+#
+# Narrative under review (full JSON):
+# {narrative_json}
+# ... (rubric body) ...
+# """
+#
+# Current version (2026-04). Subject-agnostic; tri-lingual narrative_json.
 #
 # Required placeholders (the orchestrator must supply every one):
-#   seed_text, baby_name, baby_age_months, narrative_json
+#   seed_text, narrative_json
 #
 # JSON braces in the embedded skeleton are doubled (``{{`` / ``}}``) so
 # they survive ``str.format()`` unchanged.
 USER_JUDGE_TEMPLATE: str = """\
-You are scoring a bilingual hiking-memory narrative produced by another model
-for a family with a young baby. The reader is a grandparent in Russia or a
-friend abroad.
+You are scoring a hiking-memory narrative produced by another model. The
+narrative is in English, Russian, and German; you score the English and
+Russian variants only. The reader is a close family member or friend.
 
 Hike context:
-- Parent's seed text: "{seed_text}"
-- Baby: {baby_name}, {baby_age_months} months old
+- Hiker's seed text: "{seed_text}"
 
-Narrative under review (full JSON):
+Narrative under review (full JSON, with English/Russian/German variants):
 {narrative_json}
 
 Rubric — score each axis on a 0-5 float scale (0.5 increments are fine):
 
 - warmth (0-5): how warm, personal, and intimate the prose feels.
-  5 = a parent's voice, specific sensory detail, no boilerplate.
+  5 = a hiker's own voice, specific sensory detail, no boilerplate.
   3 = readable but generic.
   0 = sporty, achievement-focused, or detached.
 - narrative_arc (0-5): does the piece move through opening / effort /
-  landscape / baby detail / summit-or-endpoint, with a satisfying shape?
+  landscape / a human-detail beat / summit-or-endpoint, with a satisfying shape?
   5 = clear arc, every paragraph earns its place.
   3 = present but uneven (one beat thin, one beat overlong).
   0 = no discernible arc, or paragraphs in arbitrary order.

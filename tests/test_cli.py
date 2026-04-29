@@ -47,23 +47,41 @@ def _make_fake_client() -> MagicMock:
 def _valid_response_json(n_photos: int = 5) -> str:
     return json.dumps(
         {
-            "schema_version": 1,
-            "title_en": "Above the fog line",
-            "title_ru": "Над линией тумана",
-            "subtitle_en": "A morning above the cloud sea",
-            "subtitle_ru": "Утро над морем облаков",
-            "paragraphs_en": [
-                "We left the trailhead at first light.",
-                "By the saddle the cloud was thinning.",
-            ],
-            "paragraphs_ru": [
-                "Вышли на тропу с первыми лучами.",  # noqa: RUF001
-                "К седловине облака начали редеть.",  # noqa: RUF001
-            ],
-            "pull_quote_en": "The fog cleared just as we reached the ridge.",
-            "pull_quote_ru": "Туман рассеялся как раз когда мы вышли на хребет.",
-            "milestone_en": "First mountain hike",
-            "milestone_ru": "Первый горный поход",
+            "schema_version": 2,
+            "title": {
+                "en": "Above the fog line",
+                "ru": "Над линией тумана",
+                "de": "Über der Nebelgrenze",
+            },
+            "subtitle": {
+                "en": "A morning above the cloud sea",
+                "ru": "Утро над морем облаков",
+                "de": "Ein Morgen über dem Wolkenmeer",
+            },
+            "paragraphs": {
+                "en": [
+                    "We left the trailhead at first light.",
+                    "By the saddle the cloud was thinning.",
+                ],
+                "ru": [
+                    "Вышли на тропу с первыми лучами.",  # noqa: RUF001
+                    "К седловине облака начали редеть.",  # noqa: RUF001
+                ],
+                "de": [
+                    "Bei erstem Licht brachen wir auf.",
+                    "Am Sattel begann die Wolke sich zu lichten.",
+                ],
+            },
+            "pull_quote": {
+                "en": "The fog cleared just as we reached the ridge.",
+                "ru": "Туман рассеялся как раз когда мы вышли на хребет.",
+                "de": "Der Nebel lichtete sich, gerade als wir den Grat erreichten.",
+            },
+            "milestone": {
+                "en": "First mountain hike",
+                "ru": "Первый горный поход",
+                "de": "Erste Bergwanderung",
+            },
             "selected_photo_indices": list(range(n_photos)),
         }
     )
@@ -91,10 +109,6 @@ def test_generate_happy_path(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) ->
             str(FIXTURES / "sample.gpx"),
             "--seed",
             "The fog cleared just as we reached the ridge.",
-            "--name",
-            "Mia",
-            "--age",
-            "5",
             "--out",
             str(out_dir),
             "--location",
@@ -114,6 +128,7 @@ def test_generate_happy_path(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) ->
     html = rendered[0].read_text(encoding="utf-8")
     assert "Above the fog line" in html
     assert "Над линией тумана" in html
+    assert "Über der Nebelgrenze" in html
     assert "data:image/jpeg;base64," in html
     assert "bavarian-alps" in rendered[0].name
 
@@ -212,10 +227,6 @@ def test_generate_second_run_uses_cache_and_skips_llm_call(
         str(FIXTURES / "sample.gpx"),
         "--seed",
         "The fog cleared just as we reached the ridge.",
-        "--name",
-        "Mia",
-        "--age",
-        "5",
         "--out",
         str(out_dir),
         "--location",

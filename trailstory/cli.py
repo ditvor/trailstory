@@ -60,8 +60,6 @@ def cli() -> None:
     required=True,
     help="2-3 sentence emotional seed describing the hike.",
 )
-@click.option("--name", default="Mia", show_default=True, help="Baby's name.")
-@click.option("--age", default=5, show_default=True, type=int, help="Baby's age in months.")
 @click.option(
     "--out",
     "out_dir_arg",
@@ -91,8 +89,6 @@ def generate(
     photos_path: Path,
     gpx_path: Path,
     seed: str,
-    name: str,
-    age: int,
     out_dir_arg: Path | None,
     location: str | None,
     instagram: bool,
@@ -128,8 +124,6 @@ def generate(
                 gpx_path=gpx_path,
                 photos_dir=photos_path,
                 seed_text=seed,
-                baby_name=name,
-                baby_age_months=age,
                 location_name=location,
             )
             client = AnthropicClient(

@@ -39,9 +39,33 @@ class HikeInput(BaseModel):
     # downstream cache key. Pydantic raises ValidationError on overflow,
     # which the CLI surfaces as a clean error message.
     seed_text: str = Field(max_length=1000)
-    baby_name: str
-    baby_age_months: int = Field(ge=0)
     location_name: str | None = None
+
+
+class LocalizedString(BaseModel):
+    """One user-facing string in every supported language.
+
+    The narrative pipeline produces every user-facing field in EN, RU, and
+    DE in a single LLM call (see ADR-005). Adding a fourth language is one
+    field here and one corresponding key in the prompt's JSON skeleton —
+    no new flat fields elsewhere.
+    """
+
+    en: str
+    ru: str
+    de: str
+
+
+class LocalizedParagraphs(BaseModel):
+    """Sibling of ``LocalizedString`` for multi-paragraph fields.
+
+    A ``LocalizedString`` can't carry list values, so paragraph blocks use
+    this small parallel shape. Same language set, same evolution rules.
+    """
+
+    en: list[str]
+    ru: list[str]
+    de: list[str]
 
 
 class NarrativeOutput(BaseModel):
@@ -50,17 +74,12 @@ class NarrativeOutput(BaseModel):
     # change to an existing one). The narrative cache (see
     # ``trailstory.llm.cache``) refuses to return entries whose
     # ``schema_version`` differs from the current value.
-    schema_version: int = 1
-    title_en: str
-    title_ru: str
-    subtitle_en: str
-    subtitle_ru: str
-    paragraphs_en: list[str]
-    paragraphs_ru: list[str]
-    pull_quote_en: str
-    pull_quote_ru: str
-    milestone_en: str
-    milestone_ru: str
+    schema_version: int = 2
+    title: LocalizedString
+    subtitle: LocalizedString
+    paragraphs: LocalizedParagraphs
+    pull_quote: LocalizedString
+    milestone: LocalizedString
     selected_photo_indices: list[int]
 
 

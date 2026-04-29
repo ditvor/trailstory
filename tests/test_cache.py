@@ -14,7 +14,15 @@ from pathlib import Path
 import pytest
 
 from trailstory.llm import cache
-from trailstory.models import GpxStats, HikeInput, NarrativeOutput, PhotoMeta, Waypoint
+from trailstory.models import (
+    GpxStats,
+    HikeInput,
+    LocalizedParagraphs,
+    LocalizedString,
+    NarrativeOutput,
+    PhotoMeta,
+    Waypoint,
+)
 
 # ── fixtures ─────────────────────────────────────────────────────────────────
 
@@ -53,25 +61,38 @@ def _hike_input(gpx_path: Path) -> HikeInput:
         gpx_path=gpx_path,
         photos_dir=gpx_path.parent,
         seed_text="The fog cleared just as we reached the ridge.",
-        baby_name="Mia",
-        baby_age_months=5,
         location_name="Bavarian Alps",
     )
 
 
 def _narrative() -> NarrativeOutput:
     return NarrativeOutput(
-        schema_version=1,
-        title_en="Above the fog line",
-        title_ru="Над линией тумана",
-        subtitle_en="A morning above the cloud sea",
-        subtitle_ru="Утро над морем облаков",
-        paragraphs_en=["First paragraph.", "Second paragraph."],
-        paragraphs_ru=["Первый абзац.", "Второй абзац."],
-        pull_quote_en="The fog cleared just as we reached the ridge.",
-        pull_quote_ru="Туман рассеялся как раз когда мы вышли на хребет.",
-        milestone_en="First mountain hike",
-        milestone_ru="Первый горный поход",
+        schema_version=2,
+        title=LocalizedString(
+            en="Above the fog line",
+            ru="Над линией тумана",
+            de="Über der Nebelgrenze",
+        ),
+        subtitle=LocalizedString(
+            en="A morning above the cloud sea",
+            ru="Утро над морем облаков",
+            de="Ein Morgen über dem Wolkenmeer",
+        ),
+        paragraphs=LocalizedParagraphs(
+            en=["First paragraph.", "Second paragraph."],
+            ru=["Первый абзац.", "Второй абзац."],
+            de=["Erster Absatz.", "Zweiter Absatz."],
+        ),
+        pull_quote=LocalizedString(
+            en="The fog cleared just as we reached the ridge.",
+            ru="Туман рассеялся как раз когда мы вышли на хребет.",
+            de="Der Nebel lichtete sich, gerade als wir den Grat erreichten.",
+        ),
+        milestone=LocalizedString(
+            en="First mountain hike",
+            ru="Первый горный поход",
+            de="Erste Bergwanderung",
+        ),
         selected_photo_indices=[0, 1, 2, 3, 4, 5],
     )
 
@@ -134,30 +155,6 @@ def test_cache_key_changes_when_seed_text_changes(tmp_path: Path) -> None:
     photos = [_write_photo(tmp_path, "a.jpg")]
     base = _hike_input(gpx)
     other = base.model_copy(update={"seed_text": "completely different seed"})
-
-    k_base = cache.cache_key(base, _gpx_stats(), photos, "claude-opus-4-7")
-    k_other = cache.cache_key(other, _gpx_stats(), photos, "claude-opus-4-7")
-
-    assert k_base != k_other
-
-
-def test_cache_key_changes_when_baby_name_changes(tmp_path: Path) -> None:
-    gpx = _write_gpx(tmp_path)
-    photos = [_write_photo(tmp_path, "a.jpg")]
-    base = _hike_input(gpx)
-    other = base.model_copy(update={"baby_name": "Lev"})
-
-    k_base = cache.cache_key(base, _gpx_stats(), photos, "claude-opus-4-7")
-    k_other = cache.cache_key(other, _gpx_stats(), photos, "claude-opus-4-7")
-
-    assert k_base != k_other
-
-
-def test_cache_key_changes_when_baby_age_changes(tmp_path: Path) -> None:
-    gpx = _write_gpx(tmp_path)
-    photos = [_write_photo(tmp_path, "a.jpg")]
-    base = _hike_input(gpx)
-    other = base.model_copy(update={"baby_age_months": 6})
 
     k_base = cache.cache_key(base, _gpx_stats(), photos, "claude-opus-4-7")
     k_other = cache.cache_key(other, _gpx_stats(), photos, "claude-opus-4-7")
@@ -270,7 +267,7 @@ def test_get_returns_none_when_payload_missing_required_field(tmp_path: Path) ->
     cache_dir = tmp_path / "cache"
     cache_dir.mkdir()
     payload = _narrative().model_dump(mode="json")
-    del payload["title_en"]
+    del payload["title"]
     (cache_dir / "broken.json").write_text(json.dumps(payload), encoding="utf-8")
 
     assert cache.get("broken") is None

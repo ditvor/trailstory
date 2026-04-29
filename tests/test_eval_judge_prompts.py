@@ -32,8 +32,6 @@ from tests.eval.judge_prompts import (
 EXPECTED_PLACEHOLDERS: frozenset[str] = frozenset(
     {
         "seed_text",
-        "baby_name",
-        "baby_age_months",
         "narrative_json",
     }
 )
@@ -49,12 +47,10 @@ def sample_fields() -> dict[str, object]:
     """Plausible values for every documented placeholder."""
     return {
         "seed_text": "The fog cleared just as we reached the ridge.",
-        "baby_name": "Mia",
-        "baby_age_months": 5,
         "narrative_json": json.dumps(
             {
-                "title_en": "Above the fog line",
-                "paragraphs_en": ["short stub paragraph"],
+                "title": {"en": "Above the fog line", "ru": "x", "de": "y"},
+                "paragraphs": {"en": ["short stub paragraph"], "ru": ["x"], "de": ["y"]},
             },
             ensure_ascii=False,
             indent=2,
@@ -112,8 +108,6 @@ def test_user_template_format_propagates_values(
     sample_fields: dict[str, object],
 ) -> None:
     rendered = USER_JUDGE_TEMPLATE.format(**sample_fields)
-    assert "Mia" in rendered
-    assert "5" in rendered
     assert "fog cleared" in rendered
     assert "Above the fog line" in rendered  # comes via narrative_json
 
