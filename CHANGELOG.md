@@ -9,6 +9,57 @@ Versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+### Added
+- Test gaps that 99% line coverage was hiding:
+  - **Golden-file HTML regression test.**
+    `tests/test_dev_helpers.py::test_render_with_fixtures_matches_golden`
+    re-renders the bundled fixtures into a `tmp_path` and asserts byte
+    equality against `tests/golden/test-render.html`. The render is
+    deterministic given the same inputs (Pillow 12.2 pinned, fixed seed
+    text), so any silent change to `templates/memory.html.j2`, the
+    elevation-profile SVG, or the photo-encoding pipeline will trip the
+    assertion. New `make golden-update` regenerates the golden after an
+    intentional change.
+  - **Long-title carousel bounds test.**
+    `tests/test_instagram.py::test_carousel_title_stays_within_slide_bounds`
+    parametrizes 1, 5, 12, and 25-word titles and asserts every drawn
+    glyph stays within `SLIDE_H - 100` × `SLIDE_W - 80` via
+    `ImageDraw.textbbox`. The 25-word case forced a layout fix in
+    `trailstory/renderers/instagram.py`: the title font now shrinks
+    dynamically from 88pt down to 40pt in 8-step decrements (`_fit_title`)
+    until the wrapped block fits the title slot, instead of overflowing
+    off the slide.
+  - **GPX edge cases.** `tests/test_gpx.py` now covers a single-trkpt
+    GPX (`parse_gpx` returns successfully; `elevation_profile` returns
+    the constant `[(0.0, 0.5), (1.0, 0.5)]` fallback), a flat track
+    where every elevation is identical (every y in the profile is
+    exactly 0.5), and a GPX with no trkpt timestamps (`moving_time` is
+    0, so `duration_min` is 0).
+  - **Property-based tests.** `tests/test_properties.py` uses
+    Hypothesis to drive `_slugify` (output regex `^[a-z0-9-]*$` for any
+    text), `_derive_slug` (always non-empty; matches
+    `^\d{4}-\d{2}-\d{2}-`), `_wrap_text` (joining the wrapped lines
+    reproduces the original word sequence; no line contains a literal
+    newline), and `elevation_profile` (output length always equals
+    `n`; x is monotonically non-decreasing; every y is in `[0, 1]`).
+    Adds `hypothesis>=6` to the dev dependency group.
+  - **`MODEL` env override test.**
+    `tests/test_cli.py::test_generate_passes_model_env_override_into_client`
+    monkeypatches `MODEL=claude-sonnet-4-6`, captures the kwargs the CLI
+    passes to `AnthropicClient`, and asserts the override flows through
+    `Settings`. Locks in the documented escape hatch from CLAUDE.md.
+
+### Changed
+- `trailstory/renderers/instagram.py` title slide layout. The title
+  font now picks the largest size between 88pt and 40pt (in 8pt steps)
+  whose wrapped block fits within `TITLE_MAX_WIDTH=920` ×
+  `TITLE_MAX_HEIGHT=480`, replacing the previous fixed 88pt that would
+  overflow the slide on long titles. Layout constants
+  (`TITLE_TOP=360`, `TITLE_LINE_SPACING=18`, font-size bracket) are
+  exported as module-level `Final[int]` so the new bounds test in
+  `tests/test_instagram.py` can re-run the exact same layout
+  computation when measuring drawn glyph extents.
+
 ### Security
 - Pillow upgraded from `>=10.3,<12` to `>=12.2,<13` in `pyproject.toml`,
   which picks up the fixes for CVE-2026-25990 (Pillow 12.1.1) and
