@@ -21,6 +21,16 @@ Versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   in `trailstory/photos.py` still behaves the same way under the new
   version.
 
+### Fixed
+- `.github/workflows/security.yml` no longer combines `--strict` with
+  `--skip-editable`, which conflict: `--strict` re-escalates the
+  editable-skip warning into a fatal error, so the dep-audit job was
+  failing on every run with `ERROR: trailstory: distribution marked as
+  editable` regardless of whether real CVEs were present. Dropping
+  `--strict` keeps the job's actual signal (non-zero exit on a real
+  CVE) intact while letting the local editable install be skipped
+  cleanly.
+
 ### Added
 - Defense-in-depth security baseline. `.github/workflows/security.yml`
   runs on every push to `develop` and every PR with two jobs:
