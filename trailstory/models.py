@@ -33,7 +33,12 @@ class PhotoMeta(BaseModel):
 class HikeInput(BaseModel):
     gpx_path: Path
     photos_dir: Path
-    seed_text: str
+    # Cap the parent's free-text seed at 1000 characters. Real seeds are
+    # 2-3 sentences; this is a defensive bound against a malicious or
+    # accidentally enormous payload bloating the LLM prompt and the
+    # downstream cache key. Pydantic raises ValidationError on overflow,
+    # which the CLI surfaces as a clean error message.
+    seed_text: str = Field(max_length=1000)
     baby_name: str
     baby_age_months: int = Field(ge=0)
     location_name: str | None = None

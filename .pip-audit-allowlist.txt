@@ -1,0 +1,27 @@
+# pip-audit allowlist — one vulnerability id per line.
+#
+# Add a CVE / GHSA / PYSEC id here only after triaging the advisory and
+# concluding it does not affect Trailstory (e.g. the vulnerable code path
+# is not reached, or no fixed version exists yet and the risk is accepted
+# for a single release). Always include a comment with the id explaining
+# why it is allow-listed and link the upstream advisory.
+#
+# Lines that are blank or start with '#' are ignored by .github/workflows/security.yml.
+
+# ── Pillow 11.x CVEs, fix lives in 12.x ───────────────────────────────────────
+#
+# Both advisories below are addressed in Pillow 12.x. The pyproject.toml
+# constraint currently pins `Pillow>=10.3,<12`, so picking up the fix
+# requires a major-version bump tracked in a dedicated follow-up PR
+# (chore/upgrade-pillow-12). In the meantime the risk is accepted for a
+# single release because Trailstory's input pipeline is narrow:
+#
+#   * file extensions are restricted to jpg/jpeg/heic/heif via
+#     SUPPORTED_EXTENSIONS in trailstory/photos.py — no SVG, GIF, ICO, etc.,
+#   * pixel count is capped at 200_000_000 via Image.MAX_IMAGE_PIXELS,
+#   * the source directory is chosen by the parent on their own laptop —
+#     there is no upload surface or untrusted-network path into Pillow.
+#
+# Remove these two lines as soon as chore/upgrade-pillow-12 lands.
+CVE-2026-25990
+CVE-2026-40192

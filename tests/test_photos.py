@@ -192,6 +192,25 @@ def test_load_photos_handles_malformed_exif_datetime(tmp_path: Path) -> None:
     assert photo.timestamp == datetime.fromtimestamp(fixed)
 
 
+def test_load_photos_rejects_pixel_bomb(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    """A source whose pixel count exceeds Image.MAX_IMAGE_PIXELS must be
+    rejected as a ``PhotoLoadError`` rather than allowed to consume RAM.
+
+    We dial the threshold down with monkeypatch so the fixture can stay tiny
+    on disk — a 1000x1000 JPEG is far cheaper to keep around than a synthetic
+    bomb large enough to trip the production 200 MP cap.
+    """
+    src = tmp_path / "src"
+    src.mkdir()
+    _make_jpeg(src / "huge.jpg", size=(1000, 1000), exif_datetime="2025:01:01 00:00:00")
+
+    # 100_000 < 1000*1000 = 1_000_000 → Pillow raises DecompressionBombError.
+    monkeypatch.setattr(Image, "MAX_IMAGE_PIXELS", 100_000)
+
+    with pytest.raises(PhotoLoadError, match="exceeds the maximum pixel budget"):
+        load_photos(src, tmp_path / "out")
+
+
 def test_load_photos_strips_gps_and_applies_exif_transpose(tmp_path: Path) -> None:
     """A photo with GPS coordinates and a non-default orientation tag must be
     written out with no GPS IFD (privacy) and with orientation baked into the

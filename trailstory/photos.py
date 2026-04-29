@@ -10,6 +10,15 @@ from trailstory.models import PhotoMeta
 
 register_heif_opener()
 
+# Reject decompression bombs while staying generous for legitimate photos.
+# 200 megapixels is well above any modern phone or full-frame camera sensor
+# (the 102 MP medium-format Fujifilm GFX is currently the high-water mark
+# for prosumer hardware) but small enough that Pillow refuses to decode the
+# obvious bomb shapes (e.g. a 50000x50000 PNG that decompresses from a few
+# kilobytes of zlib). Pillow raises Image.DecompressionBombError above this
+# threshold, which load_photos wraps in PhotoLoadError.
+Image.MAX_IMAGE_PIXELS = 200_000_000
+
 SUPPORTED_EXTENSIONS = frozenset({".jpg", ".jpeg", ".heic", ".heif"})
 DEFAULT_MAX_EDGE = 1800
 DEFAULT_QUALITY = 90
@@ -59,28 +68,32 @@ def load_photos(
 
     items: list[tuple[datetime, Path]] = []
     for src in sources:
-        with Image.open(src) as raw:
-            # Bake the EXIF orientation into pixels — otherwise iPhone portraits
-            # come out sideways in viewers that ignore the tag.
-            img = ImageOps.exif_transpose(raw)
-            timestamp = _extract_timestamp(img, src)
-            exif = img.getexif()
-            # Strip the GPS sub-IFD pointer; HTML output base64-embeds these
-            # JPEGs verbatim, so any GPS coordinates would travel with the file.
-            # PIL's Exif.tobytes() iterates the private _ifds cache and restores
-            # any cached sub-IFD whose tag is missing from the main dict, so we
-            # have to clear that cache too — pop alone is not enough.
-            exif.pop(_EXIF_GPS_IFD_TAG, None)
-            # PIL has no public API to drop a cached sub-IFD; reach into the
-            # private cache (this is the only way to make tobytes() drop GPS).
-            exif._ifds.pop(_EXIF_GPS_IFD_TAG, None)  # type: ignore[attr-defined]
-            img.thumbnail((max_edge, max_edge), Image.Resampling.LANCZOS)
-            out_path = resize_dir / f"{src.stem}.jpg"
-            rgb = img.convert("RGB")
-            if len(exif):
-                rgb.save(out_path, format="JPEG", quality=quality, exif=exif.tobytes())
-            else:
-                rgb.save(out_path, format="JPEG", quality=quality)
+        try:
+            with Image.open(src) as raw:
+                # Bake the EXIF orientation into pixels — otherwise iPhone portraits
+                # come out sideways in viewers that ignore the tag.
+                img = ImageOps.exif_transpose(raw)
+                timestamp = _extract_timestamp(img, src)
+                exif = img.getexif()
+                # Strip the GPS sub-IFD pointer; HTML output base64-embeds these
+                # JPEGs verbatim, so any GPS coordinates would travel with the file.
+                # PIL's Exif.tobytes() iterates the private _ifds cache and restores
+                # any cached sub-IFD whose tag is missing from the main dict, so we
+                # have to clear that cache too — pop alone is not enough.
+                exif.pop(_EXIF_GPS_IFD_TAG, None)
+                # PIL has no public API to drop a cached sub-IFD; reach into the
+                # private cache (this is the only way to make tobytes() drop GPS).
+                exif._ifds.pop(_EXIF_GPS_IFD_TAG, None)  # type: ignore[attr-defined]
+                img.thumbnail((max_edge, max_edge), Image.Resampling.LANCZOS)
+                out_path = resize_dir / f"{src.stem}.jpg"
+                rgb = img.convert("RGB")
+                if len(exif):
+                    rgb.save(out_path, format="JPEG", quality=quality, exif=exif.tobytes())
+                else:
+                    rgb.save(out_path, format="JPEG", quality=quality)
+        except Image.DecompressionBombError as exc:
+            # Hostile or accidental pixel bomb; refuse rather than blow up RAM.
+            raise PhotoLoadError(f"{src} exceeds the maximum pixel budget: {exc}") from exc
         items.append((timestamp, out_path))
 
     items.sort(key=lambda t: t[0])
