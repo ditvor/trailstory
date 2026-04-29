@@ -1,0 +1,14 @@
+# Gitleaks config. Extends the default ruleset (so no built-in detection is
+# lost) and allowlists the detect-secrets baseline, whose `hashed_secret`
+# SHA1s are high-entropy by design but reveal nothing — they only mark
+# already-acknowledged findings. See `.pre-commit-config.yaml` for the
+# detect-secrets hook that owns that file.
+
+[extend]
+useDefault = true
+
+[allowlist]
+description = "detect-secrets baseline — SHA1 hashes of acknowledged findings"
+paths = [
+    '''\.secrets\.baseline$''',
+]

@@ -50,6 +50,15 @@ Versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   them) and `make ci` (the CI-equivalent gate), and explaining how to
   refresh `.secrets.baseline` if `detect-secrets` flags a new
   fixture-only fake token.
+- `.gitleaks.toml` extends the default gitleaks ruleset
+  (`useDefault = true`) and allowlists `.secrets.baseline` so the
+  Security workflow's `gitleaks` job does not flag the SHA1
+  `hashed_secret` values that `detect-secrets` writes there by design.
+  Without the allowlist, gitleaks's `generic-api-key` rule fires on
+  any high-entropy hash inside the baseline; the hashes themselves
+  reveal nothing (they only mark already-acknowledged findings owned
+  by the `detect-secrets` pre-commit hook). Every other path is still
+  scanned with the full default ruleset.
 - Test gaps that 99% line coverage was hiding:
   - **Golden-file HTML regression test.**
     `tests/test_dev_helpers.py::test_render_with_fixtures_matches_golden`
