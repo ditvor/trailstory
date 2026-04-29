@@ -65,4 +65,9 @@ jobs:
               esac
             done < .pip-audit-allowlist.txt
           fi
-          pip-audit --strict --progress-spinner off "${ignore_args[@]}"
+          # --skip-editable: trailstory itself is installed editable from a
+          # local checkout and is not published to PyPI; pip-audit would
+          # otherwise abort with "Dependency not found on PyPI" under --strict.
+          # Only the editable package is skipped — every third-party dep in the
+          # resolved environment is still audited.
+          pip-audit --strict --skip-editable --progress-spinner off "${ignore_args[@]}"
