@@ -17,7 +17,7 @@ TRAILSTORY := $(if $(wildcard $(BIN)/trailstory),$(BIN)/trailstory,trailstory)
 
 # ── Setup ──────────────────────────────────────────────────────────────────────
 
-setup:              ## One-shot: create .venv, install deps, install git hooks
+setup:              ## One-shot: create .venv, install deps, install git hooks, install pre-commit
 	@if [ ! -d $(VENV) ]; then \
 		echo "→ creating $(VENV) with $(PYTHON)"; \
 		$(PYTHON) -m venv $(VENV); \
@@ -27,6 +27,8 @@ setup:              ## One-shot: create .venv, install deps, install git hooks
 	@$(VENV)/bin/pip install --upgrade pip
 	@$(VENV)/bin/pip install -e ".[dev]"
 	@$(MAKE) --no-print-directory install-hooks
+	@echo "→ installing pre-commit hooks"
+	@$(VENV)/bin/pre-commit install --install-hooks
 	@echo ""
 	@echo "✓ setup complete. Activate with:  source $(VENV)/bin/activate"
 

@@ -10,6 +10,55 @@ Versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 ## [Unreleased]
 
 ### Added
+- Dev-loop quality baseline. New `.pre-commit-config.yaml` registers
+  `ruff` (with `--fix`), `ruff-format`, `detect-secrets` against the new
+  `.secrets.baseline`, and the upstream `check-added-large-files` hook
+  capped at 1 MB. `pre-commit>=3.7,<5` is now part of
+  `[project.optional-dependencies] dev` in `pyproject.toml`, and the
+  `setup` target in the `Makefile` ends with
+  `pre-commit install --install-hooks` so a fresh `make setup` lands a
+  developer in a state where every commit runs the same lint/format/secret
+  gates. Running `make setup` again is idempotent — `pre-commit install`
+  overwrites the existing hook script in place. The CI-equivalent gate
+  is unchanged (`make ci`); the new hooks are an earlier, faster local
+  layer on top of it.
+- Python 3.13 added to the CI matrix in `.github/workflows/ci.yml`
+  alongside 3.12. `fail-fast: false` is set so a regression on one
+  version does not mask the other, and the `coverage-report` artifact
+  upload is gated on `matrix.python-version == '3.12'` so the two
+  matrix legs do not collide on the same artifact name. No dependency
+  bumps were required — every entry under `[project] dependencies`
+  already publishes 3.13 wheels.
+- `.github/workflows/pr-title.yml` runs
+  `amannn/action-semantic-pull-request@v5` on every pull request and
+  fails the check if the title does not start with one of the eight
+  Conventional Commits prefixes documented in `CONTRIBUTING.md`
+  (`feat`, `fix`, `chore`, `docs`, `test`, `refactor`, `perf`,
+  `style`). Subject must start with a lowercase letter to match the
+  existing commit-message convention.
+- `.github/dependabot.yml` opens a single weekly PR per ecosystem on
+  Mondays at 06:00 Europe/Berlin: one for Python deps from
+  `pyproject.toml` (minor + patch grouped under `python-minor-patch`)
+  and one for GitHub Actions versions (minor + patch grouped under
+  `actions-minor-patch`). Major-version bumps are still opened
+  individually so each gets a dedicated `chore/` PR per
+  `CONTRIBUTING.md`. Both ecosystems target `develop`, label PRs
+  `type: chore`, and use `chore(deps)` / `chore(ci)` Conventional
+  Commits prefixes so the new PR-title check accepts them.
+- `CONTRIBUTING.md` gains a "Pre-commit hooks" subsection under "Code
+  quality standards" pointing at `make setup` (which now installs
+  them) and `make ci` (the CI-equivalent gate), and explaining how to
+  refresh `.secrets.baseline` if `detect-secrets` flags a new
+  fixture-only fake token.
+- `.gitleaks.toml` extends the default gitleaks ruleset
+  (`useDefault = true`) and allowlists `.secrets.baseline` so the
+  Security workflow's `gitleaks` job does not flag the SHA1
+  `hashed_secret` values that `detect-secrets` writes there by design.
+  Without the allowlist, gitleaks's `generic-api-key` rule fires on
+  any high-entropy hash inside the baseline; the hashes themselves
+  reveal nothing (they only mark already-acknowledged findings owned
+  by the `detect-secrets` pre-commit hook). Every other path is still
+  scanned with the full default ruleset.
 - Test gaps that 99% line coverage was hiding:
   - **Golden-file HTML regression test.**
     `tests/test_dev_helpers.py::test_render_with_fixtures_matches_golden`

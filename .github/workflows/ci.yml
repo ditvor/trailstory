@@ -17,8 +17,9 @@ jobs:
     timeout-minutes: 10
 
     strategy:
+      fail-fast: false
       matrix:
-        python-version: ["3.12"]
+        python-version: ["3.12", "3.13"]
 
     steps:
       - name: Checkout
@@ -56,7 +57,7 @@ jobs:
           ANTHROPIC_API_KEY: sk-ant-test-fake-key-for-ci-only
 
       - name: Upload coverage report
-        if: github.ref == 'refs/heads/develop'
+        if: github.ref == 'refs/heads/develop' && matrix.python-version == '3.12'
         uses: actions/upload-artifact@v4
         with:
           name: coverage-report
