@@ -1,0 +1,366 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>{{ narrative.title.en }}</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+  body {
+    font-family: "Iowan Old Style", "Hoefler Text", "Garamond Premier Pro",
+                 ui-serif, Georgia, "Times New Roman", serif;
+    color: #2a2520;
+    background: #ede4d3;
+    line-height: 1.55;
+    -webkit-font-smoothing: antialiased;
+  }
+  main {
+    max-width: 880px;
+    margin: 0 auto;
+    padding: 3rem 1.5rem 4.5rem;
+    background: #f6efe1;
+    box-shadow: 0 0 0 1px #cdbfa3 inset, 0 0 60px rgba(0,0,0,0.05);
+  }
+
+  /* hero — kunstbuch frontispiece */
+  header.hero {
+    text-align: center;
+    margin-bottom: 2.5rem;
+    padding-bottom: 1.5rem;
+    border-bottom: 3px double #6b5a37;
+  }
+  .plate-no {
+    font-family: "Didot", "Bodoni 72", "Playfair Display", Garamond, ui-serif, serif;
+    font-size: 0.7rem;
+    letter-spacing: 0.45em;
+    text-transform: uppercase;
+    color: #6b5a37;
+    margin-bottom: 1rem;
+  }
+  .milestone {
+    display: inline-block;
+    padding: 0.35rem 1rem;
+    border-top: 1px solid #6b5a37;
+    border-bottom: 1px solid #6b5a37;
+    font-family: "Didot", "Bodoni 72", "Playfair Display", Garamond, ui-serif, serif;
+    font-size: 0.72rem;
+    letter-spacing: 0.3em;
+    text-transform: uppercase;
+    color: #6b5a37;
+    margin-bottom: 1.25rem;
+  }
+  h1 {
+    font-family: "Didot", "Bodoni 72", "Playfair Display", Garamond, ui-serif, serif;
+    font-size: clamp(2.3rem, 6vw, 3.6rem);
+    margin: 0 0 0.6rem;
+    line-height: 1.1;
+    font-weight: 400;
+    letter-spacing: 0.005em;
+  }
+  .subtitle {
+    margin: 0 0 0.8rem;
+    font-size: 1.05rem;
+    font-style: italic;
+    color: #5a4d35;
+    font-weight: 400;
+    font-variant: small-caps;
+    letter-spacing: 0.05em;
+  }
+  .meta {
+    font-size: 0.85rem;
+    color: #6b5a37;
+    font-style: italic;
+  }
+
+  /* lang toggle */
+  .lang-toggle { position: fixed; top: 0.75rem; right: 0.75rem; z-index: 10; }
+  .lang-toggle button {
+    background: #2a2520;
+    color: #ede4d3;
+    border: 1px solid #6b5a37;
+    border-radius: 0;
+    padding: 0.45rem 0.95rem;
+    font: inherit;
+    font-family: "Didot", Garamond, ui-serif, serif;
+    font-size: 0.75rem;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    cursor: pointer;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.18);
+  }
+
+  body.lang-en .ru, body.lang-en .de { display: none; }
+  body.lang-ru .en, body.lang-ru .de { display: none; }
+  body.lang-de .en, body.lang-de .ru { display: none; }
+
+  /* stats — labelled vignette */
+  .stats {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 0;
+    padding: 0;
+    margin: 0 0 1.75rem;
+    border-top: 1px solid #6b5a37;
+    border-bottom: 1px solid #6b5a37;
+    text-align: center;
+  }
+  .stats > div {
+    padding: 1rem 0.5rem;
+    border-right: 1px solid #cdbfa3;
+  }
+  .stats > div:last-child { border-right: 0; }
+  .stats .v {
+    font-family: "Didot", "Bodoni 72", Garamond, ui-serif, serif;
+    font-size: 1.5rem;
+    font-weight: 400;
+    color: #2a2520;
+  }
+  .stats .l {
+    font-size: 0.65rem;
+    color: #6b5a37;
+    text-transform: uppercase;
+    letter-spacing: 0.18em;
+    margin-top: 0.25rem;
+    font-style: italic;
+  }
+
+  /* elevation profile — engraved sepia plate */
+  .elevation {
+    width: 100%;
+    height: 130px;
+    margin-bottom: 2.5rem;
+    display: block;
+  }
+  .elevation path {
+    fill: rgba(107, 90, 55, 0.18);
+    stroke: #6b5a37;
+    stroke-width: 0.5;
+    stroke-linejoin: round;
+  }
+
+  /* article — two-column body with drop cap */
+  article {
+    column-count: 2;
+    column-gap: 2.25rem;
+    column-rule: 1px solid #cdbfa3;
+    text-align: justify;
+    hyphens: auto;
+  }
+  article p {
+    font-size: 1.04rem;
+    margin: 0 0 1rem;
+  }
+  article > div > p:first-of-type::first-letter {
+    font-family: "Didot", "Bodoni 72", "Playfair Display", Garamond, ui-serif, serif;
+    float: left;
+    font-size: 3.5rem;
+    line-height: 0.9;
+    padding: 0.3rem 0.55rem 0 0;
+    color: #6b5a37;
+    font-weight: 400;
+  }
+  blockquote {
+    column-span: all;
+    border-top: 1px solid #6b5a37;
+    border-bottom: 1px solid #6b5a37;
+    margin: 1.75rem 0;
+    padding: 1rem 0;
+    font-family: "Didot", "Bodoni 72", Garamond, ui-serif, serif;
+    font-size: 1.45rem;
+    font-style: italic;
+    text-align: center;
+    color: #2a2520;
+    line-height: 1.35;
+  }
+
+  /* photo plates — figure with figure caption */
+  .photos {
+    column-span: all;
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 2rem;
+    margin: 2.5rem 0;
+  }
+  @media (min-width: 640px) {
+    .photos { grid-template-columns: 1fr 1fr; }
+  }
+  .photos figure {
+    margin: 0;
+    text-align: center;
+  }
+  .photos img {
+    width: 100%;
+    height: auto;
+    display: block;
+    border: 1px solid #6b5a37;
+    padding: 6px;
+    background: #ede4d3;
+    box-shadow: 0 4px 14px rgba(0,0,0,0.08);
+  }
+  .photos figcaption {
+    margin-top: 0.65rem;
+    font-style: italic;
+    font-size: 0.82rem;
+    color: #5a4d35;
+    letter-spacing: 0.04em;
+  }
+
+  /* share */
+  .share {
+    column-span: all;
+    text-align: center;
+    margin: 2.5rem 0 1rem;
+    padding-top: 1.5rem;
+    border-top: 3px double #6b5a37;
+  }
+  .share a, .share button {
+    display: inline-block;
+    margin: 0.25rem;
+    padding: 0.55rem 1.25rem;
+    border: 1px solid #6b5a37;
+    background: transparent;
+    color: #2a2520;
+    text-decoration: none;
+    font: inherit;
+    font-family: "Didot", Garamond, ui-serif, serif;
+    font-size: 0.78rem;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    cursor: pointer;
+  }
+
+  footer {
+    column-span: all;
+    text-align: center;
+    color: #6b5a37;
+    font-size: 0.7rem;
+    margin-top: 2rem;
+    font-style: italic;
+    letter-spacing: 0.12em;
+  }
+</style>
+</head>
+<body class="lang-en style-encyclopedia">
+  <div class="lang-toggle">
+    <button id="langBtn" type="button" aria-label="Switch language">EN · RU · DE</button>
+  </div>
+
+  <main>
+    <header class="hero">
+      <div class="plate-no">Plate &mdash; {{ meta.slug }}</div>
+      <span class="milestone">
+        <span class="en">{{ narrative.milestone.en }}</span>
+        <span class="ru">{{ narrative.milestone.ru }}</span>
+        <span class="de">{{ narrative.milestone.de }}</span>
+      </span>
+      <h1>
+        <span class="en">{{ narrative.title.en }}</span>
+        <span class="ru">{{ narrative.title.ru }}</span>
+        <span class="de">{{ narrative.title.de }}</span>
+      </h1>
+      <p class="subtitle">
+        <span class="en">{{ narrative.subtitle.en }}</span>
+        <span class="ru">{{ narrative.subtitle.ru }}</span>
+        <span class="de">{{ narrative.subtitle.de }}</span>
+      </p>
+      {% if meta.location or meta.date %}
+      <div class="meta">
+        {% if meta.location %}{{ meta.location }}{% endif %}
+        {% if meta.location and meta.date %} &mdash; {% endif %}
+        {% if meta.date %}{{ meta.date }}{% endif %}
+      </div>
+      {% endif %}
+    </header>
+
+    <section class="stats" aria-label="hike stats">
+      <div><div class="v">{{ stats.distance_km }}</div><div class="l">km</div></div>
+      <div><div class="v">{{ stats.elevation_gain_m | int }}</div><div class="l">m gain</div></div>
+      <div><div class="v">{{ stats.duration_min }}</div><div class="l">min</div></div>
+      <div><div class="v">{{ stats.summit_elev_m | int }}</div><div class="l">m summit</div></div>
+    </section>
+
+    <svg class="elevation" viewBox="0 0 100 30" preserveAspectRatio="none" aria-hidden="true">
+      <path d="M 0,30
+        {%- for x, y in elevation %} L {{ (x * 100) | round(2) }},{{ (30 - y * 25) | round(2) }}{% endfor -%}
+         L 100,30 Z"/>
+    </svg>
+
+    <article>
+      <div class="en">
+        {% for p in narrative.paragraphs.en %}<p>{{ p }}</p>{% endfor %}
+      </div>
+      <div class="ru">
+        {% for p in narrative.paragraphs.ru %}<p>{{ p }}</p>{% endfor %}
+      </div>
+      <div class="de">
+        {% for p in narrative.paragraphs.de %}<p>{{ p }}</p>{% endfor %}
+      </div>
+
+      <blockquote>
+        <span class="en">{{ narrative.pull_quote.en }}</span>
+        <span class="ru">{{ narrative.pull_quote.ru }}</span>
+        <span class="de">{{ narrative.pull_quote.de }}</span>
+      </blockquote>
+
+      <section class="photos">
+        {% for photo in photos %}
+        <figure>
+          <img src="{{ photo.data_uri }}" alt="" loading="lazy">
+          <figcaption>Fig. {{ loop.index }} &mdash; plate {{ "%02d" | format(photo.index) }}</figcaption>
+        </figure>
+        {% endfor %}
+      </section>
+
+      <section class="share" aria-label="share">
+        <a id="waLink" href="#" target="_blank" rel="noopener noreferrer">WhatsApp</a>
+        <button id="copyBtn" type="button">Copy text</button>
+      </section>
+
+      <footer>{{ meta.slug }}</footer>
+    </article>
+  </main>
+
+  <script>
+    (function () {
+      var langs = ['en', 'ru', 'de'];
+      var labels = { en: 'EN · RU · DE', ru: 'RU · DE · EN', de: 'DE · EN · RU' };
+      var btn = document.getElementById('langBtn');
+
+      function currentLang() {
+        for (var i = 0; i < langs.length; i++) {
+          if (document.body.classList.contains('lang-' + langs[i])) return langs[i];
+        }
+        return 'en';
+      }
+
+      function setLang(next) {
+        for (var i = 0; i < langs.length; i++) {
+          document.body.classList.remove('lang-' + langs[i]);
+        }
+        document.body.classList.add('lang-' + next);
+        document.documentElement.lang = next;
+        btn.textContent = labels[next];
+      }
+
+      btn.addEventListener('click', function () {
+        var idx = langs.indexOf(currentLang());
+        setLang(langs[(idx + 1) % langs.length]);
+      });
+
+      var titleEn = {{ narrative.title.en | tojson }};
+      var quoteEn = {{ narrative.pull_quote.en | tojson }};
+      var msg = titleEn + ' — ' + quoteEn;
+
+      document.getElementById('waLink').href =
+        'https://wa.me/?text=' + encodeURIComponent(msg);
+
+      document.getElementById('copyBtn').addEventListener('click', function () {
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+          navigator.clipboard.writeText(msg);
+        }
+      });
+    })();
+  </script>
+</body>
+</html>

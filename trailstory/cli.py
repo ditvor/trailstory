@@ -27,7 +27,7 @@ from trailstory.config import load_settings
 from trailstory.gpx import GpxParseError, parse_gpx
 from trailstory.llm.client import AnthropicClient
 from trailstory.llm.narrative import NarrativeGenerationError, generate_narrative
-from trailstory.models import GpxStats, HikeInput, Memory, PhotoMeta
+from trailstory.models import GpxStats, HikeInput, Memory, PhotoMeta, Style
 from trailstory.photos import PhotoLoadError, load_photos
 from trailstory.renderers.html import HtmlRenderError, render_html
 from trailstory.renderers.instagram import InstagramRenderError, render_instagram_carousel
@@ -85,6 +85,15 @@ def cli() -> None:
     default=False,
     help="Skip the on-disk narrative cache for this run (forces a fresh LLM call).",
 )
+@click.option(
+    "--style",
+    "style",
+    type=click.Choice([s.value for s in Style], case_sensitive=False),
+    default=Style.editorial.value,
+    show_default=True,
+    help="Visual treatment of the rendered memory page (see ADR-006). "
+    "All three styles share one narrative; only layout and CSS differ.",
+)
 def generate(
     photos_path: Path,
     gpx_path: Path,
@@ -93,6 +102,7 @@ def generate(
     location: str | None,
     instagram: bool,
     no_cache: bool,
+    style: str,
 ) -> None:
     """Generate a shareable HTML memory page from a hike."""
     settings = load_settings()
@@ -157,6 +167,7 @@ def generate(
                 gpx_stats=stats,
                 narrative=narrative,
                 selected_photos=selected,
+                style=Style(style),
             )
 
             with console.status("Rendering HTML…", spinner="dots"):

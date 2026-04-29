@@ -1,0 +1,316 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>{{ narrative.title.en }}</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+  body {
+    font-family: ui-sans-serif, "SF Pro Text", "Helvetica Neue", Arial, sans-serif;
+    color: #1f2328;
+    background: #f4f5f7;
+    line-height: 1.45;
+    -webkit-font-smoothing: antialiased;
+  }
+  main {
+    max-width: 640px;
+    margin: 0 auto;
+    padding: 1.5rem 1rem 3rem;
+  }
+
+  /* hero — log-entry header: monospace timestamp, compact meta line */
+  header.hero {
+    border-top: 2px solid #1f2328;
+    border-bottom: 1px solid #d0d7de;
+    padding: 0.75rem 0;
+    margin-bottom: 1.25rem;
+  }
+  .log-stamp {
+    font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+    font-size: 0.72rem;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    color: #57606a;
+    margin-bottom: 0.4rem;
+  }
+  .milestone {
+    display: inline-block;
+    padding: 0.12rem 0.45rem;
+    background: #1f2328;
+    color: #f4f5f7;
+    font-size: 0.7rem;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    margin-right: 0.4rem;
+    font-weight: 600;
+  }
+  h1 {
+    font-size: 1.55rem;
+    margin: 0.25rem 0 0.35rem;
+    line-height: 1.2;
+    font-weight: 700;
+    letter-spacing: -0.01em;
+  }
+  .subtitle {
+    margin: 0;
+    font-size: 0.95rem;
+    color: #57606a;
+    font-weight: 400;
+  }
+
+  /* lang toggle */
+  .lang-toggle { position: fixed; top: 0.5rem; right: 0.5rem; z-index: 10; }
+  .lang-toggle button {
+    background: #1f2328;
+    color: #f4f5f7;
+    border: 0;
+    border-radius: 4px;
+    padding: 0.3rem 0.7rem;
+    font: inherit;
+    font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+    font-size: 0.7rem;
+    letter-spacing: 0.06em;
+    cursor: pointer;
+  }
+
+  body.lang-en .ru, body.lang-en .de { display: none; }
+  body.lang-ru .en, body.lang-ru .de { display: none; }
+  body.lang-de .en, body.lang-de .ru { display: none; }
+
+  /* stats — list, not a grid; aligned key/value pairs */
+  .stats {
+    list-style: none;
+    padding: 0;
+    margin: 0 0 1.25rem;
+    border: 1px solid #d0d7de;
+    background: #ffffff;
+  }
+  .stats li {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    padding: 0.55rem 0.85rem;
+    border-bottom: 1px solid #eaeef2;
+    font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+    font-size: 0.85rem;
+  }
+  .stats li:last-child { border-bottom: 0; }
+  .stats .l {
+    color: #57606a;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    font-size: 0.7rem;
+  }
+  .stats .v { color: #1f2328; font-weight: 600; }
+
+  /* elevation profile — flat sparkline, no fill */
+  .elevation {
+    width: 100%;
+    height: 60px;
+    margin-bottom: 1.25rem;
+    display: block;
+    background: #ffffff;
+    border: 1px solid #d0d7de;
+    padding: 4px;
+  }
+  .elevation path {
+    fill: none;
+    stroke: #1f2328;
+    stroke-width: 0.5;
+    stroke-linejoin: round;
+  }
+
+  /* article — compact, narrower line height */
+  article p { font-size: 0.95rem; margin: 0 0 0.85rem; }
+  blockquote {
+    border-left: 2px solid #1f2328;
+    margin: 1.25rem 0;
+    padding: 0.1rem 0.85rem;
+    font-size: 1rem;
+    color: #1f2328;
+    background: #ffffff;
+  }
+
+  /* photos — list of dated entries with caption */
+  .photos {
+    display: flex;
+    flex-direction: column;
+    gap: 0.85rem;
+    margin: 1.5rem 0;
+  }
+  .photos figure {
+    margin: 0;
+    background: #ffffff;
+    border: 1px solid #d0d7de;
+    padding: 6px;
+  }
+  .photos img {
+    width: 100%;
+    height: auto;
+    display: block;
+    max-height: 260px;
+    object-fit: cover;
+  }
+  .photos figcaption {
+    font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+    font-size: 0.7rem;
+    color: #57606a;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    padding: 0.45rem 0.15rem 0.1rem;
+  }
+
+  /* share */
+  .share {
+    margin: 2rem 0 1rem;
+    padding-top: 1rem;
+    border-top: 1px solid #d0d7de;
+  }
+  .share a, .share button {
+    display: inline-block;
+    margin: 0 0.5rem 0 0;
+    padding: 0.35rem 0.75rem;
+    border-radius: 4px;
+    background: #1f2328;
+    color: #f4f5f7;
+    text-decoration: none;
+    border: 0;
+    font: inherit;
+    font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+    font-size: 0.75rem;
+    letter-spacing: 0.04em;
+    cursor: pointer;
+  }
+
+  footer {
+    font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+    color: #8c959f;
+    font-size: 0.7rem;
+    margin-top: 1.5rem;
+    border-top: 1px solid #d0d7de;
+    padding-top: 0.75rem;
+  }
+</style>
+</head>
+<body class="lang-en style-log">
+  <div class="lang-toggle">
+    <button id="langBtn" type="button" aria-label="Switch language">EN · RU · DE</button>
+  </div>
+
+  <main>
+    <header class="hero">
+      <div class="log-stamp">
+        Log entry
+        {% if meta.date %} · {{ meta.date }}{% endif %}
+        {% if meta.location %} · {{ meta.location }}{% endif %}
+      </div>
+      <span class="milestone">
+        <span class="en">{{ narrative.milestone.en }}</span>
+        <span class="ru">{{ narrative.milestone.ru }}</span>
+        <span class="de">{{ narrative.milestone.de }}</span>
+      </span>
+      <h1>
+        <span class="en">{{ narrative.title.en }}</span>
+        <span class="ru">{{ narrative.title.ru }}</span>
+        <span class="de">{{ narrative.title.de }}</span>
+      </h1>
+      <p class="subtitle">
+        <span class="en">{{ narrative.subtitle.en }}</span>
+        <span class="ru">{{ narrative.subtitle.ru }}</span>
+        <span class="de">{{ narrative.subtitle.de }}</span>
+      </p>
+    </header>
+
+    <ul class="stats" aria-label="hike stats">
+      <li><span class="l">distance</span><span class="v">{{ stats.distance_km }} km</span></li>
+      <li><span class="l">elev. gain</span><span class="v">{{ stats.elevation_gain_m | int }} m</span></li>
+      <li><span class="l">duration</span><span class="v">{{ stats.duration_min }} min</span></li>
+      <li><span class="l">summit</span><span class="v">{{ stats.summit_elev_m | int }} m</span></li>
+    </ul>
+
+    <svg class="elevation" viewBox="0 0 100 30" preserveAspectRatio="none" aria-hidden="true">
+      <path d="M 0,30
+        {%- for x, y in elevation %} L {{ (x * 100) | round(2) }},{{ (30 - y * 25) | round(2) }}{% endfor -%}
+         L 100,30"/>
+    </svg>
+
+    <article>
+      <div class="en">
+        {% for p in narrative.paragraphs.en %}<p>{{ p }}</p>{% endfor %}
+      </div>
+      <div class="ru">
+        {% for p in narrative.paragraphs.ru %}<p>{{ p }}</p>{% endfor %}
+      </div>
+      <div class="de">
+        {% for p in narrative.paragraphs.de %}<p>{{ p }}</p>{% endfor %}
+      </div>
+
+      <blockquote>
+        <span class="en">{{ narrative.pull_quote.en }}</span>
+        <span class="ru">{{ narrative.pull_quote.ru }}</span>
+        <span class="de">{{ narrative.pull_quote.de }}</span>
+      </blockquote>
+    </article>
+
+    <section class="photos">
+      {% for photo in photos %}
+      <figure>
+        <img src="{{ photo.data_uri }}" alt="" loading="lazy">
+        <figcaption>frame {{ "%02d" | format(loop.index) }} / {{ photos | length }}</figcaption>
+      </figure>
+      {% endfor %}
+    </section>
+
+    <section class="share" aria-label="share">
+      <a id="waLink" href="#" target="_blank" rel="noopener noreferrer">WhatsApp</a>
+      <button id="copyBtn" type="button">Copy text</button>
+    </section>
+
+    <footer>{{ meta.slug }}</footer>
+  </main>
+
+  <script>
+    (function () {
+      var langs = ['en', 'ru', 'de'];
+      var labels = { en: 'EN · RU · DE', ru: 'RU · DE · EN', de: 'DE · EN · RU' };
+      var btn = document.getElementById('langBtn');
+
+      function currentLang() {
+        for (var i = 0; i < langs.length; i++) {
+          if (document.body.classList.contains('lang-' + langs[i])) return langs[i];
+        }
+        return 'en';
+      }
+
+      function setLang(next) {
+        for (var i = 0; i < langs.length; i++) {
+          document.body.classList.remove('lang-' + langs[i]);
+        }
+        document.body.classList.add('lang-' + next);
+        document.documentElement.lang = next;
+        btn.textContent = labels[next];
+      }
+
+      btn.addEventListener('click', function () {
+        var idx = langs.indexOf(currentLang());
+        setLang(langs[(idx + 1) % langs.length]);
+      });
+
+      var titleEn = {{ narrative.title.en | tojson }};
+      var quoteEn = {{ narrative.pull_quote.en | tojson }};
+      var msg = titleEn + ' — ' + quoteEn;
+
+      document.getElementById('waLink').href =
+        'https://wa.me/?text=' + encodeURIComponent(msg);
+
+      document.getElementById('copyBtn').addEventListener('click', function () {
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+          navigator.clipboard.writeText(msg);
+        }
+      });
+    })();
+  </script>
+</body>
+</html>

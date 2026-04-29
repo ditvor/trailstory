@@ -1,9 +1,23 @@
 from __future__ import annotations
 
 from datetime import datetime
+from enum import StrEnum
 from pathlib import Path
 
 from pydantic import BaseModel, ConfigDict, Field
+
+
+class Style(StrEnum):
+    """Visual treatment for the rendered memory page (see ADR-006).
+
+    The same ``NarrativeOutput`` renders under any style — only the Jinja
+    template and CSS bundle differ. Adding a fourth style is a templates-
+    and-CSS PR plus one new enum value; no prompt or eval changes.
+    """
+
+    editorial = "editorial"
+    log = "log"
+    encyclopedia = "encyclopedia"
 
 
 class Waypoint(BaseModel):
@@ -88,3 +102,4 @@ class Memory(BaseModel):
     gpx_stats: GpxStats
     narrative: NarrativeOutput
     selected_photos: list[PhotoMeta]
+    style: Style = Style.editorial

@@ -23,6 +23,7 @@ from trailstory.models import (
     LocalizedString,
     Memory,
     NarrativeOutput,
+    Style,
 )
 from trailstory.photos import load_photos
 from trailstory.renderers.html import render_html
@@ -77,12 +78,18 @@ def sample_narrative() -> NarrativeOutput:
     )
 
 
-def render_with_fixtures(output_dir: Path | None = None) -> Path:
+def render_with_fixtures(
+    output_dir: Path | None = None,
+    *,
+    style: Style = Style.editorial,
+) -> Path:
     """Render the HTML template against bundled fixtures (no LLM call).
 
-    Used by ``make test-render`` to iterate on
-    ``templates/memory.html.j2`` or its embedded CSS without making a paid
-    LLM call. Returns the absolute path of the file that was written.
+    Used by ``make test-render`` to iterate on the style templates or
+    their embedded CSS without making a paid LLM call. The output file is
+    named ``test-render-<style>.html`` so all three styles can land in
+    the same directory side by side. Returns the absolute path of the
+    file that was written.
     """
     target_dir = output_dir or Path("output/test")
     stats = parse_gpx(SAMPLE_GPX)
@@ -99,11 +106,12 @@ def render_with_fixtures(output_dir: Path | None = None) -> Path:
             gpx_stats=stats,
             narrative=narrative,
             selected_photos=photos,
+            style=style,
         )
         out = render_html(
             memory=memory,
             output_dir=target_dir,
-            slug="test-render",
+            slug=f"test-render-{style.value}",
             hike_date=date(2025, 8, 15),
             location="Bavarian Alps",
         )
