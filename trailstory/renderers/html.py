@@ -20,7 +20,7 @@ from typing import Final
 from jinja2 import Environment, FileSystemLoader, select_autoescape
 
 from trailstory.gpx import elevation_profile
-from trailstory.models import GpxStats, NarrativeOutput, PhotoMeta
+from trailstory.models import Memory, PhotoMeta
 
 logger = logging.getLogger(__name__)
 
@@ -39,9 +39,7 @@ class HtmlRenderError(Exception):
 
 def render_html(
     *,
-    narrative: NarrativeOutput,
-    gpx_stats: GpxStats,
-    photos: list[PhotoMeta],
+    memory: Memory,
     output_dir: Path,
     slug: str,
     hike_date: date | None = None,
@@ -50,12 +48,11 @@ def render_html(
     """Render a self-contained HTML memory page.
 
     Args:
-        narrative: Validated bilingual narrative produced by the LLM pipeline.
-        gpx_stats: Hike stats. Used both for the stats strip and for the
-            inline elevation-profile SVG.
-        photos: Photos to embed, in display order. Caller is responsible for
-            having already filtered ``narrative.selected_photo_indices``
-            into this list.
+        memory: The full hike memory. ``memory.selected_photos`` is the
+            already-filtered display list (caller resolved
+            ``narrative.selected_photo_indices`` into ``PhotoMeta`` objects);
+            ``memory.narrative`` and ``memory.gpx_stats`` feed the hero,
+            stats strip, and inline elevation SVG.
         output_dir: Directory the file is written to. Created if missing.
         slug: URL-safe identifier; the output filename is ``{slug}.html``.
         hike_date: Optional date shown in the hero meta line.
@@ -65,10 +62,10 @@ def render_html(
         Absolute path to the rendered HTML file.
 
     Raises:
-        HtmlRenderError: photos is empty, slug is empty, or a photo file
-            cannot be read from disk.
+        HtmlRenderError: ``memory.selected_photos`` is empty, slug is empty,
+            or a photo file cannot be read from disk.
     """
-    if not photos:
+    if not memory.selected_photos:
         raise HtmlRenderError("at least one photo is required to render the memory page")
     if not slug:
         raise HtmlRenderError("slug must be a non-empty string")
@@ -77,10 +74,10 @@ def render_html(
     template = env.get_template(TEMPLATE_NAME)
 
     rendered = template.render(
-        narrative=narrative,
-        stats=gpx_stats,
-        photos=[_photo_context(p) for p in photos],
-        elevation=elevation_profile(gpx_stats, n=ELEVATION_POINTS),
+        narrative=memory.narrative,
+        stats=memory.gpx_stats,
+        photos=[_photo_context(p) for p in memory.selected_photos],
+        elevation=elevation_profile(memory.gpx_stats, n=ELEVATION_POINTS),
         meta={
             "slug": slug,
             "date": hike_date.isoformat() if hike_date else "",

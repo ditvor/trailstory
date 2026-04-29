@@ -351,12 +351,18 @@ Quick reference: intent → recipe. Slash-command shortcuts live in
 
 ### Add a renderer
 
-1. Create `trailstory/renderers/<name>.py`. The public entry point takes
-   `memory: Memory` and returns the `Path` of the produced file.
+1. Create `trailstory/renderers/<name>.py` with
+   `def render_<name>(*, memory: Memory, output_dir: Path, slug: str, …) -> Path | list[Path]`.
+   Read inputs from `memory.narrative`, `memory.gpx_stats`, and
+   `memory.selected_photos` — never recompute or re-derive them. Existing
+   renderers (`render_html`, `render_instagram_carousel`) are the
+   reference shape.
 2. Wire it into `trailstory/cli.py` behind a new `--<name>` flag — off by
-   default, opt-in.
-3. Add `tests/test_<name>.py`. Use the existing `Memory` fixtures from
-   `tests/conftest.py`. Never call the real Anthropic API in unit tests.
+   default, opt-in. The CLI builds one `Memory` after photo selection and
+   passes the same instance to every renderer; reuse it.
+3. Add `tests/test_<name>.py` with a small `_memory()` helper per file
+   (see `tests/test_renderers.py` and `tests/test_instagram.py` for the
+   pattern). Never call the real Anthropic API in unit tests.
 4. Add an entry under `### Added` in `CHANGELOG.md`.
 5. `make ci` must pass. For visual changes, run `/render-test` and eyeball
    the output before opening the PR.

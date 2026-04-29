@@ -50,6 +50,23 @@ Versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
     `Settings`. Locks in the documented escape hatch from CLAUDE.md.
 
 ### Changed
+- Renderers now take a single `Memory` argument instead of three loose
+  parameters. The `Memory` model in `trailstory/models.py`
+  (`hike_input` + `gpx_stats` + `narrative` + `selected_photos`) was
+  defined but unused; both
+  `trailstory.renderers.html.render_html` and
+  `trailstory.renderers.instagram.render_instagram_carousel` now expect
+  `memory: Memory` and read `memory.narrative` /
+  `memory.gpx_stats` / `memory.selected_photos` internally. The CLI
+  builds one `Memory` after photo selection in `trailstory/cli.py` and
+  passes the same instance to both renderers, so future renderers can
+  drop in without re-plumbing the signature. Pure refactor — the
+  rendered HTML is byte-identical against
+  `tests/golden/test-render.html` and the existing carousel structural
+  tests still pass. Tests updated with a small `_memory()` helper per
+  file (`tests/test_renderers.py`, `tests/test_instagram.py`,
+  `tests/conftest.py::render_with_fixtures`); the "Add a renderer"
+  recipe in `CLAUDE.md` now spells out the new signature shape.
 - `trailstory/renderers/instagram.py` title slide layout. The title
   font now picks the largest size between 88pt and 40pt (in 8pt steps)
   whose wrapped block fits within `TITLE_MAX_WIDTH=920` ×

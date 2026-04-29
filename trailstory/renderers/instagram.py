@@ -23,7 +23,7 @@ from typing import Final
 
 from PIL import Image, ImageDraw, ImageFont, ImageOps
 
-from trailstory.models import NarrativeOutput, PhotoMeta
+from trailstory.models import Memory, NarrativeOutput, PhotoMeta
 
 logger = logging.getLogger(__name__)
 
@@ -72,8 +72,7 @@ class InstagramRenderError(Exception):
 
 def render_instagram_carousel(
     *,
-    narrative: NarrativeOutput,
-    photos: list[PhotoMeta],
+    memory: Memory,
     output_dir: Path,
     slug: str,
     hike_date: date | None = None,
@@ -83,10 +82,9 @@ def render_instagram_carousel(
     """Render the Instagram carousel for one hike.
 
     Args:
-        narrative: Validated bilingual narrative. Only the English fields
-            are rendered onto slides.
-        photos: Photos to display, already filtered to the LLM's selected
-            indices and in display order.
+        memory: The full hike memory. Only ``memory.narrative`` (English
+            fields) and ``memory.selected_photos`` (already filtered to the
+            LLM's selected indices, in display order) are read.
         output_dir: Directory under which ``{slug}/carousel/`` is created.
         slug: URL-safe identifier; matches the HTML output filename.
         hike_date: Optional date shown on the title slide footer.
@@ -99,9 +97,11 @@ def render_instagram_carousel(
         Paths in display order: title, photos…, quote.
 
     Raises:
-        InstagramRenderError: photos is empty, slug is empty, or a photo
-            cannot be opened by Pillow.
+        InstagramRenderError: ``memory.selected_photos`` is empty, slug is
+            empty, or a photo cannot be opened by Pillow.
     """
+    photos = memory.selected_photos
+    narrative = memory.narrative
     if not photos:
         raise InstagramRenderError("at least one photo is required")
     if not slug:
