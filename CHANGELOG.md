@@ -9,6 +9,18 @@ Versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+### Security
+- Pillow upgraded from `>=10.3,<12` to `>=12.2,<13` in `pyproject.toml`,
+  which picks up the fixes for CVE-2026-25990 (Pillow 12.1.1) and
+  CVE-2026-40192 (Pillow 12.2.0). Both advisories were surfaced by the
+  pip-audit job introduced alongside the security baseline and were
+  temporarily allow-listed in `.pip-audit-allowlist.txt`; the allowlist
+  is now empty again. `make ci` (203 tests, including the EXIF
+  GPS-strip and pixel-bomb cases) and `make test-render` both pass on
+  Pillow 12.2.0 — the private `Exif._ifds` cache used by the GPS strip
+  in `trailstory/photos.py` still behaves the same way under the new
+  version.
+
 ### Added
 - Defense-in-depth security baseline. `.github/workflows/security.yml`
   runs on every push to `develop` and every PR with two jobs:
