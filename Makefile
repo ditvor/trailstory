@@ -1,5 +1,5 @@
 .DEFAULT_GOAL := help
-.PHONY: help setup dev install install-hooks test lint format typecheck ci clean generate test-render eval eval-live eval-update-golden
+.PHONY: help setup dev install install-hooks test lint format typecheck ci clean generate test-render golden-update eval eval-live eval-update-golden
 
 PYTHON ?= python3.12
 VENV   := .venv
@@ -78,6 +78,11 @@ generate:           ## Run generator with sample fixtures (requires .env with AP
 
 test-render:        ## Render the HTML template with fixture data (no API call)
 	$(PY) -c "from tests.conftest import render_with_fixtures; render_with_fixtures()"
+
+golden-update:      ## Regenerate tests/golden/test-render.html from the current renderer output
+	$(PY) -c "from tests.conftest import render_with_fixtures; render_with_fixtures()"
+	cp output/test/test-render.html tests/golden/test-render.html
+	@echo "✓ tests/golden/test-render.html refreshed"
 
 eval:               ## Run narrative rubric against every eval case (PAID — calls real Anthropic API)
 	$(PY) -m tests.eval.run --all

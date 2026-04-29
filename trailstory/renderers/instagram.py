@@ -33,6 +33,16 @@ SLIDE_W: Final[int] = 1080
 SLIDE_H: Final[int] = 1350
 DEFAULT_JPEG_QUALITY: Final[int] = 90
 
+# Title slide layout. The title block sits between the milestone and the
+# subtitle; it shrinks dynamically when a long title would overflow.
+TITLE_TOP: Final[int] = 360
+TITLE_MAX_WIDTH: Final[int] = SLIDE_W - 160
+TITLE_MAX_HEIGHT: Final[int] = 480
+TITLE_LINE_SPACING: Final[int] = 18
+TITLE_FONT_SIZE_MAX: Final[int] = 88
+TITLE_FONT_SIZE_MIN: Final[int] = 40
+TITLE_FONT_SIZE_STEP: Final[int] = 8
+
 # Palette mirrors templates/memory.html.j2 so the carousel feels of a piece
 # with the HTML page.
 BG_COLOR: Final[tuple[int, int, int]] = (250, 248, 244)  # warm cream
@@ -133,12 +143,16 @@ def _render_title_slide(
     milestone_font = _load_font(SERIF_BOLD_PATHS, size=34)
     _draw_centered_text(draw, narrative.milestone_en.upper(), milestone_font, ACCENT_COLOR, y=200)
 
-    # Title — wrapped, centered, large bold serif.
-    title_font = _load_font(SERIF_BOLD_PATHS, size=88)
-    title_lines = _wrap_text(narrative.title_en, title_font, max_width=SLIDE_W - 160)
-    title_top = 360
+    # Title — wrapped, centered, large bold serif. Shrinks to fit so that
+    # a 25-word title still stays inside the slide.
+    title_font, title_lines = _fit_title(narrative.title_en)
     title_bottom = _draw_centered_block(
-        draw, title_lines, title_font, INK_COLOR, top=title_top, line_spacing=18
+        draw,
+        title_lines,
+        title_font,
+        INK_COLOR,
+        top=TITLE_TOP,
+        line_spacing=TITLE_LINE_SPACING,
     )
 
     # Subtitle — italic-ish (regular serif, smaller, subtle colour).
@@ -243,6 +257,37 @@ def _wrap_text(text: str, font: ImageFont.FreeTypeFont, *, max_width: int) -> li
             cur = word
     lines.append(cur)
     return lines
+
+
+def _fit_title(text: str) -> tuple[ImageFont.FreeTypeFont, list[str]]:
+    """Pick the largest title font whose wrapped block fits the title slot.
+
+    Walks ``TITLE_FONT_SIZE_MAX`` down to ``TITLE_FONT_SIZE_MIN`` in
+    ``TITLE_FONT_SIZE_STEP`` steps and returns the first ``(font, lines)``
+    pair whose wrapped block stays within ``TITLE_MAX_WIDTH`` by
+    ``TITLE_MAX_HEIGHT``. Falls through to the smallest size if no
+    candidate fits — pathological inputs overflow rather than silently
+    truncate.
+    """
+    last_font = _load_font(SERIF_BOLD_PATHS, size=TITLE_FONT_SIZE_MIN)
+    last_lines: list[str] = [text]
+    for size in range(TITLE_FONT_SIZE_MAX, TITLE_FONT_SIZE_MIN - 1, -TITLE_FONT_SIZE_STEP):
+        font = _load_font(SERIF_BOLD_PATHS, size=size)
+        lines = _wrap_text(text, font, max_width=TITLE_MAX_WIDTH)
+        block_h = 0
+        max_line_w = 0
+        for i, line in enumerate(lines):
+            bbox = font.getbbox(line)
+            line_w = bbox[2] - bbox[0]
+            line_h = bbox[3] - bbox[1]
+            block_h += line_h
+            if i < len(lines) - 1:
+                block_h += TITLE_LINE_SPACING
+            max_line_w = max(max_line_w, line_w)
+        last_font, last_lines = font, lines
+        if block_h <= TITLE_MAX_HEIGHT and max_line_w <= TITLE_MAX_WIDTH:
+            return font, lines
+    return last_font, last_lines
 
 
 def _text_size(

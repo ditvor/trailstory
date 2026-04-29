@@ -289,6 +289,47 @@ def test_generate_requires_anthropic_api_key(
     assert result.exit_code == 2
 
 
+def test_generate_passes_model_env_override_into_client(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """``MODEL=claude-sonnet-4-6`` must flow through ``Settings`` into the
+    ``AnthropicClient`` constructor — that is the only knob the user has to
+    swap writers without editing ``config.py``."""
+    monkeypatch.setenv("ANTHROPIC_API_KEY", "sk-test-fake")
+    monkeypatch.setenv("MODEL", "claude-sonnet-4-6")
+
+    fake_client = _make_fake_client()
+    fake_client.complete.return_value = _valid_response_json()
+
+    captured_kwargs: dict[str, object] = {}
+
+    def _capture(*_args: object, **kwargs: object) -> MagicMock:
+        captured_kwargs.update(kwargs)
+        return fake_client
+
+    monkeypatch.setattr("trailstory.cli.AnthropicClient", _capture)
+
+    runner = CliRunner()
+    result = runner.invoke(
+        cli,
+        [
+            "generate",
+            "--photos",
+            str(FIXTURES / "sample_photos"),
+            "--gpx",
+            str(FIXTURES / "sample.gpx"),
+            "--seed",
+            "irrelevant",
+            "--out",
+            str(tmp_path / "out"),
+        ],
+        catch_exceptions=False,
+    )
+
+    assert result.exit_code == 0, result.output
+    assert captured_kwargs.get("model") == "claude-sonnet-4-6"
+
+
 # ── helpers ──────────────────────────────────────────────────────────────────
 
 

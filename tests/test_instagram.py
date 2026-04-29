@@ -10,13 +10,16 @@ from datetime import date, datetime
 from pathlib import Path
 
 import pytest
-from PIL import Image, ImageFont
+from PIL import Image, ImageDraw, ImageFont
 
 from trailstory.models import NarrativeOutput, PhotoMeta
 from trailstory.renderers.instagram import (
     SLIDE_H,
     SLIDE_W,
+    TITLE_LINE_SPACING,
+    TITLE_TOP,
     InstagramRenderError,
+    _fit_title,
     _wrap_text,
     render_instagram_carousel,
 )
@@ -166,6 +169,80 @@ def test_carousel_includes_hike_date_and_location_when_provided(
 
     with Image.open(paths[0]) as img:
         assert img.size == (SLIDE_W, SLIDE_H)
+
+
+# ── long-title bounds ────────────────────────────────────────────────────────
+
+
+_LONG_TITLE_WORDS: tuple[str, ...] = (
+    "Above",
+    "the",
+    "fog",
+    "line",
+    "morning",
+    "ridge",
+    "alpine",
+    "sunrise",
+    "valley",
+    "summit",
+    "Bavarian",
+    "spring",
+    "meadow",
+    "trail",
+    "ascent",
+    "horizon",
+    "mist",
+    "pine",
+    "crest",
+    "saddle",
+    "first",
+    "tracks",
+    "early",
+    "snowmelt",
+    "cabin",
+)
+
+
+@pytest.mark.parametrize("word_count", [1, 5, 12, 25])
+def test_carousel_title_stays_within_slide_bounds(tmp_path: Path, word_count: int) -> None:
+    """Long titles must shrink to fit. The renderer drops the title font in
+    8px steps from 88 down until the wrapped block fits the title slot, so
+    every drawn glyph stays inside the slide.
+    """
+    title = " ".join(_LONG_TITLE_WORDS[:word_count])
+    narrative = _narrative().model_copy(update={"title_en": title})
+    photos = [_make_photo(tmp_path, 0, (50, 80, 120))]
+
+    paths = render_instagram_carousel(
+        narrative=narrative,
+        photos=photos,
+        output_dir=tmp_path / "out",
+        slug="hike",
+    )
+
+    img = Image.open(paths[0])
+    draw = ImageDraw.Draw(img)
+    font, lines = _fit_title(title)
+
+    y = TITLE_TOP
+    max_x = 0
+    max_y = 0
+    for line in lines:
+        line_bbox = font.getbbox(line)
+        line_w = line_bbox[2] - line_bbox[0]
+        line_h = line_bbox[3] - line_bbox[1]
+        x = (SLIDE_W - line_w) // 2
+        drawn = draw.textbbox((x, y), line, font=font)
+        max_x = max(max_x, drawn[2])
+        max_y = max(max_y, drawn[3])
+        y += line_h + TITLE_LINE_SPACING
+
+    assert max_y < SLIDE_H - 100, (
+        f"title bottom {max_y} >= {SLIDE_H - 100} for {word_count}-word title"
+    )
+    assert max_x < SLIDE_W - 80, (
+        f"title right edge {max_x} >= {SLIDE_W - 80} for {word_count}-word title"
+    )
 
 
 # ── error surface ────────────────────────────────────────────────────────────
