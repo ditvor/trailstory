@@ -82,9 +82,10 @@ def render_instagram_carousel(
     """Render the Instagram carousel for one hike.
 
     Args:
-        memory: The full hike memory. Only ``memory.narrative`` (English
-            fields) and ``memory.selected_photos`` (already filtered to the
-            LLM's selected indices, in display order) are read.
+        memory: The full hike memory. Only the English variants of
+            ``memory.narrative`` (``.title.en`` etc.) and
+            ``memory.selected_photos`` (already filtered to the LLM's
+            selected indices, in display order) are read.
         output_dir: Directory under which ``{slug}/carousel/`` is created.
         slug: URL-safe identifier; matches the HTML output filename.
         hike_date: Optional date shown on the title slide footer.
@@ -141,11 +142,11 @@ def _render_title_slide(
 
     # Milestone — letter-spaced uppercase, near the top.
     milestone_font = _load_font(SERIF_BOLD_PATHS, size=34)
-    _draw_centered_text(draw, narrative.milestone_en.upper(), milestone_font, ACCENT_COLOR, y=200)
+    _draw_centered_text(draw, narrative.milestone.en.upper(), milestone_font, ACCENT_COLOR, y=200)
 
     # Title — wrapped, centered, large bold serif. Shrinks to fit so that
     # a 25-word title still stays inside the slide.
-    title_font, title_lines = _fit_title(narrative.title_en)
+    title_font, title_lines = _fit_title(narrative.title.en)
     title_bottom = _draw_centered_block(
         draw,
         title_lines,
@@ -157,7 +158,7 @@ def _render_title_slide(
 
     # Subtitle — italic-ish (regular serif, smaller, subtle colour).
     subtitle_font = _load_font(SERIF_PATHS, size=42)
-    sub_lines = _wrap_text(narrative.subtitle_en, subtitle_font, max_width=SLIDE_W - 200)
+    sub_lines = _wrap_text(narrative.subtitle.en, subtitle_font, max_width=SLIDE_W - 200)
     _draw_centered_block(
         draw,
         sub_lines,
@@ -202,7 +203,7 @@ def _render_quote_slide(narrative: NarrativeOutput) -> Image.Image:
     draw.rectangle((cx - bar_half_w, bar_y, cx + bar_half_w, bar_y + 4), fill=ACCENT_COLOR)
 
     quote_font = _load_font(SERIF_PATHS, size=62)
-    text = f"“{narrative.pull_quote_en}”"  # curly double quotes
+    text = f"“{narrative.pull_quote.en}”"  # curly double quotes
     lines = _wrap_text(text, quote_font, max_width=SLIDE_W - 180)
     _draw_centered_block(draw, lines, quote_font, INK_COLOR, top=bar_y + 60, line_spacing=22)
 

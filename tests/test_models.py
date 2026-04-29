@@ -20,8 +20,6 @@ def _base_kwargs(seed_text: str) -> dict[str, object]:
         "gpx_path": Path("hike.gpx"),
         "photos_dir": Path("photos"),
         "seed_text": seed_text,
-        "baby_name": "Mia",
-        "baby_age_months": 5,
     }
 
 

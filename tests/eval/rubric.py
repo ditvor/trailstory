@@ -57,13 +57,14 @@ def schema_validates(narrative: NarrativeOutput) -> RubricResult:
 
 
 def paragraph_count_3_to_5_each_lang(narrative: NarrativeOutput) -> RubricResult:
-    """Both EN and RU paragraph lists must contain 3 to 5 entries."""
+    """EN, RU, and DE paragraph lists must each contain 3 to 5 entries."""
     name = "paragraph_count_3_to_5_each_lang"
-    en = len(narrative.paragraphs_en)
-    ru = len(narrative.paragraphs_ru)
-    if 3 <= en <= 5 and 3 <= ru <= 5:
-        return RubricResult(name, True, f"en={en}, ru={ru}")
-    return RubricResult(name, False, f"en={en}, ru={ru} (expected 3-5 each)")
+    en = len(narrative.paragraphs.en)
+    ru = len(narrative.paragraphs.ru)
+    de = len(narrative.paragraphs.de)
+    if 3 <= en <= 5 and 3 <= ru <= 5 and 3 <= de <= 5:
+        return RubricResult(name, True, f"en={en}, ru={ru}, de={de}")
+    return RubricResult(name, False, f"en={en}, ru={ru}, de={de} (expected 3-5 each)")
 
 
 def russian_actually_cyrillic(narrative: NarrativeOutput) -> RubricResult:
@@ -75,15 +76,15 @@ def russian_actually_cyrillic(narrative: NarrativeOutput) -> RubricResult:
     sentence or two.
     """
     name = "russian_actually_cyrillic"
-    for i, para in enumerate(narrative.paragraphs_ru):
+    for i, para in enumerate(narrative.paragraphs.ru):
         if not _CYRILLIC_RE.search(para):
-            return RubricResult(name, False, f"paragraphs_ru[{i}] has no Cyrillic char")
+            return RubricResult(name, False, f"paragraphs.ru[{i}] has no Cyrillic char")
         run = _max_ascii_letter_run(para)
         if run > 5:
             return RubricResult(
                 name,
                 False,
-                f"paragraphs_ru[{i}] contains a run of {run} consecutive ASCII-letter words",
+                f"paragraphs.ru[{i}] contains a run of {run} consecutive ASCII-letter words",
             )
     return RubricResult(name, True, "ok")
 
@@ -91,8 +92,8 @@ def russian_actually_cyrillic(narrative: NarrativeOutput) -> RubricResult:
 def word_count_ratio_en_ru_in_0_7_to_1_4(narrative: NarrativeOutput) -> RubricResult:
     """Total RU words divided by total EN words must be in [0.7, 1.4]."""
     name = "word_count_ratio_en_ru_in_0_7_to_1_4"
-    en_words = sum(len(_words(p)) for p in narrative.paragraphs_en)
-    ru_words = sum(len(_words(p)) for p in narrative.paragraphs_ru)
+    en_words = sum(len(_words(p)) for p in narrative.paragraphs.en)
+    ru_words = sum(len(_words(p)) for p in narrative.paragraphs.ru)
     if en_words == 0:
         return RubricResult(name, False, "EN paragraphs have no words")
     ratio = ru_words / en_words
@@ -102,33 +103,54 @@ def word_count_ratio_en_ru_in_0_7_to_1_4(narrative: NarrativeOutput) -> RubricRe
     return RubricResult(name, False, f"{detail}; expected 0.7-1.4")
 
 
+def word_count_ratio_en_de_in_0_7_to_1_4(narrative: NarrativeOutput) -> RubricResult:
+    """Total DE words divided by total EN words must be in [0.7, 1.4].
+
+    Same shape as the EN/RU check — catches a DE paragraph block that is
+    half-empty or wildly verbose relative to the source.
+    """
+    name = "word_count_ratio_en_de_in_0_7_to_1_4"
+    en_words = sum(len(_words(p)) for p in narrative.paragraphs.en)
+    de_words = sum(len(_words(p)) for p in narrative.paragraphs.de)
+    if en_words == 0:
+        return RubricResult(name, False, "EN paragraphs have no words")
+    ratio = de_words / en_words
+    detail = f"ratio={ratio:.2f} (en={en_words}, de={de_words})"
+    if 0.7 <= ratio <= 1.4:
+        return RubricResult(name, True, detail)
+    return RubricResult(name, False, f"{detail}; expected 0.7-1.4")
+
+
 def title_under_60_chars(narrative: NarrativeOutput) -> RubricResult:
-    """Both titles must be under 60 characters."""
+    """All three titles must be under 60 characters."""
     return _length_check(
         "title_under_60_chars",
         60,
-        ("title_en", narrative.title_en),
-        ("title_ru", narrative.title_ru),
+        ("title.en", narrative.title.en),
+        ("title.ru", narrative.title.ru),
+        ("title.de", narrative.title.de),
     )
 
 
 def subtitle_under_90_chars(narrative: NarrativeOutput) -> RubricResult:
-    """Both subtitles must be under 90 characters."""
+    """All three subtitles must be under 90 characters."""
     return _length_check(
         "subtitle_under_90_chars",
         90,
-        ("subtitle_en", narrative.subtitle_en),
-        ("subtitle_ru", narrative.subtitle_ru),
+        ("subtitle.en", narrative.subtitle.en),
+        ("subtitle.ru", narrative.subtitle.ru),
+        ("subtitle.de", narrative.subtitle.de),
     )
 
 
 def milestone_under_30_chars(narrative: NarrativeOutput) -> RubricResult:
-    """Both milestone tags must be under 30 characters."""
+    """All three milestone tags must be under 30 characters."""
     return _length_check(
         "milestone_under_30_chars",
         30,
-        ("milestone_en", narrative.milestone_en),
-        ("milestone_ru", narrative.milestone_ru),
+        ("milestone.en", narrative.milestone.en),
+        ("milestone.ru", narrative.milestone.ru),
+        ("milestone.de", narrative.milestone.de),
     )
 
 
@@ -152,18 +174,18 @@ def indices_valid(narrative: NarrativeOutput, n_photos: int) -> RubricResult:
 
 
 def pull_quote_drawn_from_body(narrative: NarrativeOutput) -> RubricResult:
-    """``pull_quote_en`` shares ≥60% of its words with at least one EN paragraph.
+    """``pull_quote.en`` shares ≥60% of its words with at least one EN paragraph.
 
     Set-based overlap: ``|quote ∩ paragraph| / |quote|`` taken as the max
     over all paragraphs. This catches pull-quotes that are made up wholesale
     rather than distilled from the body, while tolerating light paraphrase.
     """
     name = "pull_quote_drawn_from_body"
-    quote_words = set(_words(narrative.pull_quote_en))
+    quote_words = set(_words(narrative.pull_quote.en))
     if not quote_words:
-        return RubricResult(name, False, "pull_quote_en has no words")
+        return RubricResult(name, False, "pull_quote.en has no words")
     best = 0.0
-    for para in narrative.paragraphs_en:
+    for para in narrative.paragraphs.en:
         para_words = set(_words(para))
         overlap = len(quote_words & para_words) / len(quote_words)
         if overlap > best:
@@ -180,6 +202,7 @@ def apply_rubric(narrative: NarrativeOutput, n_photos: int) -> list[RubricResult
         paragraph_count_3_to_5_each_lang(narrative),
         russian_actually_cyrillic(narrative),
         word_count_ratio_en_ru_in_0_7_to_1_4(narrative),
+        word_count_ratio_en_de_in_0_7_to_1_4(narrative),
         title_under_60_chars(narrative),
         subtitle_under_90_chars(narrative),
         milestone_under_30_chars(narrative),

@@ -74,8 +74,6 @@ generate:           ## Run generator with sample fixtures (requires .env with AP
 		--photos  tests/fixtures/sample_photos \
 		--gpx     tests/fixtures/sample.gpx \
 		--seed    "The fog cleared just as we reached the ridge." \
-		--name    Mia \
-		--age     5 \
 		--out     output/dev
 
 test-render:        ## Render the HTML template with fixture data (no API call)

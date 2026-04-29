@@ -34,8 +34,6 @@ def _hike_input() -> HikeInput:
         gpx_path=Path("/tmp/hike.gpx"),
         photos_dir=Path("/tmp/photos"),
         seed_text="The fog cleared just as we reached the ridge.",
-        baby_name="Mia",
-        baby_age_months=5,
     )
 
 
@@ -66,28 +64,47 @@ def _photos(n: int = 12) -> list[PhotoMeta]:
 
 def _valid_response_dict(indices: list[int] | None = None) -> dict[str, object]:
     return {
-        "schema_version": 1,
-        "title_en": "Above the fog line",
-        "title_ru": "Над линией тумана",
-        "subtitle_en": "A morning above the cloud sea",
-        "subtitle_ru": "Утро над морем облаков",
-        "paragraphs_en": [
-            "We left the trailhead at first light.",
-            "By the saddle the cloud was thinning.",
-            "Mia slept the whole climb, her cheek warm against the carrier.",
-        ],
-        "paragraphs_ru": [
-            # noqa lines: "с" and "К" are genuine single-letter Russian
-            # prepositions; ruff flags them as Cyrillic-Latin lookalikes
-            # (RUF001), but they are correct Russian here.
-            "Вышли на тропу с первыми лучами.",  # noqa: RUF001
-            "К седловине облака начали редеть.",  # noqa: RUF001
-            "Мия проспала весь подъём, прижавшись щекой к переноске.",
-        ],
-        "pull_quote_en": "The fog cleared just as we reached the ridge.",
-        "pull_quote_ru": "Туман рассеялся как раз когда мы вышли на хребет.",
-        "milestone_en": "First mountain hike",
-        "milestone_ru": "Первый горный поход",
+        "schema_version": 2,
+        "title": {
+            "en": "Above the fog line",
+            "ru": "Над линией тумана",
+            "de": "Über der Nebelgrenze",
+        },
+        "subtitle": {
+            "en": "A morning above the cloud sea",
+            "ru": "Утро над морем облаков",
+            "de": "Ein Morgen über dem Wolkenmeer",
+        },
+        "paragraphs": {
+            "en": [
+                "We left the trailhead at first light.",
+                "By the saddle the cloud was thinning.",
+                "Mia slept the whole climb, her cheek warm against the carrier.",
+            ],
+            "ru": [
+                # noqa lines: "с" and "К" are genuine single-letter Russian
+                # prepositions; ruff flags them as Cyrillic-Latin lookalikes
+                # (RUF001), but they are correct Russian here.
+                "Вышли на тропу с первыми лучами.",  # noqa: RUF001
+                "К седловине облака начали редеть.",  # noqa: RUF001
+                "Мия проспала весь подъём, прижавшись щекой к переноске.",
+            ],
+            "de": [
+                "Bei erstem Licht brachen wir auf.",
+                "Am Sattel begann die Wolke sich zu lichten.",
+                "Mia schlief den ganzen Aufstieg, die Wange warm an der Trage.",
+            ],
+        },
+        "pull_quote": {
+            "en": "The fog cleared just as we reached the ridge.",
+            "ru": "Туман рассеялся как раз когда мы вышли на хребет.",
+            "de": "Der Nebel lichtete sich, gerade als wir den Grat erreichten.",
+        },
+        "milestone": {
+            "en": "First mountain hike",
+            "ru": "Первый горный поход",
+            "de": "Erste Bergwanderung",
+        },
         "selected_photo_indices": indices or [0, 2, 4, 6, 8, 10],
     }
 
@@ -124,8 +141,9 @@ def test_generate_narrative_happy_path() -> None:
     out = generate_narrative(_hike_input(), _gpx_stats(), _photos(), client=client, **_NO_CACHE)
 
     assert isinstance(out, NarrativeOutput)
-    assert out.title_en == "Above the fog line"
-    assert out.title_ru == "Над линией тумана"
+    assert out.title.en == "Above the fog line"
+    assert out.title.ru == "Над линией тумана"
+    assert out.title.de == "Über der Nebelgrenze"
     assert out.selected_photo_indices == [0, 2, 4, 6, 8, 10]
     assert client.complete.call_count == 1
 
@@ -137,7 +155,7 @@ def test_generate_narrative_strips_markdown_fences() -> None:
 
     out = generate_narrative(_hike_input(), _gpx_stats(), _photos(), client=client, **_NO_CACHE)
 
-    assert out.title_en == "Above the fog line"
+    assert out.title.en == "Above the fog line"
     # Fenced response parsed on the first attempt — no retry needed.
     assert client.complete.call_count == 1
 
@@ -148,7 +166,7 @@ def test_generate_narrative_strips_bare_triple_backtick_fence() -> None:
 
     out = generate_narrative(_hike_input(), _gpx_stats(), _photos(), client=client, **_NO_CACHE)
 
-    assert out.milestone_en == "First mountain hike"
+    assert out.milestone.en == "First mountain hike"
     assert client.complete.call_count == 1
 
 
@@ -174,8 +192,6 @@ def test_generate_narrative_passes_hike_data_to_prompt() -> None:
     assert "610" in sent  # elevation_gain_m
     assert "1330" in sent  # summit_elev_m
     assert "165" in sent  # duration_min
-    assert "Mia" in sent
-    assert "5 months old" in sent
     assert "fog cleared" in sent
     # Photo count and zero-indexed upper bound.
     assert "Photos available: 8 (indexed 0-7)" in sent
@@ -222,7 +238,7 @@ def test_generate_narrative_retries_on_invalid_json_then_succeeds() -> None:
 
     out = generate_narrative(_hike_input(), _gpx_stats(), _photos(), client=client, **_NO_CACHE)
 
-    assert out.title_en == "Above the fog line"
+    assert out.title.en == "Above the fog line"
     assert client.complete.call_count == 2
 
 
@@ -251,7 +267,7 @@ def test_generate_narrative_treats_json_array_as_parse_failure() -> None:
 
     out = generate_narrative(_hike_input(), _gpx_stats(), _photos(), client=client, **_NO_CACHE)
 
-    assert out.title_en == "Above the fog line"
+    assert out.title.en == "Above the fog line"
     assert client.complete.call_count == 2
 
 
@@ -261,7 +277,7 @@ def test_generate_narrative_treats_json_array_as_parse_failure() -> None:
 def test_generate_narrative_raises_on_validation_error() -> None:
     """JSON parses but is missing a required field — surface immediately,
     no retry (per Step 7 spec, retry is only for parse failures)."""
-    incomplete = json.dumps({"title_en": "x", "title_ru": "y"})  # missing required fields
+    incomplete = json.dumps({"title": {"en": "x", "ru": "y", "de": "z"}})  # missing required
     client = _client(incomplete)
 
     with pytest.raises(NarrativeGenerationError, match="schema"):
@@ -272,7 +288,7 @@ def test_generate_narrative_raises_on_validation_error() -> None:
 def test_generate_narrative_does_not_retry_on_validation_error() -> None:
     """Belt-and-braces version of the above: even if a 2nd response was
     queued, validation failure must not consume it."""
-    incomplete = json.dumps({"title_en": "x"})
+    incomplete = json.dumps({"title": {"en": "x", "ru": "y", "de": "z"}})
     second = _valid_response_json()
     client = _client(incomplete, second)
 

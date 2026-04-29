@@ -9,20 +9,20 @@ and what are the decisions already made that you must not reverse.
 ## What this project does
 
 Trailstory is a command-line tool that takes hiking inputs (GPX track, photos, a short
-emotional description from the parent) and produces a beautiful, shareable memory page.
+emotional description from the hiker) and produces a beautiful, shareable memory page.
 
-The core user: a parent with a young infant (currently 5 months old) living in Munich,
-who hikes regularly and wants to share those experiences with family in Russia — where
-Instagram and some messaging platforms are blocked — and also post on Instagram.
+The core user: a hiker living in Munich who wants to share those experiences with
+family abroad — including in Russia, where Instagram and some messaging platforms
+are blocked — and with German-speaking neighbours and in-laws nearby.
 
 The output is a **single self-contained HTML file** that:
 - Works in any browser without internet access or CDN
 - Can be sent as a file via WhatsApp, email, or any messenger
-- Has a bilingual toggle (English / Russian)
+- Has a tri-lingual toggle (English / Russian / German)
 - Contains an embedded elevation profile SVG
 - Has share buttons (WhatsApp, copy link, Instagram export prompt)
 
-This is **not** a fitness tracker. It is a family memory tool.
+This is **not** a fitness tracker. It is a memory tool.
 Stats (distance, elevation) appear in the output but serve the narrative, not the other way around.
 
 ---
@@ -34,15 +34,19 @@ One-liners. When in doubt, this is the meaning the codebase intends.
 - **slug** — url-safe hike identifier (e.g. `2025-05-tegernsee-fog`). Available
   inside the template as `{{ meta.slug }}` and used as the output directory
   and HTML filename.
-- **narrative** — the LLM-generated content (`NarrativeOutput`): bilingual
+- **narrative** — the LLM-generated content (`NarrativeOutput`): tri-lingual
   title, subtitle, paragraphs, pull quote, milestone, and selected photo
-  indices.
-- **subtitle** — the short `subtitle_en` / `subtitle_ru` line under the title.
-  Sets the emotional tone in one sentence.
-- **pull quote** — the `pull_quote_en` / `pull_quote_ru` callout rendered
-  large in the page body. Pulled from the parent's seed text or close to it.
-- **milestone** — the `milestone_en` / `milestone_ru` badge ("First mountain
-  hike", "First time above the fog").
+  indices. Each user-facing field is a `LocalizedString` (or
+  `LocalizedParagraphs`) carrying `en` / `ru` / `de` variants.
+- **LocalizedString** — small Pydantic model with `en` / `ru` / `de` string
+  fields. The shape that lets one prompt + one LLM call produce all three
+  languages at once. See ADR-005.
+- **subtitle** — the short `narrative.subtitle.en` / `.ru` / `.de` line under
+  the title. Sets the emotional tone in one sentence.
+- **pull quote** — the `narrative.pull_quote.en` / `.ru` / `.de` callout
+  rendered large in the page body. Pulled from the seed text or close to it.
+- **milestone** — the `narrative.milestone.en` / `.ru` / `.de` badge ("First
+  mountain hike", "First time above the fog").
 - **hero** — the top header block of the rendered memory page: title +
   subtitle + meta line (date, location, distance, elevation, duration). See
   `header.hero` in `templates/memory.html.j2`.
@@ -134,7 +138,7 @@ llm/narrative.py        takes HikeInput + GpxStats + list[PhotoMeta]
     │                   calls Anthropic with structured prompt
     │                   validates JSON response
     ▼
-NarrativeOutput         (bilingual title, paragraphs, pull quote, selected_photo_indices)
+NarrativeOutput         (tri-lingual title, paragraphs, pull quote, selected_photo_indices)
     │
     ├─► renderers/html.py       → {slug}.html
     └─► renderers/instagram.py  → carousel/*.jpg  (only if --instagram flag)
@@ -167,22 +171,26 @@ class PhotoMeta:
 class HikeInput:
     gpx_path: Path
     photos_dir: Path
-    seed_text: str                      # the parent's 2-3 sentence emotional description
-    baby_name: str
-    baby_age_months: int
+    seed_text: str                      # the hiker's 2-3 sentence emotional description
     location_name: str | None           # auto-detected from GPX if not provided
 
+class LocalizedString:
+    en: str
+    ru: str
+    de: str
+
+class LocalizedParagraphs:
+    en: list[str]                       # 3-5 paragraphs
+    ru: list[str]
+    de: list[str]
+
 class NarrativeOutput:
-    title_en: str
-    title_ru: str
-    subtitle_en: str
-    subtitle_ru: str
-    paragraphs_en: list[str]            # 3-5 paragraphs
-    paragraphs_ru: list[str]
-    pull_quote_en: str
-    pull_quote_ru: str
-    milestone_en: str                   # e.g. "First mountain hike"
-    milestone_ru: str
+    schema_version: int = 2
+    title: LocalizedString
+    subtitle: LocalizedString
+    paragraphs: LocalizedParagraphs
+    pull_quote: LocalizedString
+    milestone: LocalizedString          # e.g. "First mountain hike"
     selected_photo_indices: list[int]   # 6-8 indices into PhotoMeta list
 
 class Memory:
@@ -259,17 +267,21 @@ See `docs/adr/001-base64-photo-embedding.md`.
 
 The user provides a directory of photos. The LLM receives a numbered list and selects
 6–8 indices that it judges will tell the best narrative arc (start, effort, landscape,
-baby detail, summit). The user does not curate.
+a human-detail beat drawn from the seed, summit). The user does not curate.
 
 This is a core UX decision. Do not add a `--select-photos` flag without discussion.
 
-### 3. Bilingual output is the default, not an option
+### 3. Tri-lingual output is the default, not an option
 
-Every `NarrativeOutput` field has `_en` and `_ru` variants. The HTML template always
-renders both; the reader toggles via a CSS class switch. There is no `--language` flag.
+Every user-facing `NarrativeOutput` field is a `LocalizedString` (or
+`LocalizedParagraphs`) carrying `en` / `ru` / `de` variants — produced in a single LLM
+call. The HTML template renders all three; the reader cycles through with a button.
+There is no `--language` flag.
 
-If you need to add a third language, add it to the model and template in a single PR.
-Do not add partial language support.
+To add a fourth language, add the field to `LocalizedString` and
+`LocalizedParagraphs`, update the prompt's JSON skeleton, extend the
+template's body class swap, and refresh goldens — all in one PR. Do not add
+partial language support. See ADR-005.
 
 ### 4. The HTML template is a Jinja2 file, not a string in Python
 
@@ -318,17 +330,21 @@ Quick reference: intent → recipe. Slash-command shortcuts live in
 
 ### Add a field to `NarrativeOutput`
 
-1. Add the field to `NarrativeOutput` in `trailstory/models.py` (English and
-   Russian variants if it's user-facing text).
+1. Add the field to `NarrativeOutput` in `trailstory/models.py`. User-facing
+   strings should be `LocalizedString` (en / ru / de) and paragraph blocks
+   should be `LocalizedParagraphs`; do not invent flat per-language fields.
 2. Update the JSON skeleton in `llm/prompts.py` so the model is instructed to
-   produce it. Leave the previous version as a dated comment.
+   produce it (with the `en` / `ru` / `de` keys when the field is localized).
+   Leave the previous version as a dated comment.
 3. Update mocks: `tests/test_narrative.py`, `tests/test_cli.py`,
    `tests/test_renderers.py`, `tests/test_instagram.py`,
-   `tests/conftest.py`. The `render_with_fixtures` helper and any stub
-   `NarrativeOutput` constructor must include the new field — otherwise
-   `make ci` and `/render-test` will break.
-4. Reference the field in `templates/memory.html.j2`.
-5. If it appears in the carousel, update `trailstory/renderers/instagram.py`.
+   `tests/test_cache.py`, `tests/conftest.py`. The `render_with_fixtures`
+   helper and any stub `NarrativeOutput` constructor must include the new
+   field — otherwise `make ci` and `/render-test` will break.
+4. Reference the field in `templates/memory.html.j2` (one `<span class="en">`/
+   `ru`/`de` block per language, or `narrative.<field>.<lang>` directly).
+5. If it appears in the carousel, update `trailstory/renderers/instagram.py`
+   (the carousel reads the English variants only).
 6. `make ci` (free) → `make eval` (paid writer call). Confirm the model
    populates the new field cleanly across every case before opening the PR.
 
@@ -371,7 +387,7 @@ Quick reference: intent → recipe. Slash-command shortcuts live in
 
 1. Create `tests/eval/cases/<NN>-<slug>.json`. Required fields (see existing
    cases for the exact shape): `name`, `gpx_path`, `photos_dir`, `seed_text`,
-   `baby_name`, `baby_age_months`, `location_name`.
+   `location_name`.
 2. Run
    `python -m tests.eval.run --case <NN>-<slug> --live-judge --update-golden`
    to produce both `tests/eval/golden/<NN>-<slug>.json` and
@@ -388,7 +404,7 @@ Edit `templates/memory.html.j2`. This is a Jinja2 template. Available
 context variables:
 
 ```
-{{ narrative }}     NarrativeOutput object — access as narrative.title_en etc.
+{{ narrative }}     NarrativeOutput object — access as narrative.title.en, .ru, .de etc.
 {{ stats }}         GpxStats object
 {{ photos }}        list of dicts with { 'data_uri': str, 'caption': str, 'index': int }
 {{ meta.date }}     formatted hike date
@@ -436,6 +452,16 @@ don't relitigate them.
    judge layer for taste-level axes (`make eval-live`). Goldens under
    `tests/eval/golden/` are the regression baseline; refresh deliberately
    and explain in the PR.
+4. [ADR-004 — `HikeInput` carries no baby fields](docs/adr/004-remove-baby-fields-from-hike-input.md):
+   `baby_name` and `baby_age_months` are gone. The seed text is the only
+   subject context the prompt sees. Privacy and audience-breadth wins;
+   `seed_text` becomes load-bearing for family flavour. Don't add the
+   fields back without a new ADR.
+5. [ADR-005 — `LocalizedString { en, ru, de }`](docs/adr/005-localized-string-and-german-output.md):
+   every user-facing narrative field is one nested `LocalizedString` instead
+   of two flat `_en` / `_ru` strings. EN, RU, and DE are produced in a
+   single LLM call. Adding a fourth language is one Pydantic field +
+   prompt-skeleton edit + template arm + golden refresh.
 
 If you're about to do something that touches an area covered by an existing
 ADR, **read the ADR first**. If the change is incompatible with the recorded

@@ -13,12 +13,12 @@ from tests.conftest import render_with_fixtures, sample_narrative
 GOLDEN_HTML = Path(__file__).parent / "golden" / "test-render.html"
 
 
-def test_sample_narrative_has_required_bilingual_fields() -> None:
+def test_sample_narrative_has_required_trilingual_fields() -> None:
     n = sample_narrative()
-    assert n.title_en and n.title_ru
-    assert n.paragraphs_en and n.paragraphs_ru
-    assert n.pull_quote_en and n.pull_quote_ru
-    assert n.milestone_en and n.milestone_ru
+    assert n.title.en and n.title.ru and n.title.de
+    assert n.paragraphs.en and n.paragraphs.ru and n.paragraphs.de
+    assert n.pull_quote.en and n.pull_quote.ru and n.pull_quote.de
+    assert n.milestone.en and n.milestone.ru and n.milestone.de
     assert n.selected_photo_indices
 
 

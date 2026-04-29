@@ -98,8 +98,6 @@ class EvalCase:
                 gpx_path=REPO_ROOT / data["gpx_path"],
                 photos_dir=REPO_ROOT / data["photos_dir"],
                 seed_text=data["seed_text"],
-                baby_name=data["baby_name"],
-                baby_age_months=data["baby_age_months"],
                 location_name=data.get("location_name"),
             ),
         )

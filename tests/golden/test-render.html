@@ -59,9 +59,11 @@
     box-shadow: 0 2px 8px rgba(0,0,0,0.15);
   }
 
-  /* bilingual swap: default body shows EN; .lang-ru shows RU. */
-  body.lang-ru .en { display: none; }
-  body:not(.lang-ru) .ru { display: none; }
+  /* tri-lingual swap: body class .lang-en | .lang-ru | .lang-de selects
+     which language's blocks are visible. Default is EN (set on <body>). */
+  body.lang-en .ru, body.lang-en .de { display: none; }
+  body.lang-ru .en, body.lang-ru .de { display: none; }
+  body.lang-de .en, body.lang-de .ru { display: none; }
 
   /* stats */
   .stats {
@@ -149,9 +151,9 @@
   }
 </style>
 </head>
-<body>
+<body class="lang-en">
   <div class="lang-toggle">
-    <button id="langBtn" type="button" aria-label="Toggle language">RU / EN</button>
+    <button id="langBtn" type="button" aria-label="Switch language">EN · RU · DE</button>
   </div>
 
   <main>
@@ -159,14 +161,17 @@
       <span class="milestone">
         <span class="en">First mountain hike</span>
         <span class="ru">Первый горный поход</span>
+        <span class="de">Erste Bergwanderung</span>
       </span>
       <h1>
         <span class="en">Above the fog line</span>
         <span class="ru">Над линией тумана</span>
+        <span class="de">Über der Nebelgrenze</span>
       </h1>
       <p class="subtitle">
         <span class="en">A morning above the cloud sea</span>
         <span class="ru">Утро над морем облаков</span>
+        <span class="de">Ein Morgen über dem Wolkenmeer</span>
       </p>
       <div class="meta">
 Bavarian Alps · 2025-08-15      </div>
@@ -188,10 +193,13 @@ Bavarian Alps · 2025-08-15      </div>
 <p>We left the trailhead at first light, the air sharp with damp moss.</p><p>By the saddle the cloud was thinning into a soft white scarf.</p><p>Mia slept the whole climb, her cheek warm against the carrier.</p>      </div>
       <div class="ru">
 <p>Вышли на тропу с первыми лучами; воздух пах мхом и хвоей.</p><p>К седловине облака уже редели, превращаясь в белый шарф.</p><p>Мия проспала весь подъём, прижавшись щекой к переноске.</p>      </div>
+      <div class="de">
+<p>Bei erstem Licht brachen wir auf, die Luft scharf von feuchtem Moos.</p><p>Am Sattel zog die Wolke sich zu einem weichen weißen Schal zusammen.</p><p>Mia schlief den ganzen Aufstieg, die Wange warm an der Trage.</p>      </div>
 
       <blockquote>
         <span class="en">The fog cleared just as we reached the ridge.</span>
         <span class="ru">Туман рассеялся как раз когда мы вышли на хребет.</span>
+        <span class="de">Der Nebel lichtete sich, gerade als wir den Grat erreichten.</span>
       </blockquote>
     </article>
 
@@ -220,11 +228,29 @@ Bavarian Alps · 2025-08-15      </div>
 
   <script>
     (function () {
+      var langs = ['en', 'ru', 'de'];
+      var labels = { en: 'EN · RU · DE', ru: 'RU · DE · EN', de: 'DE · EN · RU' };
       var btn = document.getElementById('langBtn');
+
+      function currentLang() {
+        for (var i = 0; i < langs.length; i++) {
+          if (document.body.classList.contains('lang-' + langs[i])) return langs[i];
+        }
+        return 'en';
+      }
+
+      function setLang(next) {
+        for (var i = 0; i < langs.length; i++) {
+          document.body.classList.remove('lang-' + langs[i]);
+        }
+        document.body.classList.add('lang-' + next);
+        document.documentElement.lang = next;
+        btn.textContent = labels[next];
+      }
+
       btn.addEventListener('click', function () {
-        document.body.classList.toggle('lang-ru');
-        document.documentElement.lang =
-          document.body.classList.contains('lang-ru') ? 'ru' : 'en';
+        var idx = langs.indexOf(currentLang());
+        setLang(langs[(idx + 1) % langs.length]);
       });
 
       var titleEn = "Above the fog line";

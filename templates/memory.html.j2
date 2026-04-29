@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>{{ narrative.title_en }}</title>
+<title>{{ narrative.title.en }}</title>
 <style>
   *, *::before, *::after { box-sizing: border-box; }
   html, body { margin: 0; padding: 0; }
@@ -59,9 +59,11 @@
     box-shadow: 0 2px 8px rgba(0,0,0,0.15);
   }
 
-  /* bilingual swap: default body shows EN; .lang-ru shows RU. */
-  body.lang-ru .en { display: none; }
-  body:not(.lang-ru) .ru { display: none; }
+  /* tri-lingual swap: body class .lang-en | .lang-ru | .lang-de selects
+     which language's blocks are visible. Default is EN (set on <body>). */
+  body.lang-en .ru, body.lang-en .de { display: none; }
+  body.lang-ru .en, body.lang-ru .de { display: none; }
+  body.lang-de .en, body.lang-de .ru { display: none; }
 
   /* stats */
   .stats {
@@ -149,24 +151,27 @@
   }
 </style>
 </head>
-<body>
+<body class="lang-en">
   <div class="lang-toggle">
-    <button id="langBtn" type="button" aria-label="Toggle language">RU / EN</button>
+    <button id="langBtn" type="button" aria-label="Switch language">EN · RU · DE</button>
   </div>
 
   <main>
     <header class="hero">
       <span class="milestone">
-        <span class="en">{{ narrative.milestone_en }}</span>
-        <span class="ru">{{ narrative.milestone_ru }}</span>
+        <span class="en">{{ narrative.milestone.en }}</span>
+        <span class="ru">{{ narrative.milestone.ru }}</span>
+        <span class="de">{{ narrative.milestone.de }}</span>
       </span>
       <h1>
-        <span class="en">{{ narrative.title_en }}</span>
-        <span class="ru">{{ narrative.title_ru }}</span>
+        <span class="en">{{ narrative.title.en }}</span>
+        <span class="ru">{{ narrative.title.ru }}</span>
+        <span class="de">{{ narrative.title.de }}</span>
       </h1>
       <p class="subtitle">
-        <span class="en">{{ narrative.subtitle_en }}</span>
-        <span class="ru">{{ narrative.subtitle_ru }}</span>
+        <span class="en">{{ narrative.subtitle.en }}</span>
+        <span class="ru">{{ narrative.subtitle.ru }}</span>
+        <span class="de">{{ narrative.subtitle.de }}</span>
       </p>
       {% if meta.location or meta.date %}
       <div class="meta">
@@ -192,15 +197,19 @@
 
     <article>
       <div class="en">
-        {% for p in narrative.paragraphs_en %}<p>{{ p }}</p>{% endfor %}
+        {% for p in narrative.paragraphs.en %}<p>{{ p }}</p>{% endfor %}
       </div>
       <div class="ru">
-        {% for p in narrative.paragraphs_ru %}<p>{{ p }}</p>{% endfor %}
+        {% for p in narrative.paragraphs.ru %}<p>{{ p }}</p>{% endfor %}
+      </div>
+      <div class="de">
+        {% for p in narrative.paragraphs.de %}<p>{{ p }}</p>{% endfor %}
       </div>
 
       <blockquote>
-        <span class="en">{{ narrative.pull_quote_en }}</span>
-        <span class="ru">{{ narrative.pull_quote_ru }}</span>
+        <span class="en">{{ narrative.pull_quote.en }}</span>
+        <span class="ru">{{ narrative.pull_quote.ru }}</span>
+        <span class="de">{{ narrative.pull_quote.de }}</span>
       </blockquote>
     </article>
 
@@ -220,15 +229,33 @@
 
   <script>
     (function () {
+      var langs = ['en', 'ru', 'de'];
+      var labels = { en: 'EN · RU · DE', ru: 'RU · DE · EN', de: 'DE · EN · RU' };
       var btn = document.getElementById('langBtn');
+
+      function currentLang() {
+        for (var i = 0; i < langs.length; i++) {
+          if (document.body.classList.contains('lang-' + langs[i])) return langs[i];
+        }
+        return 'en';
+      }
+
+      function setLang(next) {
+        for (var i = 0; i < langs.length; i++) {
+          document.body.classList.remove('lang-' + langs[i]);
+        }
+        document.body.classList.add('lang-' + next);
+        document.documentElement.lang = next;
+        btn.textContent = labels[next];
+      }
+
       btn.addEventListener('click', function () {
-        document.body.classList.toggle('lang-ru');
-        document.documentElement.lang =
-          document.body.classList.contains('lang-ru') ? 'ru' : 'en';
+        var idx = langs.indexOf(currentLang());
+        setLang(langs[(idx + 1) % langs.length]);
       });
 
-      var titleEn = {{ narrative.title_en | tojson }};
-      var quoteEn = {{ narrative.pull_quote_en | tojson }};
+      var titleEn = {{ narrative.title.en | tojson }};
+      var quoteEn = {{ narrative.pull_quote.en | tojson }};
       var msg = titleEn + ' — ' + quoteEn;
 
       document.getElementById('waLink').href =

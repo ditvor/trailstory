@@ -76,8 +76,6 @@ def cache_key(
         "gpx_sha256": _sha256_file(hike_input.gpx_path),
         "photos": sorted((p.path.name, _sha256_file(p.path)) for p in photos),
         "seed_text": hike_input.seed_text,
-        "baby_name": hike_input.baby_name,
-        "baby_age_months": hike_input.baby_age_months,
         "location_name": hike_input.location_name,
         "model": model,
     }
