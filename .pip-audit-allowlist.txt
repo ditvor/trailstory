@@ -1,0 +1,9 @@
+# pip-audit allowlist — one vulnerability id per line.
+#
+# Add a CVE / GHSA / PYSEC id here only after triaging the advisory and
+# concluding it does not affect Trailstory (e.g. the vulnerable code path
+# is not reached, or no fixed version exists yet and the risk is accepted
+# for a single release). Always include a comment with the id explaining
+# why it is allow-listed and link the upstream advisory.
+#
+# Lines that are blank or start with '#' are ignored by .github/workflows/security.yml.

@@ -1,0 +1,68 @@
+name: Security
+
+on:
+  push:
+    branches: [develop]
+  pull_request:
+    branches: [develop]
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  secret-scan:
+    name: Secret scan (gitleaks)
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          # gitleaks needs the full history to scan past commits, not just
+          # the tip — shallow clones miss leaks introduced earlier on the branch.
+          fetch-depth: 0
+
+      - name: Run gitleaks
+        uses: gitleaks/gitleaks-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  dep-audit:
+    name: Dependency CVE scan (pip-audit)
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      - name: Install project + pip-audit
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e ".[dev]"
+          pip install pip-audit
+
+      - name: Run pip-audit with allowlist
+        run: |
+          # Build the --ignore-vuln flags from the allowlist file. Lines that
+          # are blank or start with '#' are ignored. Each remaining line is
+          # treated as a single CVE / GHSA / PYSEC id to ignore for this run.
+          ignore_args=()
+          if [ -f .pip-audit-allowlist.txt ]; then
+            while IFS= read -r line; do
+              trimmed="$(echo "$line" | sed 's/[[:space:]]*$//')"
+              case "$trimmed" in
+                ''|\#*) continue ;;
+                *) ignore_args+=(--ignore-vuln "$trimmed") ;;
+              esac
+            done < .pip-audit-allowlist.txt
+          fi
+          pip-audit --strict --progress-spinner off "${ignore_args[@]}"

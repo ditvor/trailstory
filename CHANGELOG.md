@@ -10,6 +10,34 @@ Versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 ## [Unreleased]
 
 ### Added
+- Defense-in-depth security baseline. `.github/workflows/security.yml`
+  runs on every push to `develop` and every PR with two jobs:
+  `gitleaks/gitleaks-action@v2` for secret scanning across the full
+  branch history, and `pip-audit --strict` against the installed
+  dependency tree. Vulnerabilities can be allow-listed (one CVE / GHSA
+  / PYSEC id per line, with a comment) in `.pip-audit-allowlist.txt`,
+  which is read by the workflow and starts empty. `SECURITY.md` at the
+  repo root captures the threat model (single-user CLI, output shared
+  via messengers), what NOT to do (no committing `.env`, no pasting
+  keys into issues or logs), and the rotate-then-rebase steps if an
+  Anthropic key leaks; it cross-references
+  [ADR-001](docs/adr/001-base64-photo-embedding.md) and the EXIF GPS
+  strip in `trailstory/photos.py`.
+- `Image.MAX_IMAGE_PIXELS = 200_000_000` set at the top of
+  `trailstory/photos.py` rejects decompression bombs (Pillow raises
+  `Image.DecompressionBombError`, which `load_photos` now wraps in
+  `PhotoLoadError`) while staying generous for any legitimate phone or
+  full-frame camera. `tests/test_photos.py` covers the wrap by
+  monkeypatching the threshold lower against a small fixture.
+- Length cap on `HikeInput.seed_text` (`Field(max_length=1000)` in
+  `trailstory/models.py`) — Pydantic raises `ValidationError` on
+  overflow and the existing CLI error handling surfaces it cleanly.
+  New `tests/test_models.py` covers the boundary.
+- Prompt-injection guard appended to `SYSTEM_NARRATIVE` in
+  `trailstory/llm/prompts.py`: the model is instructed to treat the
+  seed text as untrusted prose, never change languages or output
+  format based on its content, and never reveal or modify the system
+  instructions. `tests/test_prompts.py` asserts the clause is present.
 - Five new `Settings` fields covering output preferences that were
   previously hardcoded: `photo_max_edge` (`PHOTO_MAX_EDGE`, default
   `1800`), `photo_quality` (`PHOTO_QUALITY`, default `90`),
