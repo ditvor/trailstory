@@ -82,6 +82,7 @@ def render_html(
             "slug": slug,
             "date": hike_date.isoformat() if hike_date else "",
             "location": location or "",
+            "style": memory.style.value,
         },
     )
 

@@ -8,9 +8,12 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from tests.conftest import render_with_fixtures, sample_narrative
+import pytest
 
-GOLDEN_HTML = Path(__file__).parent / "golden" / "test-render.html"
+from tests.conftest import render_with_fixtures, sample_narrative
+from trailstory.models import Style
+
+GOLDEN_DIR = Path(__file__).parent / "golden"
 
 
 def test_sample_narrative_has_required_trilingual_fields() -> None:
@@ -31,19 +34,21 @@ def test_render_with_fixtures_writes_html(tmp_path: Path) -> None:
     assert "data:image/jpeg;base64," in text
 
 
-def test_render_with_fixtures_matches_golden(tmp_path: Path) -> None:
-    """Catch any silent change to the HTML template, the elevation SVG,
+@pytest.mark.parametrize("style", list(Style))
+def test_render_with_fixtures_matches_golden(tmp_path: Path, style: Style) -> None:
+    """Catch any silent change to a style template, the elevation SVG,
     photo encoding pipeline, or fixture data. The render is deterministic
     given the same inputs, so byte-equality against
-    ``tests/golden/test-render.html`` is the cheapest gate available.
+    ``tests/golden/test-render-<style>.html`` is the cheapest gate
+    available.
 
     To update: ``make golden-update``
     """
-    out = render_with_fixtures(output_dir=tmp_path)
+    out = render_with_fixtures(output_dir=tmp_path, style=style)
     actual = out.read_bytes()
-    expected = GOLDEN_HTML.read_bytes()
+    expected = (GOLDEN_DIR / f"test-render-{style.value}.html").read_bytes()
     assert actual == expected, (
-        "rendered HTML drifted from tests/golden/test-render.html. "
+        f"rendered HTML drifted from tests/golden/test-render-{style.value}.html. "
         "If the change is intentional, regenerate the golden with: "
         "`make golden-update`"
     )
