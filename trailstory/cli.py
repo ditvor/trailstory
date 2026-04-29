@@ -27,7 +27,7 @@ from trailstory.config import load_settings
 from trailstory.gpx import GpxParseError, parse_gpx
 from trailstory.llm.client import AnthropicClient
 from trailstory.llm.narrative import NarrativeGenerationError, generate_narrative
-from trailstory.models import GpxStats, HikeInput, PhotoMeta
+from trailstory.models import GpxStats, HikeInput, Memory, PhotoMeta
 from trailstory.photos import PhotoLoadError, load_photos
 from trailstory.renderers.html import HtmlRenderError, render_html
 from trailstory.renderers.instagram import InstagramRenderError, render_instagram_carousel
@@ -158,11 +158,16 @@ def generate(
             hike_date = _derive_hike_date(stats, photos)
             slug = _derive_slug(hike_date, location)
 
+            memory = Memory(
+                hike_input=hike_input,
+                gpx_stats=stats,
+                narrative=narrative,
+                selected_photos=selected,
+            )
+
             with console.status("Rendering HTML…", spinner="dots"):
                 out_path = render_html(
-                    narrative=narrative,
-                    gpx_stats=stats,
-                    photos=selected,
+                    memory=memory,
                     output_dir=out_dir,
                     slug=slug,
                     hike_date=hike_date,
@@ -175,8 +180,7 @@ def generate(
                 # TemporaryDirectory context.
                 with console.status("Rendering Instagram carousel…", spinner="dots"):
                     carousel_paths = render_instagram_carousel(
-                        narrative=narrative,
-                        photos=selected,
+                        memory=memory,
                         output_dir=out_dir,
                         slug=slug,
                         hike_date=hike_date,

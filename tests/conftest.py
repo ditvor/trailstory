@@ -17,7 +17,7 @@ from pathlib import Path
 from tempfile import TemporaryDirectory
 
 from trailstory.gpx import parse_gpx
-from trailstory.models import NarrativeOutput
+from trailstory.models import HikeInput, Memory, NarrativeOutput
 from trailstory.photos import load_photos
 from trailstory.renderers.html import render_html
 
@@ -63,10 +63,22 @@ def render_with_fixtures(output_dir: Path | None = None) -> Path:
     stats = parse_gpx(SAMPLE_GPX)
     with TemporaryDirectory(prefix="trailstory-test-render-") as tmp:
         photos = load_photos(SAMPLE_PHOTOS, Path(tmp))
-        out = render_html(
-            narrative=sample_narrative(),
+        narrative = sample_narrative()
+        memory = Memory(
+            hike_input=HikeInput(
+                gpx_path=SAMPLE_GPX,
+                photos_dir=SAMPLE_PHOTOS,
+                seed_text="The fog cleared just as we reached the ridge.",
+                baby_name="Mia",
+                baby_age_months=5,
+                location_name="Bavarian Alps",
+            ),
             gpx_stats=stats,
-            photos=photos,
+            narrative=narrative,
+            selected_photos=photos,
+        )
+        out = render_html(
+            memory=memory,
             output_dir=target_dir,
             slug="test-render",
             hike_date=date(2025, 8, 15),

@@ -12,7 +12,7 @@ from pathlib import Path
 import pytest
 from PIL import Image, ImageDraw, ImageFont
 
-from trailstory.models import NarrativeOutput, PhotoMeta
+from trailstory.models import GpxStats, HikeInput, Memory, NarrativeOutput, PhotoMeta, Waypoint
 from trailstory.renderers.instagram import (
     SLIDE_H,
     SLIDE_W,
@@ -61,6 +61,38 @@ def _make_photo(
     )
 
 
+def _gpx_stats() -> GpxStats:
+    return GpxStats(
+        distance_km=6.2,
+        elevation_gain_m=610,
+        duration_min=165,
+        start_elev_m=720.0,
+        summit_elev_m=1330.0,
+        waypoints=[Waypoint(lat=47.55, lon=11.78, ele_m=720.0, time=None)],
+    )
+
+
+def _memory(
+    photos: list[PhotoMeta],
+    *,
+    narrative: NarrativeOutput | None = None,
+) -> Memory:
+    """Build a ``Memory`` from a photo list plus optional narrative override."""
+    return Memory(
+        hike_input=HikeInput(
+            gpx_path=Path("/fixtures/sample.gpx"),
+            photos_dir=Path("/fixtures/sample_photos"),
+            seed_text="The fog cleared just as we reached the ridge.",
+            baby_name="Mia",
+            baby_age_months=5,
+            location_name="Bavarian Alps",
+        ),
+        gpx_stats=_gpx_stats(),
+        narrative=narrative if narrative is not None else _narrative(),
+        selected_photos=photos,
+    )
+
+
 # ── happy path ───────────────────────────────────────────────────────────────
 
 
@@ -69,8 +101,7 @@ def test_carousel_creates_title_photos_and_quote_in_order(tmp_path: Path) -> Non
     out_dir = tmp_path / "out"
 
     paths = render_instagram_carousel(
-        narrative=_narrative(),
-        photos=photos,
+        memory=_memory(photos),
         output_dir=out_dir,
         slug="2025-08-15-zugspitze",
     )
@@ -90,8 +121,7 @@ def test_carousel_every_slide_is_1080x1350_jpeg(tmp_path: Path) -> None:
     photos = [_make_photo(tmp_path, i, (i * 40, 100, 100)) for i in range(2)]
 
     paths = render_instagram_carousel(
-        narrative=_narrative(),
-        photos=photos,
+        memory=_memory(photos),
         output_dir=tmp_path / "out",
         slug="hike",
     )
@@ -113,8 +143,7 @@ def test_carousel_center_crops_landscape_photos_without_distortion(
     photo = PhotoMeta(path=src, timestamp=datetime(2025, 8, 15), index=0)
 
     paths = render_instagram_carousel(
-        narrative=_narrative(),
-        photos=[photo],
+        memory=_memory([photo]),
         output_dir=tmp_path / "out",
         slug="hike",
     )
@@ -128,8 +157,7 @@ def test_carousel_handles_portrait_photos(tmp_path: Path) -> None:
     photo = _make_photo(tmp_path, 0, (60, 80, 120), size=(900, 1600))
 
     paths = render_instagram_carousel(
-        narrative=_narrative(),
-        photos=[photo],
+        memory=_memory([photo]),
         output_dir=tmp_path / "out",
         slug="hike",
     )
@@ -142,8 +170,7 @@ def test_carousel_creates_nested_output_directory(tmp_path: Path) -> None:
     nested = tmp_path / "deeply" / "nested"
 
     paths = render_instagram_carousel(
-        narrative=_narrative(),
-        photos=photos,
+        memory=_memory(photos),
         output_dir=nested,
         slug="hike",
     )
@@ -159,8 +186,7 @@ def test_carousel_includes_hike_date_and_location_when_provided(
     photos = [_make_photo(tmp_path, 0, (50, 80, 120))]
 
     paths = render_instagram_carousel(
-        narrative=_narrative(),
-        photos=photos,
+        memory=_memory(photos),
         output_dir=tmp_path / "out",
         slug="hike",
         hike_date=date(2025, 8, 15),
@@ -214,8 +240,7 @@ def test_carousel_title_stays_within_slide_bounds(tmp_path: Path, word_count: in
     photos = [_make_photo(tmp_path, 0, (50, 80, 120))]
 
     paths = render_instagram_carousel(
-        narrative=narrative,
-        photos=photos,
+        memory=_memory(photos, narrative=narrative),
         output_dir=tmp_path / "out",
         slug="hike",
     )
@@ -251,8 +276,7 @@ def test_carousel_title_stays_within_slide_bounds(tmp_path: Path, word_count: in
 def test_carousel_raises_on_empty_photos(tmp_path: Path) -> None:
     with pytest.raises(InstagramRenderError, match="at least one"):
         render_instagram_carousel(
-            narrative=_narrative(),
-            photos=[],
+            memory=_memory([]),
             output_dir=tmp_path / "out",
             slug="hike",
         )
@@ -262,8 +286,7 @@ def test_carousel_raises_on_empty_slug(tmp_path: Path) -> None:
     photos = [_make_photo(tmp_path, 0, (50, 80, 120))]
     with pytest.raises(InstagramRenderError, match="slug"):
         render_instagram_carousel(
-            narrative=_narrative(),
-            photos=photos,
+            memory=_memory(photos),
             output_dir=tmp_path / "out",
             slug="",
         )
@@ -277,8 +300,7 @@ def test_carousel_raises_on_unreadable_photo(tmp_path: Path) -> None:
     )
     with pytest.raises(InstagramRenderError, match="unable to read photo"):
         render_instagram_carousel(
-            narrative=_narrative(),
-            photos=[missing],
+            memory=_memory([missing]),
             output_dir=tmp_path / "out",
             slug="hike",
         )
@@ -297,8 +319,7 @@ def test_carousel_renders_when_no_system_font_is_available(
 
     photos = [_make_photo(tmp_path, 0, (50, 80, 120))]
     paths = render_instagram_carousel(
-        narrative=_narrative(),
-        photos=photos,
+        memory=_memory(photos),
         output_dir=tmp_path / "out",
         slug="hike",
     )

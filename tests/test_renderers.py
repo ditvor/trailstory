@@ -17,7 +17,7 @@ import pytest
 from PIL import Image
 from PIL.TiffImagePlugin import IFDRational
 
-from trailstory.models import GpxStats, NarrativeOutput, PhotoMeta, Waypoint
+from trailstory.models import GpxStats, HikeInput, Memory, NarrativeOutput, PhotoMeta, Waypoint
 from trailstory.photos import load_photos
 from trailstory.renderers.html import HtmlRenderError, render_html
 
@@ -76,6 +76,28 @@ def _make_photo(tmp_path: Path, idx: int, color: tuple[int, int, int]) -> PhotoM
     )
 
 
+def _memory(
+    photos: list[PhotoMeta],
+    *,
+    narrative: NarrativeOutput | None = None,
+    gpx_stats: GpxStats | None = None,
+) -> Memory:
+    """Build a ``Memory`` from a photo list plus optional narrative / stats overrides."""
+    return Memory(
+        hike_input=HikeInput(
+            gpx_path=Path("/fixtures/sample.gpx"),
+            photos_dir=Path("/fixtures/sample_photos"),
+            seed_text="The fog cleared just as we reached the ridge.",
+            baby_name="Mia",
+            baby_age_months=5,
+            location_name="Bavarian Alps",
+        ),
+        gpx_stats=gpx_stats if gpx_stats is not None else _gpx_stats(),
+        narrative=narrative if narrative is not None else _narrative(),
+        selected_photos=photos,
+    )
+
+
 # ── tests ────────────────────────────────────────────────────────────────────
 
 
@@ -84,9 +106,7 @@ def test_render_writes_html_at_expected_path(tmp_path: Path) -> None:
     out_dir = tmp_path / "out"
 
     out_path = render_html(
-        narrative=_narrative(),
-        gpx_stats=_gpx_stats(),
-        photos=photos,
+        memory=_memory(photos),
         output_dir=out_dir,
         slug="2025-08-15-zugspitze",
         hike_date=date(2025, 8, 15),
@@ -102,9 +122,7 @@ def test_render_creates_missing_output_directory(tmp_path: Path) -> None:
     nested = tmp_path / "deeply" / "nested" / "out"
 
     out_path = render_html(
-        narrative=_narrative(),
-        gpx_stats=_gpx_stats(),
-        photos=photos,
+        memory=_memory(photos),
         output_dir=nested,
         slug="hike",
     )
@@ -117,9 +135,7 @@ def test_render_includes_bilingual_narrative_content(tmp_path: Path) -> None:
     photos = [_make_photo(tmp_path, 0, (50, 80, 120))]
 
     out_path = render_html(
-        narrative=_narrative(),
-        gpx_stats=_gpx_stats(),
-        photos=photos,
+        memory=_memory(photos),
         output_dir=tmp_path / "out",
         slug="hike",
     )
@@ -140,9 +156,7 @@ def test_render_embeds_every_photo_as_jpeg_data_uri(tmp_path: Path) -> None:
     photos = [_make_photo(tmp_path, i, (i * 40, 100, 100)) for i in range(4)]
 
     out_path = render_html(
-        narrative=_narrative(),
-        gpx_stats=_gpx_stats(),
-        photos=photos,
+        memory=_memory(photos),
         output_dir=tmp_path / "out",
         slug="hike",
     )
@@ -155,9 +169,7 @@ def test_render_is_self_contained_no_external_resources(tmp_path: Path) -> None:
     photos = [_make_photo(tmp_path, 0, (50, 80, 120))]
 
     out_path = render_html(
-        narrative=_narrative(),
-        gpx_stats=_gpx_stats(),
-        photos=photos,
+        memory=_memory(photos),
         output_dir=tmp_path / "out",
         slug="hike",
     )
@@ -177,9 +189,7 @@ def test_render_includes_gpx_stats(tmp_path: Path) -> None:
     photos = [_make_photo(tmp_path, 0, (50, 80, 120))]
 
     out_path = render_html(
-        narrative=_narrative(),
-        gpx_stats=_gpx_stats(),
-        photos=photos,
+        memory=_memory(photos),
         output_dir=tmp_path / "out",
         slug="hike",
     )
@@ -195,9 +205,7 @@ def test_render_emits_inline_elevation_svg(tmp_path: Path) -> None:
     photos = [_make_photo(tmp_path, 0, (50, 80, 120))]
 
     out_path = render_html(
-        narrative=_narrative(),
-        gpx_stats=_gpx_stats(),
-        photos=photos,
+        memory=_memory(photos),
         output_dir=tmp_path / "out",
         slug="hike",
     )
@@ -227,9 +235,7 @@ def test_render_escapes_html_in_narrative_fields(tmp_path: Path) -> None:
     )
 
     out_path = render_html(
-        narrative=nasty,
-        gpx_stats=_gpx_stats(),
-        photos=photos,
+        memory=_memory(photos, narrative=nasty),
         output_dir=tmp_path / "out",
         slug="hike",
     )
@@ -263,9 +269,7 @@ def test_render_escapes_narrative_when_emitted_into_script_block(
     )
 
     out_path = render_html(
-        narrative=nasty,
-        gpx_stats=_gpx_stats(),
-        photos=photos,
+        memory=_memory(photos, narrative=nasty),
         output_dir=tmp_path / "out",
         slug="hike",
     )
@@ -278,9 +282,7 @@ def test_render_escapes_narrative_when_emitted_into_script_block(
 def test_render_raises_when_photos_empty(tmp_path: Path) -> None:
     with pytest.raises(HtmlRenderError, match="at least one photo"):
         render_html(
-            narrative=_narrative(),
-            gpx_stats=_gpx_stats(),
-            photos=[],
+            memory=_memory([]),
             output_dir=tmp_path / "out",
             slug="hike",
         )
@@ -290,9 +292,7 @@ def test_render_raises_when_slug_empty(tmp_path: Path) -> None:
     photos = [_make_photo(tmp_path, 0, (50, 80, 120))]
     with pytest.raises(HtmlRenderError, match="slug"):
         render_html(
-            narrative=_narrative(),
-            gpx_stats=_gpx_stats(),
-            photos=photos,
+            memory=_memory(photos),
             output_dir=tmp_path / "out",
             slug="",
         )
@@ -306,9 +306,7 @@ def test_render_raises_when_photo_file_unreadable(tmp_path: Path) -> None:
     )
     with pytest.raises(HtmlRenderError, match="unable to read photo"):
         render_html(
-            narrative=_narrative(),
-            gpx_stats=_gpx_stats(),
-            photos=[missing],
+            memory=_memory([missing]),
             output_dir=tmp_path / "out",
             slug="hike",
         )
@@ -318,16 +316,12 @@ def test_render_meta_line_renders_only_when_provided(tmp_path: Path) -> None:
     photos = [_make_photo(tmp_path, 0, (50, 80, 120))]
 
     without_meta = render_html(
-        narrative=_narrative(),
-        gpx_stats=_gpx_stats(),
-        photos=photos,
+        memory=_memory(photos),
         output_dir=tmp_path / "no_meta",
         slug="hike",
     ).read_text(encoding="utf-8")
     with_meta = render_html(
-        narrative=_narrative(),
-        gpx_stats=_gpx_stats(),
-        photos=photos,
+        memory=_memory(photos),
         output_dir=tmp_path / "with_meta",
         slug="hike",
         hike_date=date(2025, 8, 15),
@@ -361,9 +355,7 @@ def test_render_does_not_embed_gps_exif_after_load_photos(tmp_path: Path) -> Non
     photos = load_photos(src_dir, tmp_path / "resized")
 
     out_path = render_html(
-        narrative=_narrative(),
-        gpx_stats=_gpx_stats(),
-        photos=photos,
+        memory=_memory(photos),
         output_dir=tmp_path / "out",
         slug="hike",
     )
