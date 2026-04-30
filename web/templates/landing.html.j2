@@ -1,0 +1,131 @@
+{% extends "base.html.j2" %}
+
+{% block title %}Trailstory — build a memory{% endblock %}
+
+{% block content %}
+<section class="mt-2">
+  <h1 class="text-3xl sm:text-4xl font-bold leading-tight tracking-tight">
+    Share the hike,<br>not just the steps.
+  </h1>
+  <p class="mt-3 text-base text-[color:var(--subtle)] leading-relaxed">
+    Upload your GPX track and a few photos. Add a sentence about how the day
+    felt. We'll write it up in English, Russian, and German — one self-contained
+    page you can send to family on any messenger.
+  </p>
+</section>
+
+<form
+  action="/generate"
+  method="post"
+  enctype="multipart/form-data"
+  x-data="{
+    gpxName: '',
+    photoCount: 0,
+    submitting: false,
+    onGpx(e) { this.gpxName = e.target.files[0]?.name || ''; },
+    onPhotos(e) { this.photoCount = e.target.files.length; },
+  }"
+  @submit="submitting = true"
+  class="mt-8 space-y-6"
+>
+  <!-- GPX -->
+  <label class="block">
+    <span class="block text-sm font-semibold mb-2">1. GPX track</span>
+    <div class="border border-dashed border-[color:var(--rule)] rounded-lg p-4 bg-white">
+      <input
+        type="file"
+        name="gpx"
+        accept=".gpx,application/gpx+xml"
+        required
+        @change="onGpx($event)"
+        class="block w-full text-sm tap file:mr-3 file:py-2 file:px-4 file:rounded-md file:border-0 file:bg-[color:var(--accent-soft)] file:text-[color:var(--accent)] file:text-sm file:font-medium hover:file:bg-yellow-50"
+      >
+      <p x-show="gpxName" x-cloak class="mt-2 text-xs text-[color:var(--subtle)] truncate" x-text="gpxName"></p>
+    </div>
+  </label>
+
+  <!-- Photos -->
+  <label class="block">
+    <span class="block text-sm font-semibold mb-2">2. Photos (multiple)</span>
+    <div class="border border-dashed border-[color:var(--rule)] rounded-lg p-4 bg-white">
+      <input
+        type="file"
+        name="photos"
+        accept="image/*,.heic,.heif"
+        multiple
+        required
+        @change="onPhotos($event)"
+        class="block w-full text-sm tap file:mr-3 file:py-2 file:px-4 file:rounded-md file:border-0 file:bg-[color:var(--accent-soft)] file:text-[color:var(--accent)] file:text-sm file:font-medium hover:file:bg-yellow-50"
+      >
+      <p x-show="photoCount" x-cloak class="mt-2 text-xs text-[color:var(--subtle)]">
+        <span x-text="photoCount"></span> photo<span x-show="photoCount !== 1">s</span> selected
+      </p>
+    </div>
+  </label>
+
+  <!-- Description -->
+  <label class="block">
+    <span class="block text-sm font-semibold mb-2">3. How did the day feel?</span>
+    <textarea
+      name="description"
+      required
+      minlength="1"
+      maxlength="1000"
+      rows="4"
+      placeholder="Two or three sentences. The fog, the summit, the moment that stuck."
+      class="block w-full rounded-lg border border-[color:var(--rule)] bg-white p-3 text-base focus:border-[color:var(--accent)] focus:ring-[color:var(--accent)]"
+    ></textarea>
+  </label>
+
+  <!-- Optional location -->
+  <label class="block">
+    <span class="block text-sm font-semibold mb-2">4. Location <span class="text-[color:var(--subtle)] font-normal">(optional)</span></span>
+    <input
+      type="text"
+      name="location"
+      maxlength="120"
+      placeholder="Bavarian Alps, Tegernsee, …"
+      class="block w-full rounded-lg border border-[color:var(--rule)] bg-white p-3 text-base focus:border-[color:var(--accent)] focus:ring-[color:var(--accent)]"
+    >
+  </label>
+
+  <!-- Style -->
+  <fieldset class="block">
+    <legend class="block text-sm font-semibold mb-2">5. Visual style</legend>
+    <div class="grid grid-cols-3 gap-2">
+      {% for s in styles %}
+      <label class="flex">
+        <input
+          type="radio"
+          name="style"
+          value="{{ s }}"
+          class="peer sr-only"
+          {% if s == default_style %}checked{% endif %}
+        >
+        <span class="tap flex-1 cursor-pointer rounded-lg border border-[color:var(--rule)] bg-white text-center px-2 py-3 text-sm capitalize peer-checked:border-[color:var(--accent)] peer-checked:bg-[color:var(--accent-soft)] peer-checked:text-[color:var(--accent)] peer-checked:font-semibold">
+          {{ s }}
+        </span>
+      </label>
+      {% endfor %}
+    </div>
+    <p class="mt-2 text-xs text-[color:var(--subtle)]">
+      One narrative, three layouts. The text is the same; only the look changes.
+    </p>
+  </fieldset>
+
+  <!-- Submit -->
+  <button
+    type="submit"
+    :disabled="submitting"
+    class="tap w-full rounded-lg bg-[color:var(--ink)] px-5 py-3 text-base font-semibold text-[color:var(--paper)] disabled:opacity-60"
+  >
+    <span x-show="!submitting">Generate memory</span>
+    <span x-show="submitting" x-cloak>Working… this can take a minute.</span>
+  </button>
+
+  <p class="text-xs text-center text-[color:var(--subtle)]">
+    Files are deleted as soon as your page is rendered.
+    <a class="underline" href="/privacy">Read the privacy page.</a>
+  </p>
+</form>
+{% endblock %}

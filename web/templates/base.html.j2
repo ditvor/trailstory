@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=5">
+  <meta name="color-scheme" content="light">
+  <title>{% block title %}Trailstory{% endblock %}</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><text y='26' font-size='28'>🥾</text></svg>">
+
+  <!-- Tailwind via CDN — no build step. The Play CDN is fine for v0
+       traffic; we'll move to a built bundle when the form needs more
+       than utility classes. -->
+  <script src="https://cdn.tailwindcss.com?plugins=forms"></script>
+  <!-- Alpine for tiny client-side reactivity (file-name preview,
+       submit-button busy state). -->
+  <script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
+  <!-- HTMX kept in the bundle for the carousel POST flow. -->
+  <script src="https://unpkg.com/htmx.org@2.0.4"></script>
+
+  <style>
+    /* Custom palette mirrors the rendered memory page so the builder
+       and the output feel like one product. */
+    :root {
+      --ink: #1a1a1a;
+      --paper: #faf8f4;
+      --accent: #6b5a2c;
+      --accent-soft: #fdf6e0;
+      --rule: #e6dec8;
+      --subtle: #6c6c6c;
+    }
+    html, body { background: var(--paper); color: var(--ink); }
+    body {
+      font-family: ui-serif, Georgia, "Times New Roman", serif;
+      -webkit-font-smoothing: antialiased;
+    }
+    /* Tap target floor — the form submit + radio chips are the
+       primary mobile interactions, so they meet the 44px iOS
+       minimum on small screens. */
+    .tap { min-height: 44px; }
+  </style>
+  {% block head_extra %}{% endblock %}
+</head>
+<body class="min-h-screen flex flex-col">
+  <header class="px-5 pt-6 pb-3 text-center">
+    <a href="/" class="inline-block">
+      <span class="text-2xl font-bold tracking-tight">Trailstory</span>
+    </a>
+    <p class="text-sm text-[color:var(--subtle)] mt-1">
+      Turn a hike into a memory worth sharing.
+    </p>
+  </header>
+
+  <main class="flex-1 w-full max-w-xl mx-auto px-5 pb-16">
+    {% block content %}{% endblock %}
+  </main>
+
+  <footer class="px-5 py-6 text-center text-xs text-[color:var(--subtle)]">
+    <a class="underline" href="/privacy">Privacy</a>
+    &middot;
+    <a class="underline" href="https://github.com/ditvor/trailstory" rel="noopener noreferrer" target="_blank">Source</a>
+  </footer>
+</body>
+</html>

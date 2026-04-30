@@ -1,5 +1,5 @@
 .DEFAULT_GOAL := help
-.PHONY: help setup dev install install-hooks test lint format typecheck ci clean generate test-render golden-update eval eval-live eval-update-golden
+.PHONY: help setup dev install install-hooks test lint format typecheck ci clean generate test-render golden-update eval eval-live eval-update-golden web web-dev
 
 PYTHON ?= python3.12
 VENV   := .venv
@@ -56,16 +56,16 @@ format:             ## Auto-fix lint issues and format code
 	$(RUFF) format .
 
 typecheck:          ## Run mypy static type checking
-	$(MYPY) trailstory/
+	$(MYPY) trailstory/ web/
 
 test:               ## Run tests with coverage report
-	$(PYTEST) --cov=trailstory --cov-report=term-missing --cov-report=html
+	$(PYTEST) --cov=trailstory --cov=web --cov-report=term-missing --cov-report=html
 
 ci:                 ## Full CI check — lint, type check, tests (run before pushing)
 	$(RUFF) check .
 	$(RUFF) format --check .
-	$(MYPY) trailstory/
-	$(PYTEST) --cov=trailstory --cov-fail-under=80
+	$(MYPY) trailstory/ web/
+	$(PYTEST) --cov=trailstory --cov=web --cov-fail-under=80
 
 # ── Development helpers ────────────────────────────────────────────────────────
 
@@ -100,6 +100,14 @@ eval-live:          ## Rubric + paid LLM-as-judge layer (PAID — writer + judge
 
 eval-update-golden: ## Rewrite narrative AND judge goldens from a fresh paid run (PAID)
 	$(PY) -m tests.eval.run --all --live-judge --update-golden
+
+# ── Web builder ────────────────────────────────────────────────────────────────
+
+web:                ## Run the FastAPI builder against the real Anthropic API (needs ANTHROPIC_API_KEY)
+	$(PY) -m web --reload
+
+web-dev:            ## Run the FastAPI builder with a fake LLM (free, deterministic narrative)
+	$(PY) -m web --fake-llm --reload
 
 # ── Cleanup ────────────────────────────────────────────────────────────────────
 

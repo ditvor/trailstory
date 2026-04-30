@@ -85,6 +85,8 @@ One-liners. When in doubt, this is the meaning the codebase intends.
 | Lint + format | `ruff` | Fast, replaces black + isort + flake8 |
 | Type checking | `mypy` | Catches model field mismatches early |
 | Output | Rich `console` | Never use `print()` |
+| Web service | `fastapi` + `uvicorn` | Same pipeline behind a mobile-first form (`web/`) |
+| Form parsing | `python-multipart` | Required by FastAPI for `UploadFile` / `Form` |
 
 ---
 
@@ -110,6 +112,17 @@ trailstory/
 templates/
 └── memory.html.j2      The shareable memory page. Edit this to change the design.
 
+web/                    FastAPI builder. Wraps the existing pipeline behind a form.
+├── __init__.py         Re-exports create_app.
+├── __main__.py         python -m web → uvicorn entry point. --fake-llm for offline UI work.
+├── app.py              FastAPI factory + lifespan-driven retention sweeper.
+├── dev.py              Fake LLM client factory used when WEB_FAKE_LLM=1 (UI iteration only).
+├── routes.py           Six handlers: /, /generate, /memory/{slug}, /memory/{slug}/carousel, /privacy, /healthz.
+├── pipeline.py         Style enum + glue between an upload and the trailstory pipeline.
+├── storage.py          Workspace = {root}/{slug}/{input,resized,output}/. 30-min retention.
+├── templates/          Jinja2 templates for the builder UI (separate from the output page).
+└── static/             Tailwind via CDN; no JS build step.
+
 tests/
 ├── conftest.py         Shared fixtures. Fake API key injection. Sample data.
 ├── fixtures/
@@ -118,7 +131,8 @@ tests/
 ├── test_gpx.py
 ├── test_photos.py
 ├── test_narrative.py   Always mocks the Anthropic client. Never calls the real API.
-└── test_renderers.py
+├── test_renderers.py
+└── test_web.py         Routes via fastapi.testclient.TestClient with the LLM mocked.
 
 docs/adr/               Architecture Decision Records — why decisions were made.
 ```
@@ -413,6 +427,22 @@ context variables:
 
 After editing, run `make test-render` (or `/render-test`) to produce a test
 HTML in `output/test/` and open it in a browser before opening the PR.
+
+### Iterate on the web builder UI
+
+1. `make web-dev` — runs `python -m web --fake-llm --reload` so the form,
+   the privacy page, and the output template can be exercised end-to-end
+   against `tests/fixtures/sample.gpx` + `tests/fixtures/sample_photos/`
+   without paying for any API calls. The fake client returns the same
+   EN/RU/DE narrative every time; useful for layout iteration, useless
+   for narrative quality work (use `make eval` for that).
+2. `make web` — runs the same server but with the real Anthropic client
+   (`ANTHROPIC_API_KEY` required). Use this when you need a fresh
+   narrative for screenshot or QA purposes.
+3. To check mobile rendering, open Chrome DevTools and switch to
+   responsive mode at 375px width. The form uses 44px tap targets and a
+   single-column layout; anything that breaks on a 375px viewport is a
+   regression.
 
 ---
 
