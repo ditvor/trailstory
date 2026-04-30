@@ -10,6 +10,23 @@ Versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 ## [Unreleased]
 
 ### Added
+- **Per-IP rate limit on `POST /generate`** (10 requests / hour /
+  client IP, sliding window). Caps abuse cost at the
+  most-expensive route — each `/generate` triggers an Anthropic
+  narrative call costing ~$0.10–$0.30, so without a cap a single
+  abusive IP could burn the published Anthropic spend ceiling in
+  minutes. Limit lives in-process (`web.ratelimit.RateLimiter`) and
+  is keyed on `Fly-Client-IP` (Fly's edge proxy) → `X-Forwarded-For`
+  → socket peer; `request.client.host` alone would be useless on
+  Fly because it is one of Fly's load-balancer addresses. Bounded
+  to 10 000 tracked IPs (LRU-by-insert eviction) so a flood of
+  unique sources cannot OOM the process. Over-quota responses are
+  HTTP 429 with a `Retry-After` header, returned before the
+  multipart body is parsed (FastAPI dependency runs first when the
+  dep only takes `Request`). Picked over a global cap because per-IP
+  bounds the worst case from a single attacker; a global counter
+  would not have helped against a botnet hitting each IP once and
+  would have hurt legitimate concurrent use during a launch.
 - **Fly.io deployment config** (`Dockerfile`, `fly.toml`, `.dockerignore`)
   for the web builder. The image is `python:3.12-slim` with the project
   installed in editable mode so `trailstory.renderers.html` keeps

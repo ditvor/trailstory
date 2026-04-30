@@ -35,7 +35,7 @@ from collections.abc import Callable, Iterable, Iterator
 from pathlib import Path
 from typing import Annotated, Final
 
-from fastapi import APIRouter, BackgroundTasks, Form, HTTPException, Request, UploadFile
+from fastapi import APIRouter, BackgroundTasks, Depends, Form, HTTPException, Request, UploadFile
 from fastapi.responses import (
     FileResponse,
     HTMLResponse,
@@ -57,6 +57,7 @@ from web.pipeline import (
     render_carousel,
     stream_pipeline,
 )
+from web.ratelimit import enforce_generate_limit
 from web.storage import Storage, Workspace
 
 logger = logging.getLogger(__name__)
@@ -141,7 +142,11 @@ async def version() -> dict[str, str]:
 # ── pipeline ─────────────────────────────────────────────────────────────────
 
 
-@router.post("/generate", response_class=HTMLResponse)
+@router.post(
+    "/generate",
+    response_class=HTMLResponse,
+    dependencies=[Depends(enforce_generate_limit)],
+)
 async def generate(
     request: Request,
     background_tasks: BackgroundTasks,
@@ -157,6 +162,11 @@ async def generate(
     Server-Sent Events to run the LLM call. We persist the parsed inputs
     (``pending.json``) before responding so the SSE endpoint can pick up
     even after the BackgroundTask has wiped the raw uploads.
+
+    The route is rate-limited per client IP via
+    :func:`web.ratelimit.enforce_generate_limit`; an over-quota client
+    gets a 429 with a ``Retry-After`` header before the multipart body
+    is parsed.
 
     Raises a 4xx if the inputs are missing, oversized, or unsupported;
     pipeline parse / photo-load errors surface as 400 here rather than
