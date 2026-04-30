@@ -1,0 +1,78 @@
+{% extends "base.html.j2" %}
+
+{% block title %}Trailstory — privacy{% endblock %}
+
+{% block content %}
+<article class="prose prose-neutral mt-2 max-w-none">
+  <h1 class="text-3xl font-bold tracking-tight">Privacy</h1>
+
+  <p class="mt-3 text-base leading-relaxed">
+    Trailstory is built around a simple promise: your hike is yours. We do not
+    keep accounts, we do not run analytics on your photos or your text, and we
+    do not retain your raw uploads after the page is rendered.
+  </p>
+
+  <h2 class="mt-6 text-lg font-semibold">What we do with your upload</h2>
+
+  <ol class="mt-2 list-decimal pl-5 space-y-3 text-base leading-relaxed">
+    <li>
+      Your GPX file and photos are written to a temporary directory on the
+      server, identified only by a random one-time slug.
+    </li>
+    <li>
+      We parse the GPX, resize each photo, strip GPS coordinates from photo
+      metadata, and send a structured prompt — your description plus the hike
+      stats — to Anthropic's Claude API to write the narrative.
+    </li>
+    <li>
+      We render a single self-contained HTML file with the photos embedded as
+      base64 data URIs. The file works offline and can be sent over any
+      messenger.
+    </li>
+    <li>
+      <strong>Your raw GPX and original photos are deleted as soon as the
+      response is sent.</strong> Only the resized, GPS-stripped JPEGs and the
+      rendered HTML page remain.
+    </li>
+    <li>
+      The rendered page stays on disk for {{ retention_minutes }} minutes so
+      you can re-share the link or generate an Instagram carousel. After that
+      window the entire workspace is deleted by an automatic sweep.
+    </li>
+  </ol>
+
+  <h2 class="mt-6 text-lg font-semibold">What we do not do</h2>
+
+  <ul class="mt-2 list-disc pl-5 space-y-2 text-base leading-relaxed">
+    <li>No accounts, no email, no cookies for tracking.</li>
+    <li>No analytics on your description, photos, or GPX.</li>
+    <li>No third-party scripts other than the Anthropic API call described above
+      and Tailwind / Alpine / HTMX assets that load this page.</li>
+    <li>No long-term retention. The {{ retention_minutes }}-minute window is the
+      maximum, not a minimum.</li>
+  </ul>
+
+  <h2 class="mt-6 text-lg font-semibold">Sent to Anthropic</h2>
+
+  <p class="mt-2 text-base leading-relaxed">
+    The prompt sent to the Anthropic API contains: hike statistics derived from
+    your GPX (distance, elevation gain, duration), the location name you
+    provided (if any), and your description text. Photo bytes are not sent to
+    the API; only their chronological order and a numeric index. Anthropic's
+    own privacy and retention practices apply to that single API call.
+  </p>
+
+  <h2 class="mt-6 text-lg font-semibold">Verify it yourself</h2>
+
+  <p class="mt-2 text-base leading-relaxed">
+    Trailstory is open source. Every behaviour described above is enforced by
+    the code in this repository — read it, check it, file an issue if anything
+    looks wrong:
+    <a class="underline" href="{{ repo_url }}" target="_blank" rel="noopener noreferrer">{{ repo_url }}</a>.
+  </p>
+
+  <p class="mt-6">
+    <a href="/" class="inline-block rounded-lg border border-[color:var(--rule)] bg-white px-4 py-2 text-sm font-semibold no-underline">← Back to the builder</a>
+  </p>
+</article>
+{% endblock %}

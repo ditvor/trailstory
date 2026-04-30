@@ -10,6 +10,72 @@ Versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 ## [Unreleased]
 
 ### Added
+- **FastAPI web builder** (`web/`). Mobile-first, privacy-first, no
+  accounts, no DB. Six endpoints: `GET /` (landing + builder form),
+  `POST /generate` (multipart `gpx` + `photos[]` + `description` +
+  `style` + optional `location` → runs the existing pipeline → 303
+  redirect to `/memory/{slug}`), `GET /memory/{slug}` (serves the
+  rendered HTML), `POST /memory/{slug}/carousel` (generates the
+  Instagram carousel on demand and returns a JSON manifest of
+  `/memory/{slug}/carousel/{filename}` slide URLs), `GET /privacy`
+  (plain-language privacy page linking to the public repo), and
+  `GET /healthz`. Heavy lifting is delegated to the existing
+  `trailstory.gpx`, `trailstory.photos`, `trailstory.llm`, and
+  `trailstory.renderers` modules — no logic is duplicated.
+  - Layout: `web/app.py` is a FastAPI factory (`create_app`) that
+    wires `Settings`, `Storage`, the LLM client factory, and the
+    Jinja2 template environment onto `app.state`, plus a lifespan
+    hook that runs the retention sweeper. `web/routes.py` holds the
+    six handlers and the multipart upload validation
+    (`MAX_GPX_BYTES = 50 MB`, `MAX_PHOTO_BYTES = 30 MB`,
+    `MAX_PHOTOS_PER_HIKE = 60`, `.jpg/.jpeg/.heic/.heif` only) plus
+    a process-local anonymous request counter.
+    `web/pipeline.py` is the glue between the form and the existing
+    pipeline (`Style` enum mirroring the radio buttons, `run_pipeline`
+    orchestrator, `render_carousel` rebuilder). `web/storage.py`
+    handles tmp-dir lifecycle (`Storage`, `Workspace`,
+    `RETENTION_SECONDS = 30 min`, `SLUG_HEX_LENGTH = 12`).
+  - Lifecycle / privacy: each request lands in
+    `{tmp}/{slug}/` with the layout `input/{gpx,photos}` (raw
+    upload, wiped via `BackgroundTask` as soon as the response is
+    sent), `resized/` (privacy-stripped JPEGs from
+    `trailstory.photos.load_photos`, kept for the retention window
+    so the carousel route can re-render without the originals), and
+    `output/{slug}.html` + `output/state.json` (the rendered page
+    plus the persisted `Memory` JSON). After 30 min the in-process
+    retention sweeper deletes the entire workspace.
+  - Form (mobile-first): file inputs for GPX and photos with 44px
+    tap targets, a 4-row textarea for the seed description, an
+    optional location input, and a 3-up radio for style
+    (`editorial` / `log` / `encyclopedia`, default `editorial`).
+    Tailwind via the Play CDN, Alpine for tiny client-side
+    reactivity, HTMX queued for the carousel POST flow — no JS build
+    step. The output page itself remains the existing
+    `templates/memory.html.j2`; the per-style visual variants
+    described in ADR-006 land in a follow-up PR.
+  - Run locally with `python -m web` (defaults to `0.0.0.0:8000`,
+    `--reload` available for template iteration). Tests in
+    `tests/test_web.py` (21 cases) exercise every route via
+    `fastapi.testclient.TestClient` with the Anthropic client mocked
+    at the `client_factory` injection point — the real SDK is never
+    called. New deps in `pyproject.toml`:
+    `fastapi>=0.115,<1`, `uvicorn[standard]>=0.30,<1`,
+    `python-multipart>=0.0.20,<1`, plus `httpx>=0.27,<1` in `[dev]`
+    for `TestClient`. `make ci` extends to lint / type-check / cover
+    the new `web/` package alongside `trailstory/`.
+  - **Fake-LLM dev mode.** `python -m web --fake-llm` (or
+    `WEB_FAKE_LLM=1` in the environment, or `make web-dev`) swaps the
+    Anthropic client factory for a deterministic stub from
+    `web/dev.py` that returns the same EN/RU/DE narrative every
+    time. Lets you click through the full form → pipeline → output
+    flow against the bundled fixtures without paying for any API
+    calls — useful for iterating on the form, the privacy page, or
+    the output template. The placeholder `ANTHROPIC_API_KEY` set in
+    this mode is a sentinel; it is never sent anywhere because the
+    fake client short-circuits before the SDK call. Not loaded in
+    the production import graph: the `web.dev` module (and its
+    `unittest.mock` dependency) are imported lazily, only when the
+    env flag is set.
 - Dev-loop quality baseline. New `.pre-commit-config.yaml` registers
   `ruff` (with `--fix`), `ruff-format`, `detect-secrets` against the new
   `.secrets.baseline`, and the upstream `check-added-large-files` hook
