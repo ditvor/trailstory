@@ -10,6 +10,85 @@ Versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 ## [Unreleased]
 
 ### Added
+- **Streaming narrative generation via Server-Sent Events** for the web
+  builder. `POST /generate` now runs the deterministic prep phase
+  (parse GPX + load_photos + persist `pending.json`), wipes the raw
+  upload via the existing `BackgroundTask`, and returns a
+  `generating.html.j2` page that opens an `EventSource` to the new
+  `GET /generate/{slug}/stream` endpoint. The SSE endpoint runs the
+  LLM call with `AnthropicClient.complete_stream`, emits one `chunk`
+  event per text delta, a `status` event when phases change
+  (`writing` → `regenerating` → `rendering`), and a terminal `done`
+  event with the redirect URL once the HTML has been rendered. If the
+  first response does not parse as JSON, the orchestrator retries once
+  (emitting a `regenerating` status); two failures land an `error`
+  event without consuming further LLM calls. Pending state is unlinked
+  on success so a refresh of the generating page cannot re-trigger the
+  paid call (and a follow-up `GET /generate/{slug}/stream` returns 404).
+  - New `AnthropicClient.complete_stream` mirrors `complete` but uses
+    `messages.stream(...)` and yields each `text_stream` delta. Same
+    rate-limit retry policy as `complete`, but only before the first
+    chunk lands — a mid-stream error surfaces as `LLMResponseError`
+    rather than retrying (re-yielding chunks the consumer already
+    received would corrupt the SSE stream).
+  - New `generate_narrative_stream` in `trailstory.llm.narrative`
+    yields `NarrativeStreamChunk` / `NarrativeStreamRetry` /
+    `NarrativeStreamComplete` events. The validated `NarrativeOutput`
+    rides on the terminal event, so the SSE endpoint can build the
+    `Memory`, render the HTML, and persist final `state.json` in one
+    pass. Cache is intentionally bypassed for streaming runs — the
+    user is watching tokens land, an instant cached return would be
+    jarring; CLI / `generate_narrative` keeps the cache.
+  - New `web.pipeline.prepare_pipeline` and
+    `web.pipeline.stream_pipeline` split the previous `run_pipeline`
+    into the prep + stream halves. `pending.json` (alongside
+    `state.json` in `output/`) holds the parsed inputs the SSE
+    endpoint resumes from.
+- **"Save for Instagram" button on every rendered memory page**
+  (`templates/styles/{editorial,log,encyclopedia}.html.j2`). The button
+  POSTs to `/memory/{slug}/carousel`, fetches each slide URL as a
+  `Blob`, and either calls `navigator.share({files: ...})` (iOS
+  Safari path → "Save N Images" share sheet → two-tap to Instagram)
+  or renders desktop fallback download links with the
+  `download` attribute. The carousel slide route now sets
+  `Content-Disposition: attachment; filename="<slug>-NN_role.jpg"` so
+  desktop clicks save to `~/Downloads` with a meaningful, slug-
+  namespaced name. The button is wired in JavaScript only — no new
+  Python routes — so existing carousel infrastructure
+  (`render_instagram_carousel`, `POST /memory/{slug}/carousel`) is
+  reused.
+- **Privacy page lifecycle polish** (`web/templates/privacy.html.j2`).
+  The "what we do with your upload" section is now an explicit
+  six-step lifecycle — upload → parse/resize → narrative call → HTML
+  render → raw upload deletion → workspace expiry — with a
+  "Verify it yourself" block that links to specific line ranges in
+  `web/storage.py` (`cleanup_inputs`, `sweep_expired`) and `web/app.py`
+  (`_run_sweeper`) on GitHub. The privacy link in the form
+  (`web/templates/landing.html.j2`) opens in a new tab and reads
+  "How we handle your photos →" so the user can audit without losing
+  their upload state.
+
+### Changed
+- `POST /generate` no longer 303-redirects to the memory page. It now
+  returns the new generating page (HTTP 200) with a `data-slug`
+  attribute and an inline `EventSource` listener on
+  `/generate/{slug}/stream`. The browser navigates to `/memory/{slug}`
+  itself once the SSE `done` event arrives. Existing 4xx behaviour for
+  missing / oversized / unsupported uploads is unchanged — those still
+  surface synchronously from the prep phase.
+- `web/dev.py::make_fake_client_factory` now stubs `complete_stream`
+  alongside `complete` so `make web-dev` exercises the SSE flow
+  end-to-end without paying for API calls. The stream is the same
+  fixture narrative split into ~16 chunks.
+- `web/storage.py` adds `Workspace.pending_state_path` for the
+  intermediate JSON that `prepare_pipeline` writes and
+  `stream_pipeline` consumes. The retention sweeper continues to
+  garbage-collect everything older than `RETENTION_SECONDS` (30
+  minutes by default).
+- The unused synchronous `web.pipeline.run_pipeline` was removed —
+  it was superseded by `prepare_pipeline + stream_pipeline` and only
+  the streaming flow is now wired into the routes.
+
 - **FastAPI web builder** (`web/`). Mobile-first, privacy-first, no
   accounts, no DB. Six endpoints: `GET /` (landing + builder form),
   `POST /generate` (multipart `gpx` + `photos[]` + `description` +

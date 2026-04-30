@@ -301,10 +301,36 @@
     <section class="share" aria-label="share">
       <a id="waLink" href="#" target="_blank" rel="noopener noreferrer">WhatsApp</a>
       <button id="copyBtn" type="button">Copy text</button>
+      <button id="igBtn" type="button" data-slug="test-render-log">Save for Instagram</button>
+      <p id="igStatus" class="ig-status" aria-live="polite"></p>
     </section>
 
     <footer>test-render-log</footer>
   </main>
+
+  <style>
+    .ig-status {
+      font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+      font-size: 0.7rem;
+      color: #57606a;
+      margin-top: 0.45rem;
+      min-height: 1.2em;
+      letter-spacing: 0.04em;
+    }
+    .ig-fallback { display: flex; flex-wrap: wrap; gap: 0.4rem; margin-top: 0.5rem; }
+    .ig-fallback a {
+      display: inline-block;
+      padding: 0.3rem 0.6rem;
+      border: 1px solid #d0d7de;
+      background: #ffffff;
+      color: #1f2328 !important;
+      text-decoration: none;
+      border-radius: 3px;
+      font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+      font-size: 0.7rem;
+      letter-spacing: 0.04em;
+    }
+  </style>
 
   <script>
     (function () {
@@ -345,6 +371,73 @@
           navigator.clipboard.writeText(msg);
         }
       });
+
+      // ── Instagram carousel ────────────────────────────────────────
+      var igBtn = document.getElementById('igBtn');
+      var igStatus = document.getElementById('igStatus');
+      var slug = igBtn.getAttribute('data-slug');
+
+      function setStatus(text) { igStatus.textContent = text || ''; }
+
+      async function fetchSlideAsFile(url) {
+        var res = await fetch(url);
+        if (!res.ok) throw new Error('failed to fetch ' + url);
+        var blob = await res.blob();
+        var name = url.split('/').pop() || 'slide.jpg';
+        return new File([blob], name, { type: blob.type || 'image/jpeg' });
+      }
+
+      function showFallbackLinks(urls) {
+        var existing = document.getElementById('igFallback');
+        if (existing) existing.remove();
+        var box = document.createElement('div');
+        box.id = 'igFallback';
+        box.className = 'ig-fallback';
+        urls.forEach(function (u, i) {
+          var a = document.createElement('a');
+          a.href = u;
+          a.textContent = 'slide ' + (i + 1);
+          a.setAttribute('download', '');
+          box.appendChild(a);
+        });
+        igStatus.parentNode.insertBefore(box, igStatus.nextSibling);
+      }
+
+      async function saveForInstagram() {
+        igBtn.disabled = true;
+        setStatus('Building carousel…');
+        try {
+          var manifestRes = await fetch('/memory/' + slug + '/carousel', { method: 'POST' });
+          if (!manifestRes.ok) throw new Error('carousel build failed (' + manifestRes.status + ')');
+          var manifest = await manifestRes.json();
+          var urls = (manifest && manifest.slides) || [];
+          if (!urls.length) throw new Error('no slides returned');
+
+          if (navigator.canShare) {
+            setStatus('Preparing share sheet…');
+            var files = await Promise.all(urls.map(fetchSlideAsFile));
+            var shareData = { files: files, title: titleEn, text: msg };
+            if (navigator.canShare(shareData)) {
+              try {
+                await navigator.share(shareData);
+                setStatus('Saved. Open Instagram and pick the slides from your library.');
+                igBtn.disabled = false;
+                return;
+              } catch (err) {
+                // User dismissed; fall through to download links.
+              }
+            }
+          }
+
+          setStatus('Carousel ready. Click each slide to download.');
+          showFallbackLinks(urls);
+        } catch (err) {
+          setStatus('Could not build carousel: ' + (err && err.message ? err.message : 'unknown'));
+        }
+        igBtn.disabled = false;
+      }
+
+      igBtn.addEventListener('click', saveForInstagram);
     })();
   </script>
 </body>

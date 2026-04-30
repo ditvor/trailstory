@@ -11,6 +11,7 @@ instantly.
 
 from __future__ import annotations
 
+from collections.abc import Iterator
 from typing import Any
 from unittest.mock import MagicMock
 
@@ -298,3 +299,118 @@ def test_constructor_does_not_store_plaintext_secret() -> None:
     client, _ = _build_client()
     # The unwrapped key must not appear anywhere on the instance.
     assert not any(API_KEY.get_secret_value() == v for v in vars(client).values())
+
+
+# ── streaming ────────────────────────────────────────────────────────────────
+
+
+def _make_stream_manager(chunks: list[str]) -> MagicMock:
+    """Build a fake context manager mirroring ``messages.stream(...)``.
+
+    The real SDK returns a ``MessageStreamManager`` whose ``__enter__``
+    yields a ``MessageStream`` exposing ``text_stream``. The mock keeps
+    that shape so the client code under test treats it like the real
+    thing.
+    """
+    stream = MagicMock()
+    stream.text_stream = iter(chunks)
+    manager = MagicMock()
+    manager.__enter__ = MagicMock(return_value=stream)
+    manager.__exit__ = MagicMock(return_value=None)
+    return manager
+
+
+def test_complete_stream_yields_chunks_in_order() -> None:
+    chunks = ["hello ", "world ", "from ", "claude"]
+    sdk = MagicMock()
+    sdk.messages.stream.return_value = _make_stream_manager(chunks)
+    client, _ = _build_client(sdk_mock=sdk)
+
+    out = list(client.complete_stream("p", "s"))
+    assert out == chunks
+    # Same model / system / message shape as the non-streaming path.
+    kwargs = sdk.messages.stream.call_args.kwargs
+    assert kwargs["model"] == DEFAULT_MODEL
+    assert kwargs["system"] == "s"
+    assert kwargs["messages"] == [{"role": "user", "content": "p"}]
+
+
+def test_complete_stream_skips_empty_chunks() -> None:
+    """The SDK occasionally yields empty strings between deltas; they
+    should not propagate to the consumer."""
+    sdk = MagicMock()
+    sdk.messages.stream.return_value = _make_stream_manager(["a", "", "b", "", "c"])
+    client, _ = _build_client(sdk_mock=sdk)
+
+    assert list(client.complete_stream("p", "s")) == ["a", "b", "c"]
+
+
+def test_complete_stream_raises_on_empty_stream() -> None:
+    sdk = MagicMock()
+    sdk.messages.stream.return_value = _make_stream_manager([])
+    client, _ = _build_client(sdk_mock=sdk)
+
+    with pytest.raises(LLMResponseError, match="empty"):
+        list(client.complete_stream("p", "s"))
+
+
+def test_complete_stream_retries_rate_limit_before_first_chunk() -> None:
+    """A RateLimitError raised before any chunk lands triggers a retry."""
+    chunks = ["ok " * 30]
+    sdk = MagicMock()
+    sdk.messages.stream.side_effect = [
+        _make_rate_limit_error(),
+        _make_rate_limit_error(),
+        _make_stream_manager(chunks),
+    ]
+    client, _ = _build_client(sdk_mock=sdk)
+
+    out = list(client.complete_stream("p", "s"))
+    assert out == chunks
+    assert sdk.messages.stream.call_count == 3
+
+
+def test_complete_stream_raises_retry_exhausted_after_max_attempts() -> None:
+    sdk = MagicMock()
+    sdk.messages.stream.side_effect = _make_rate_limit_error()
+    client, _ = _build_client(sdk_mock=sdk)
+
+    with pytest.raises(LLMRetryExhaustedError):
+        list(client.complete_stream("p", "s"))
+    assert sdk.messages.stream.call_count == DEFAULT_MAX_RETRIES
+
+
+def test_complete_stream_translates_status_error() -> None:
+    sdk = MagicMock()
+    sdk.messages.stream.side_effect = _make_status_error(500, "boom")
+    client, _ = _build_client(sdk_mock=sdk)
+
+    with pytest.raises(LLMResponseError, match="500"):
+        list(client.complete_stream("p", "s"))
+    assert sdk.messages.stream.call_count == 1
+
+
+def test_complete_stream_does_not_retry_after_yielding_chunks() -> None:
+    """If chunks have been yielded and the SDK then raises, we surface
+    the error rather than retrying — the consumer has already received
+    the bytes and a re-attempt would corrupt the stream."""
+
+    def _raising_chunks() -> Iterator[str]:
+        yield "first chunk"
+        raise _make_rate_limit_error()
+
+    stream = MagicMock()
+    stream.text_stream = _raising_chunks()
+    manager = MagicMock()
+    manager.__enter__ = MagicMock(return_value=stream)
+    manager.__exit__ = MagicMock(return_value=None)
+    sdk = MagicMock()
+    sdk.messages.stream.return_value = manager
+
+    client, _ = _build_client(sdk_mock=sdk)
+    gen = client.complete_stream("p", "s")
+    assert next(gen) == "first chunk"
+    with pytest.raises(LLMResponseError, match="mid-stream"):
+        list(gen)
+    # Exactly one stream call — no retry after a yield.
+    assert sdk.messages.stream.call_count == 1

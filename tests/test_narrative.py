@@ -19,7 +19,14 @@ from trailstory.llm.client import (
     LLMResponseError,
     LLMRetryExhaustedError,
 )
-from trailstory.llm.narrative import NarrativeGenerationError, generate_narrative
+from trailstory.llm.narrative import (
+    NarrativeGenerationError,
+    NarrativeStreamChunk,
+    NarrativeStreamComplete,
+    NarrativeStreamRetry,
+    generate_narrative,
+    generate_narrative_stream,
+)
 from trailstory.llm.prompts import (
     USER_NARRATIVE_RETRY_SUFFIX,
     USER_NARRATIVE_TEMPLATE,
@@ -367,3 +374,106 @@ def test_generate_narrative_supplies_every_template_placeholder() -> None:
 
     leftover = re.findall(r"\{[a-zA-Z_][a-zA-Z0-9_]*\}", sent)
     assert leftover == [], f"unfilled placeholders {leftover}; expected none of {expected}"
+
+
+# ── streaming variant ────────────────────────────────────────────────────────
+
+
+def _stream_client(*responses: list[str] | Exception) -> MagicMock:
+    """Build a mocked client whose ``.complete_stream`` yields each list."""
+    mock = MagicMock(spec=AnthropicClient)
+
+    def _side_effect(*_a: object, **_kw: object) -> object:
+        item = mock._stream_responses.pop(0)
+        if isinstance(item, Exception):
+            raise item
+        return iter(item)
+
+    mock._stream_responses = list(responses)
+    mock.complete_stream.side_effect = _side_effect
+    mock.model = "claude-opus-4-7-test"
+    return mock
+
+
+def _split(payload: str, parts: int = 6) -> list[str]:
+    step = max(1, len(payload) // parts)
+    return [payload[i : i + step] for i in range(0, len(payload), step)]
+
+
+def test_generate_narrative_stream_yields_chunks_and_terminal_event() -> None:
+    chunks = _split(_valid_response_json())
+    client = _stream_client(chunks)
+
+    events = list(generate_narrative_stream(_hike_input(), _gpx_stats(), _photos(), client=client))
+
+    chunk_events = [e for e in events if isinstance(e, NarrativeStreamChunk)]
+    complete_events = [e for e in events if isinstance(e, NarrativeStreamComplete)]
+    assert len(chunk_events) == len(chunks)
+    assert "".join(c.text for c in chunk_events) == "".join(chunks)
+    assert len(complete_events) == 1
+    narrative = complete_events[0].narrative
+    assert isinstance(narrative, NarrativeOutput)
+    assert narrative.title.en == "Above the fog line"
+
+
+def test_generate_narrative_stream_retries_on_unparseable_first_attempt() -> None:
+    chunks_bad = _split("this is not json", parts=3)
+    chunks_good = _split(_valid_response_json())
+    client = _stream_client(chunks_bad, chunks_good)
+
+    events = list(generate_narrative_stream(_hike_input(), _gpx_stats(), _photos(), client=client))
+
+    retries = [e for e in events if isinstance(e, NarrativeStreamRetry)]
+    completes = [e for e in events if isinstance(e, NarrativeStreamComplete)]
+    assert len(retries) == 1
+    assert len(completes) == 1
+    # Both attempts streamed — chunks from each appear.
+    chunk_text = "".join(e.text for e in events if isinstance(e, NarrativeStreamChunk))
+    assert "this is not json" in chunk_text
+    assert "Above the fog line" in chunk_text
+
+
+def test_generate_narrative_stream_raises_on_double_failure() -> None:
+    bad = _split("still not json", parts=3)
+    client = _stream_client(bad, bad)
+
+    with pytest.raises(NarrativeGenerationError, match="non-JSON"):
+        list(generate_narrative_stream(_hike_input(), _gpx_stats(), _photos(), client=client))
+
+
+def test_generate_narrative_stream_strips_markdown_fences() -> None:
+    fenced = "```json\n" + _valid_response_json() + "\n```"
+    client = _stream_client(_split(fenced))
+
+    events = list(generate_narrative_stream(_hike_input(), _gpx_stats(), _photos(), client=client))
+    # Single attempt — no retry — and the narrative parses cleanly.
+    completes = [e for e in events if isinstance(e, NarrativeStreamComplete)]
+    assert len(completes) == 1
+    assert completes[0].narrative.title.en == "Above the fog line"
+
+
+def test_generate_narrative_stream_rejects_empty_photo_list() -> None:
+    client = _stream_client()
+    with pytest.raises(NarrativeGenerationError, match="at least one photo"):
+        list(generate_narrative_stream(_hike_input(), _gpx_stats(), [], client=client))
+    client.complete_stream.assert_not_called()
+
+
+def test_generate_narrative_stream_translates_llm_error() -> None:
+    client = _stream_client(LLMResponseError("boom"))
+    with pytest.raises(NarrativeGenerationError, match="LLM call failed"):
+        list(generate_narrative_stream(_hike_input(), _gpx_stats(), _photos(), client=client))
+
+
+def test_generate_narrative_stream_translates_retry_exhausted_error() -> None:
+    client = _stream_client(LLMRetryExhaustedError("rate limit"))
+    with pytest.raises(NarrativeGenerationError, match="LLM call failed"):
+        list(generate_narrative_stream(_hike_input(), _gpx_stats(), _photos(), client=client))
+
+
+def test_generate_narrative_stream_validates_schema() -> None:
+    """JSON parses but is missing required keys → NarrativeGenerationError."""
+    bogus = json.dumps({"title": {"en": "x"}})
+    client = _stream_client(_split(bogus, parts=2))
+    with pytest.raises(NarrativeGenerationError, match="schema"):
+        list(generate_narrative_stream(_hike_input(), _gpx_stats(), _photos(), client=client))
