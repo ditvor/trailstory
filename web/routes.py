@@ -1,14 +1,20 @@
 """HTTP route handlers for the web builder.
 
-Six endpoints, all stateless from the user's point of view:
+Eight endpoints, all stateless from the user's point of view:
 
 * ``GET /``                          — landing page + builder form.
-* ``POST /generate``                 — multipart upload; runs the pipeline
-                                        and 303-redirects to the memory page.
+* ``POST /generate``                 — multipart upload; runs the prep
+                                        phase (parse + photo load) and
+                                        returns the generating page.
+* ``GET /generate/{slug}/stream``    — Server-Sent Events stream that
+                                        runs the LLM call and renders
+                                        the HTML; emits chunk / retry /
+                                        done / error events.
 * ``GET /memory/{slug}``             — serves the rendered HTML.
 * ``POST /memory/{slug}/carousel``   — generates the IG carousel on demand.
 * ``GET /privacy``                   — plain-language privacy page.
 * ``GET /healthz``                   — uptime probe.
+* ``GET /memory/{slug}/carousel/{filename}`` — serves a single slide.
 
 Heavy lifting (parse / load / narrative / render) lives in
 ``web.pipeline``; this module is just request validation, file I/O,
@@ -19,19 +25,35 @@ attack surface.
 
 from __future__ import annotations
 
+import json
 import logging
 import threading
-from collections.abc import Callable, Iterable
+from collections.abc import Callable, Iterable, Iterator
 from pathlib import Path
 from typing import Annotated, Final
 
 from fastapi import APIRouter, BackgroundTasks, Form, HTTPException, Request, UploadFile
-from fastapi.responses import FileResponse, HTMLResponse, JSONResponse, RedirectResponse, Response
+from fastapi.responses import (
+    FileResponse,
+    HTMLResponse,
+    JSONResponse,
+    Response,
+    StreamingResponse,
+)
 from fastapi.templating import Jinja2Templates
 
 from trailstory.config import Settings
 from trailstory.llm.client import AnthropicClient
-from web.pipeline import PipelineError, Style, render_carousel, run_pipeline
+from web.pipeline import (
+    PipelineError,
+    PipelineStreamChunk,
+    PipelineStreamRendered,
+    PipelineStreamRetry,
+    Style,
+    prepare_pipeline,
+    render_carousel,
+    stream_pipeline,
+)
 from web.storage import Storage, Workspace
 
 logger = logging.getLogger(__name__)
@@ -100,7 +122,7 @@ async def healthz() -> dict[str, str]:
 # ── pipeline ─────────────────────────────────────────────────────────────────
 
 
-@router.post("/generate")
+@router.post("/generate", response_class=HTMLResponse)
 async def generate(
     request: Request,
     background_tasks: BackgroundTasks,
@@ -110,11 +132,16 @@ async def generate(
     gpx: UploadFile | None = None,
     photos: list[UploadFile] | None = None,
 ) -> Response:
-    """Run the pipeline against an upload and redirect to the memory page.
+    """Validate the upload, run the prep phase, return the generating page.
+
+    The generating page connects to ``GET /generate/{slug}/stream`` via
+    Server-Sent Events to run the LLM call. We persist the parsed inputs
+    (``pending.json``) before responding so the SSE endpoint can pick up
+    even after the BackgroundTask has wiped the raw uploads.
 
     Raises a 4xx if the inputs are missing, oversized, or unsupported;
-    a 502 if the LLM call fails. The 303 redirect is what makes the
-    "POST then GET" pattern work without resubmitting on refresh.
+    pipeline parse / photo-load errors surface as 400 here rather than
+    in the SSE stream so the user gets immediate feedback.
     """
     if gpx is None or not gpx.filename:
         raise HTTPException(status_code=400, detail="GPX file is required")
@@ -132,20 +159,16 @@ async def generate(
     try:
         await _save_gpx(gpx, workspace)
         await _save_photos(photos, workspace)
-        client = _client_factory(request)()
         settings = _settings(request)
-        memory, _ = run_pipeline(
+        prepare_pipeline(
             workspace,
             description=description,
             style=chosen_style,
-            client=client,
             photo_max_edge=settings.photo_max_edge,
             photo_quality=settings.photo_quality,
             location=(location or None),
         )
     except PipelineError as exc:
-        # Pipeline failed after we created the workspace; don't leave
-        # half-baked state on disk.
         storage.delete_workspace(workspace)
         raise HTTPException(status_code=400, detail=str(exc)) from exc
     except HTTPException:
@@ -155,19 +178,84 @@ async def generate(
         storage.delete_workspace(workspace)
         raise
     finally:
-        # Make sure we always wipe raw uploads even if generation
-        # succeeded — the background task is the privacy guarantee.
+        # Wipe raw uploads as soon as the response is sent. The pending
+        # state captured in ``prepare_pipeline`` already references the
+        # resized JPEGs, so the SSE call that follows does not need the
+        # originals.
         background_tasks.add_task(storage.cleanup_inputs, workspace)
 
     _bump_counter()
     logger.info(
-        "generated memory %s (style=%s, photos=%d)",
+        "prepared memory %s for streaming (style=%s)",
         workspace.slug,
         chosen_style.value,
-        len(memory.selected_photos),
     )
-    # 303 because we are switching from POST to GET.
-    return RedirectResponse(url=f"/memory/{workspace.slug}", status_code=303)
+    return _templates(request).TemplateResponse(
+        request,
+        "generating.html.j2",
+        {
+            "slug": workspace.slug,
+            "style": chosen_style.value,
+            "retention_minutes": storage.retention_seconds // 60,
+        },
+    )
+
+
+@router.get("/generate/{slug}/stream")
+async def generate_stream(request: Request, slug: str) -> Response:
+    """Server-Sent Events stream that drives narrative generation.
+
+    Reads the pending state written by ``POST /generate``, calls the
+    streaming LLM, and emits four kinds of events:
+
+    * ``chunk`` — JSON ``{"text": "..."}`` for each text delta.
+    * ``status`` — JSON ``{"phase": "writing"|"regenerating"|"rendering"}``.
+    * ``done``  — JSON ``{"redirect": "/memory/<slug>"}`` once the HTML
+                  is rendered.
+    * ``error`` — JSON ``{"error": "..."}`` if anything fails.
+
+    The SSE format is plain text/event-stream — no framework dependency
+    on the front end beyond the standard ``EventSource`` API (htmx's
+    ``sse-swap`` extension also consumes this shape unchanged).
+    """
+    storage = _storage(request)
+    workspace = storage.get_workspace(slug)
+    if workspace is None:
+        raise HTTPException(status_code=404, detail="Memory not found or expired")
+    if not workspace.pending_state_path.is_file():
+        raise HTTPException(status_code=404, detail="Memory has already been generated or expired")
+
+    client = _client_factory(request)()
+
+    def event_stream() -> Iterator[bytes]:
+        yield _sse_event("status", {"phase": "writing"})
+        try:
+            for event in stream_pipeline(workspace, client=client):
+                if isinstance(event, PipelineStreamChunk):
+                    yield _sse_event("chunk", {"text": event.text})
+                elif isinstance(event, PipelineStreamRetry):
+                    yield _sse_event("status", {"phase": "regenerating", "reason": event.reason})
+                elif isinstance(event, PipelineStreamRendered):
+                    yield _sse_event("status", {"phase": "rendering"})
+                    yield _sse_event("done", {"redirect": f"/memory/{event.slug}"})
+        except PipelineError as exc:
+            logger.warning("stream pipeline failed for %s: %s", slug, exc)
+            yield _sse_event("error", {"error": str(exc)})
+        except Exception:
+            # Anything that isn't a PipelineError is unexpected — log
+            # the trace and tell the client we failed without leaking
+            # internals.
+            logger.exception("unexpected stream pipeline error for %s", slug)
+            yield _sse_event("error", {"error": "internal error during generation"})
+            raise
+
+    headers = {
+        # Disable any reverse-proxy buffering — SSE only works if the
+        # bytes reach the client as they are written.
+        "Cache-Control": "no-cache",
+        "X-Accel-Buffering": "no",
+    }
+    return StreamingResponse(event_stream(), media_type="text/event-stream", headers=headers)
 
 
 @router.get("/memory/{slug}", response_class=HTMLResponse)
@@ -210,6 +298,13 @@ async def memory_carousel_slide(request: Request, slug: str, filename: str) -> R
     only legal shape is ``NN_<role>.jpg`` — but we still validate the
     path stays inside the carousel dir so a malicious caller can't
     escape via ``../``.
+
+    Sets ``Content-Disposition: attachment; filename="<slug>-<n>.jpg"``
+    so desktop clicks on the fallback download links save with a
+    meaningful filename. iOS Safari's ``navigator.share({files: [...]})``
+    path ignores Content-Disposition — that flow goes through fetched
+    blobs and an explicit ``File`` constructor — so the header here is
+    purely for the desktop fallback.
     """
     storage = _storage(request)
     workspace = storage.get_workspace(slug)
@@ -221,7 +316,15 @@ async def memory_carousel_slide(request: Request, slug: str, filename: str) -> R
         raise HTTPException(status_code=400, detail="Invalid slide path")
     if not target.is_file():
         raise HTTPException(status_code=404, detail="Slide not found")
-    return FileResponse(target, media_type="image/jpeg")
+    # Use the slide's own filename — `01_photo.jpg` etc. — namespaced by
+    # slug so multiple downloads land with distinct names in the user's
+    # Downloads folder.
+    download_name = f"{slug}-{target.name}"
+    return FileResponse(
+        target,
+        media_type="image/jpeg",
+        headers={"Content-Disposition": f'attachment; filename="{download_name}"'},
+    )
 
 
 # ── upload validation + persistence ──────────────────────────────────────────
@@ -305,6 +408,26 @@ def _settings(request: Request) -> Settings:
 def _client_factory(request: Request) -> Callable[[], AnthropicClient]:
     factory: Callable[[], AnthropicClient] = request.app.state.client_factory
     return factory
+
+
+# ── SSE helpers ──────────────────────────────────────────────────────────────
+
+
+def _sse_event(name: str, data: dict[str, object]) -> bytes:
+    """Encode a Server-Sent Event with a named event type and JSON payload.
+
+    The wire format is::
+
+        event: <name>
+        data: <json>
+        \n
+
+    The trailing blank line is what tells the browser this event is
+    complete. We always JSON-encode the payload so the front-end can
+    parse it with one ``JSON.parse(e.data)`` call.
+    """
+    payload = json.dumps(data, ensure_ascii=False)
+    return f"event: {name}\ndata: {payload}\n\n".encode()
 
 
 # ── counter ──────────────────────────────────────────────────────────────────

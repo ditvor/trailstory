@@ -12,34 +12,86 @@
     do not retain your raw uploads after the page is rendered.
   </p>
 
-  <h2 class="mt-6 text-lg font-semibold">What we do with your upload</h2>
+  <h2 class="mt-6 text-lg font-semibold">Lifecycle of one upload</h2>
 
   <ol class="mt-2 list-decimal pl-5 space-y-3 text-base leading-relaxed">
     <li>
-      Your GPX file and photos are written to a temporary directory on the
-      server, identified only by a random one-time slug.
+      <strong>Upload received.</strong> Your GPX file and photos are written
+      to a temporary directory on the server, identified only by a random
+      one-time slug. No name, no email, no account.
     </li>
     <li>
-      We parse the GPX, resize each photo, strip GPS coordinates from photo
-      metadata, and send a structured prompt — your description plus the hike
-      stats — to Anthropic's Claude API to write the narrative.
+      <strong>Parsing &amp; resizing.</strong> We parse the GPX, resize each
+      photo to a maximum edge of 1800px, and strip GPS coordinates and other
+      identifying EXIF metadata from the resized JPEGs. The originals are
+      never re-served.
     </li>
     <li>
-      We render a single self-contained HTML file with the photos embedded as
-      base64 data URIs. The file works offline and can be sent over any
-      messenger.
+      <strong>Narrative call to Anthropic.</strong> A structured prompt — your
+      description plus the hike statistics (distance, elevation, duration) —
+      is sent to Anthropic's Claude API to write the EN/RU/DE narrative.
+      <em>Photo bytes are not sent to the API; only their chronological order
+      and a numeric index.</em>
     </li>
     <li>
-      <strong>Your raw GPX and original photos are deleted as soon as the
-      response is sent.</strong> Only the resized, GPS-stripped JPEGs and the
-      rendered HTML page remain.
+      <strong>HTML rendered.</strong> A single self-contained HTML file is
+      written, with the privacy-stripped JPEGs embedded as base64 data URIs.
+      The file works offline and can be sent over any messenger.
     </li>
     <li>
-      The rendered page stays on disk for {{ retention_minutes }} minutes so
-      you can re-share the link or generate an Instagram carousel. After that
-      window the entire workspace is deleted by an automatic sweep.
+      <strong>Raw upload deleted.</strong> Your raw GPX and original photos
+      are wiped from the temporary directory as soon as the response is
+      sent — typically within a second of the page loading. Only the
+      privacy-stripped JPEGs and the rendered HTML page remain.
+    </li>
+    <li>
+      <strong>Workspace expiry.</strong> The rendered page stays on disk for
+      <strong>{{ retention_minutes }} minutes</strong> so you can re-share
+      the link or generate an Instagram carousel. After that window the
+      entire workspace is deleted by an automatic sweep.
     </li>
   </ol>
+
+  <h2 class="mt-6 text-lg font-semibold">Verify it yourself</h2>
+
+  <p class="mt-2 text-base leading-relaxed">
+    Trailstory is open source. Every behaviour described above is enforced
+    by the code in this repository — read it, check it, file an issue if
+    anything looks wrong:
+  </p>
+
+  <ul class="mt-3 list-disc pl-5 space-y-2 text-sm leading-relaxed">
+    <li>
+      Raw upload deletion (BackgroundTask):
+      <a class="underline font-mono"
+         href="{{ repo_url }}/blob/develop/web/storage.py#L205-L215"
+         target="_blank" rel="noopener noreferrer">web/storage.py — <code>cleanup_inputs</code></a>
+    </li>
+    <li>
+      Workspace expiry sweep:
+      <a class="underline font-mono"
+         href="{{ repo_url }}/blob/develop/web/storage.py#L222-L249"
+         target="_blank" rel="noopener noreferrer">web/storage.py — <code>sweep_expired</code></a>
+    </li>
+    <li>
+      Per-request workspace + sweep cadence:
+      <a class="underline font-mono"
+         href="{{ repo_url }}/blob/develop/web/app.py#L137-L149"
+         target="_blank" rel="noopener noreferrer">web/app.py — <code>_run_sweeper</code></a>
+    </li>
+    <li>
+      EXIF / GPS stripping during photo resize:
+      <a class="underline font-mono"
+         href="{{ repo_url }}/blob/develop/trailstory/photos.py"
+         target="_blank" rel="noopener noreferrer">trailstory/photos.py</a>
+    </li>
+    <li>
+      Repository root:
+      <a class="underline"
+         href="{{ repo_url }}"
+         target="_blank" rel="noopener noreferrer">{{ repo_url }}</a>
+    </li>
+  </ul>
 
   <h2 class="mt-6 text-lg font-semibold">What we do not do</h2>
 
@@ -60,15 +112,6 @@
     provided (if any), and your description text. Photo bytes are not sent to
     the API; only their chronological order and a numeric index. Anthropic's
     own privacy and retention practices apply to that single API call.
-  </p>
-
-  <h2 class="mt-6 text-lg font-semibold">Verify it yourself</h2>
-
-  <p class="mt-2 text-base leading-relaxed">
-    Trailstory is open source. Every behaviour described above is enforced by
-    the code in this repository — read it, check it, file an issue if anything
-    looks wrong:
-    <a class="underline" href="{{ repo_url }}" target="_blank" rel="noopener noreferrer">{{ repo_url }}</a>.
   </p>
 
   <p class="mt-6">

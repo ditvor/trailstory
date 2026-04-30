@@ -83,7 +83,11 @@ def make_fake_client_factory() -> Callable[[], AnthropicClient]:
     """Return a factory that produces a deterministic fake LLM client.
 
     The factory shape matches the real one in ``web.app`` so swapping
-    is a one-line change at app construction.
+    is a one-line change at app construction. The mock supports both
+    the synchronous ``complete`` path (CLI / non-streaming generation)
+    and the ``complete_stream`` path used by the SSE flow — the stream
+    method yields the same constant narrative split across a handful
+    of chunks so the dev page shows the streaming animation.
     """
 
     def _factory() -> AnthropicClient:
@@ -94,6 +98,14 @@ def make_fake_client_factory() -> Callable[[], AnthropicClient]:
         # in by mistake.
         fake.model = "trailstory-dev-fake"
         fake.complete.return_value = _FAKE_NARRATIVE
+
+        def _stream(*_args: object, **_kwargs: object) -> object:
+            # Slice the fixture into evenly-sized chunks so the SSE
+            # flow has multiple frames to render.
+            step = max(1, len(_FAKE_NARRATIVE) // 16)
+            return iter(_FAKE_NARRATIVE[i : i + step] for i in range(0, len(_FAKE_NARRATIVE), step))
+
+        fake.complete_stream.side_effect = _stream
         return fake
 
     return _factory

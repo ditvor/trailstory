@@ -30,6 +30,8 @@ from __future__ import annotations
 
 import json
 import logging
+from collections.abc import Iterator
+from dataclasses import dataclass
 from json import JSONDecodeError
 from typing import Any
 
@@ -49,6 +51,38 @@ from trailstory.llm.prompts import (
 from trailstory.models import GpxStats, HikeInput, NarrativeOutput, PhotoMeta
 
 logger = logging.getLogger(__name__)
+
+
+@dataclass(frozen=True)
+class NarrativeStreamChunk:
+    """A text delta yielded by the streaming narrative pipeline.
+
+    The SSE endpoint forwards each chunk to the browser as an event so the
+    user sees the model writing in real time.
+    """
+
+    text: str
+
+
+@dataclass(frozen=True)
+class NarrativeStreamRetry:
+    """The first attempt produced unparseable output; we are retrying once.
+
+    Emitted between the failed attempt and the second one so the SSE
+    consumer can flip to a "regenerating" UI state.
+    """
+
+    reason: str
+
+
+@dataclass(frozen=True)
+class NarrativeStreamComplete:
+    """Final event: the streamed output validated cleanly into a narrative."""
+
+    narrative: NarrativeOutput
+
+
+NarrativeStreamEvent = NarrativeStreamChunk | NarrativeStreamRetry | NarrativeStreamComplete
 
 
 class NarrativeGenerationError(Exception):
@@ -138,7 +172,113 @@ def generate_narrative(
     return narrative
 
 
+def generate_narrative_stream(
+    hike_input: HikeInput,
+    gpx_stats: GpxStats,
+    photos: list[PhotoMeta],
+    *,
+    client: AnthropicClient,
+    location: str = "the trail",
+) -> Iterator[NarrativeStreamEvent]:
+    """Streaming variant of :func:`generate_narrative`.
+
+    Yields a :class:`NarrativeStreamChunk` for every text delta from the
+    LLM, optionally a :class:`NarrativeStreamRetry` between attempts when
+    the first response did not parse, and finally a
+    :class:`NarrativeStreamComplete` with the validated
+    :class:`NarrativeOutput`.
+
+    The retry policy mirrors :func:`generate_narrative`: one extra attempt
+    with :data:`USER_NARRATIVE_RETRY_SUFFIX` when the first response was
+    unparseable. Schema-validation failures are not retried — they raise
+    :class:`NarrativeGenerationError` immediately, the same as the
+    non-streaming pipeline.
+
+    The cache is intentionally bypassed for streaming runs: the user is
+    looking at a "writing your story" page and expects to see the words
+    appear, so a cached instant return would be jarring. The
+    non-streaming :func:`generate_narrative` keeps the cache for CLI use.
+
+    Args:
+        hike_input: Hiker's seed text and source paths.
+        gpx_stats: Parsed GPX stats.
+        photos: Loaded photos. The model selects 6-8 indices into this list.
+        client: Anthropic client wrapper. Must implement ``complete_stream``.
+        location: Fallback place name when ``hike_input.location_name`` is
+            unset.
+
+    Yields:
+        :class:`NarrativeStreamEvent` instances. The terminal event is
+        always :class:`NarrativeStreamComplete` on success.
+
+    Raises:
+        NarrativeGenerationError: photos list empty, LLM call failed, the
+            model returned non-JSON twice in a row, or the parsed JSON did
+            not validate against the schema.
+    """
+    if not photos:
+        raise NarrativeGenerationError("at least one photo is required to build a narrative")
+
+    place = hike_input.location_name or location
+    base_prompt = USER_NARRATIVE_TEMPLATE.format(
+        location=place,
+        distance_km=gpx_stats.distance_km,
+        elevation_gain_m=gpx_stats.elevation_gain_m,
+        duration_min=gpx_stats.duration_min,
+        summit_elev_m=gpx_stats.summit_elev_m,
+        n_photos=len(photos),
+        n_photos_minus_1=len(photos) - 1,
+        seed_text=hike_input.seed_text,
+    )
+
+    parsed, chunks_first = _stream_and_parse(client, base_prompt)
+    yield from (NarrativeStreamChunk(text=c) for c in chunks_first)
+
+    if parsed is None:
+        logger.warning(
+            "first streamed response did not parse as JSON; retrying with explicit directive"
+        )
+        yield NarrativeStreamRetry(reason="model output was not valid JSON; retrying once")
+        retry_prompt = base_prompt + USER_NARRATIVE_RETRY_SUFFIX
+        parsed, chunks_retry = _stream_and_parse(client, retry_prompt)
+        yield from (NarrativeStreamChunk(text=c) for c in chunks_retry)
+        if parsed is None:
+            raise NarrativeGenerationError("Model returned non-JSON output on both attempts.")
+
+    try:
+        narrative = NarrativeOutput.model_validate(parsed)
+    except ValidationError as exc:
+        raise NarrativeGenerationError(
+            f"LLM JSON did not match NarrativeOutput schema: {exc}"
+        ) from exc
+
+    yield NarrativeStreamComplete(narrative=narrative)
+
+
 # -- internal helpers ---------------------------------------------------------
+
+
+def _stream_and_parse(
+    client: AnthropicClient, prompt: str
+) -> tuple[dict[str, Any] | None, list[str]]:
+    """Stream a single attempt, accumulate text, try to parse as JSON.
+
+    Returns ``(parsed_dict_or_None, chunks)`` so the caller can yield
+    each chunk to the SSE consumer in arrival order.
+    """
+    chunks: list[str] = []
+    try:
+        for chunk in client.complete_stream(prompt=prompt, system=SYSTEM_NARRATIVE):
+            chunks.append(chunk)
+    except (LLMResponseError, LLMRetryExhaustedError) as exc:
+        raise NarrativeGenerationError(f"LLM call failed: {exc}") from exc
+
+    cleaned = _strip_code_fences("".join(chunks))
+    try:
+        result = json.loads(cleaned)
+    except JSONDecodeError:
+        return None, chunks
+    return (result if isinstance(result, dict) else None), chunks
 
 
 def _call_and_parse(client: AnthropicClient, prompt: str) -> dict[str, Any] | None:

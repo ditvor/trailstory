@@ -59,6 +59,12 @@ PHOTOS_SUBDIR: Final[str] = "photos"
 RESIZED_SUBDIR: Final[str] = "resized"
 OUTPUT_SUBDIR: Final[str] = "output"
 STATE_FILENAME: Final[str] = "state.json"
+# Written by ``POST /generate`` after parsing the GPX and loading the
+# photos but *before* the LLM call. ``GET /generate/{slug}/stream`` reads
+# this file to know what to feed the streaming narrative call. Removed
+# once the final ``state.json`` has been written so the carousel route's
+# state-loader has a single source of truth.
+PENDING_STATE_FILENAME: Final[str] = "pending.json"
 
 
 class StorageError(Exception):
@@ -95,6 +101,15 @@ class Workspace:
     def state_path(self) -> Path:
         """Where the persisted ``Memory`` JSON lives."""
         return self.output_dir / STATE_FILENAME
+
+    @property
+    def pending_state_path(self) -> Path:
+        """Where the pre-LLM (parsed inputs) JSON lives during streaming.
+
+        Written by ``/generate``, read by ``/generate/{slug}/stream``,
+        and unlinked once the final ``state.json`` has been written.
+        """
+        return self.output_dir / PENDING_STATE_FILENAME
 
     @property
     def carousel_dir(self) -> Path:

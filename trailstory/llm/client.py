@@ -14,6 +14,7 @@ from __future__ import annotations
 import logging
 import random
 import time
+from collections.abc import Iterator
 from typing import Any, Final
 
 import anthropic
@@ -162,6 +163,75 @@ class AnthropicClient:
             text = self._extract_text(message)
             self._validate_text(text)
             return text
+
+        raise LLMRetryExhaustedError(
+            f"Rate-limit retries exhausted after {self._max_retries} attempts"
+        ) from last_rate_limit
+
+    def complete_stream(self, prompt: str, system: str) -> Iterator[str]:
+        """Stream the assistant response as text chunks.
+
+        Mirrors :meth:`complete` but yields each text delta as it arrives so
+        callers (the FastAPI SSE endpoint) can push tokens to the browser
+        while the model is still writing. Rate-limit errors that fire
+        *before* any chunk is yielded are retried with the same exponential
+        backoff as :meth:`complete`; any error that fires *after* yielding
+        begins is surfaced as :class:`LLMResponseError` (re-yielding chunks
+        the caller has already consumed would corrupt the SSE stream, so we
+        don't try).
+
+        Args:
+            prompt: User-role message content.
+            system: System prompt.
+
+        Yields:
+            Each text delta in arrival order. The full response is the
+            concatenation of the yielded chunks.
+
+        Raises:
+            LLMRetryExhaustedError: All rate-limit retries were used up
+                before a single chunk was emitted.
+            LLMResponseError: Empty stream, mid-stream error, or
+                non-retryable API error.
+        """
+        last_rate_limit: RateLimitError | None = None
+
+        for attempt in range(1, self._max_retries + 1):
+            chunks_emitted = False
+            try:
+                with self._client.messages.stream(
+                    model=self._model,
+                    max_tokens=self._max_tokens,
+                    system=system,
+                    messages=[{"role": "user", "content": prompt}],
+                ) as stream:
+                    for chunk in stream.text_stream:
+                        if chunk:
+                            chunks_emitted = True
+                            yield chunk
+                if not chunks_emitted:
+                    raise LLMResponseError("Anthropic API returned an empty stream.")
+                return
+            except RateLimitError as exc:
+                if chunks_emitted:
+                    # Cannot retry once chunks are out the door.
+                    raise LLMResponseError(f"Anthropic API rate-limited mid-stream: {exc}") from exc
+                last_rate_limit = exc
+                if attempt >= self._max_retries:
+                    break
+                delay = self._compute_backoff(attempt)
+                logger.warning(
+                    "anthropic stream rate-limited (attempt %d/%d); sleeping %.2fs",
+                    attempt,
+                    self._max_retries,
+                    delay,
+                )
+                time.sleep(delay)
+                continue
+            except APIStatusError as exc:
+                raise LLMResponseError(f"Anthropic API error {exc.status_code}: {exc}") from exc
+            except APIError as exc:
+                raise LLMResponseError(f"Anthropic API error: {exc}") from exc
 
         raise LLMRetryExhaustedError(
             f"Rate-limit retries exhausted after {self._max_retries} attempts"
