@@ -10,6 +10,28 @@ Versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 ## [Unreleased]
 
 ### Added
+- **Fly.io deployment config** (`Dockerfile`, `fly.toml`, `.dockerignore`)
+  for the web builder. The image is `python:3.12-slim` with the project
+  installed in editable mode so `trailstory.renderers.html` keeps
+  finding the top-level `templates/` directory at runtime; the renderer
+  resolves it via `Path(__file__).parents[2] / "templates"`, which only
+  works when the package source lives next to `templates/` — a
+  non-editable install would relocate `trailstory/` into site-packages
+  and break the path. `fly.toml` ships a 512 MB shared-cpu-1x VM in
+  `fra` with a `/healthz` HTTP check, `force_https`, auto-stop on idle,
+  and no persistent volume — the 30-min retention sweep runs against
+  `/tmp` and restarts wipe in-flight workspaces, which is *stronger*
+  than the published privacy promise.
+- **`/version` endpoint** that returns the running image's git SHA
+  (sourced from the `GIT_SHA` build arg, falls back to `"unknown"` for
+  local runs). Wired to the `make deploy` target so every Fly deploy
+  stamps the current commit into the image and a deploy-correlated bug
+  can be tied back to the source without log archaeology.
+- **`make docker-build` / `make deploy` targets**. `deploy` refuses to
+  ship a dirty working tree and forwards `GIT_SHA` to
+  `flyctl deploy --build-arg`, so the SHA in `/version` always matches
+  the commit Fly built from. `docker-build` exists for local smoke
+  tests before the first deploy.
 - **Streaming narrative generation via Server-Sent Events** for the web
   builder. `POST /generate` now runs the deterministic prep phase
   (parse GPX + load_photos + persist `pending.json`), wipes the raw

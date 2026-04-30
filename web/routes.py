@@ -1,6 +1,6 @@
 """HTTP route handlers for the web builder.
 
-Eight endpoints, all stateless from the user's point of view:
+Nine endpoints, all stateless from the user's point of view:
 
 * ``GET /``                          — landing page + builder form.
 * ``POST /generate``                 — multipart upload; runs the prep
@@ -14,6 +14,8 @@ Eight endpoints, all stateless from the user's point of view:
 * ``POST /memory/{slug}/carousel``   — generates the IG carousel on demand.
 * ``GET /privacy``                   — plain-language privacy page.
 * ``GET /healthz``                   — uptime probe.
+* ``GET /version``                   — build identity (git SHA from the
+                                        deploy image).
 * ``GET /memory/{slug}/carousel/{filename}`` — serves a single slide.
 
 Heavy lifting (parse / load / narrative / render) lives in
@@ -27,6 +29,7 @@ from __future__ import annotations
 
 import json
 import logging
+import os
 import threading
 from collections.abc import Callable, Iterable, Iterator
 from pathlib import Path
@@ -117,6 +120,22 @@ async def privacy(request: Request) -> Response:
 async def healthz() -> dict[str, str]:
     """Uptime probe. Static — does not touch storage or the LLM."""
     return {"status": "ok"}
+
+
+@router.get("/version")
+async def version() -> dict[str, str]:
+    """Build identity for the running image.
+
+    ``git_sha`` is injected at image build time via the ``GIT_SHA``
+    Docker build arg (see Dockerfile + ``make deploy``); local runs
+    fall through to ``"unknown"``. ``version`` mirrors the value
+    declared in ``pyproject.toml`` so a deployed bug can be tied back
+    to a specific commit + release without log archaeology.
+    """
+    return {
+        "version": "0.1.0",
+        "git_sha": os.environ.get("GIT_SHA", "unknown"),
+    }
 
 
 # ── pipeline ─────────────────────────────────────────────────────────────────

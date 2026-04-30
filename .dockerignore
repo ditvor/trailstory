@@ -1,0 +1,81 @@
+# Keep the build context lean — anything not required to run the web
+# builder in production should be excluded so layer caching stays fast
+# and secrets/dev artifacts never end up in the image.
+
+# VCS / CI
+.git/
+.gitignore
+.gitattributes
+.github/
+.gitleaks.toml
+
+# Claude Code worktrees and local config
+.claude/
+
+# Virtualenvs
+.venv/
+venv/
+env/
+ENV/
+
+# Python caches
+__pycache__/
+**/__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+dist/
+*.egg-info/
+*.egg
+.eggs/
+
+# Tests, coverage, type/lint caches
+tests/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+.coverage.*
+htmlcov/
+.tox/
+coverage.xml
+
+# Local secrets — never bake into an image
+.env
+.env.*
+!.env.example
+
+# Editor
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# macOS / Windows cruft
+.DS_Store
+.AppleDouble
+.LSOverride
+Thumbs.db
+
+# Tool outputs not needed at runtime
+output/
+*.log
+
+# Docs and dev tooling not used by the runtime
+docs/
+examples/
+CHANGELOG.md
+CONTRIBUTING.md
+SECURITY.md
+.pre-commit-config.yaml
+.pip-audit-allowlist.txt
+.secrets.baseline
+scripts/
+Makefile
+
+# Container artefacts that should not nest into the image itself
+Dockerfile
+.dockerignore
+fly.toml

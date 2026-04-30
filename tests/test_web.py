@@ -296,6 +296,26 @@ def test_healthz_returns_status_ok(client: TestClient) -> None:
     assert response.json() == {"status": "ok"}
 
 
+def test_version_reports_git_sha_from_env(
+    client: TestClient, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """``GET /version`` echoes ``GIT_SHA`` for deploy traceability."""
+    monkeypatch.setenv("GIT_SHA", "abc1234")
+    response = client.get("/version")
+    assert response.status_code == 200
+    body = response.json()
+    assert body["git_sha"] == "abc1234"
+    assert body["version"] == "0.1.0"
+
+
+def test_version_falls_back_to_unknown(client: TestClient, monkeypatch: pytest.MonkeyPatch) -> None:
+    """Local runs without ``GIT_SHA`` set still return a well-formed payload."""
+    monkeypatch.delenv("GIT_SHA", raising=False)
+    response = client.get("/version")
+    assert response.status_code == 200
+    assert response.json() == {"version": "0.1.0", "git_sha": "unknown"}
+
+
 # ── happy path ───────────────────────────────────────────────────────────────
 
 
