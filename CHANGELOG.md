@@ -9,6 +9,34 @@ Versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+### Changed
+- **Editorial style is now a magazine "Letter" layout** adapted from the
+  Trailpath / Claude Design exploration. Black ink on cream paper
+  (OKLCH tokens for paper / ink / rule / hairline, with a
+  `prefers-color-scheme: dark` swap). System serif stack (Charter,
+  Iowan Old Style, Apple Garamond, Hoefler Text fallbacks) plus
+  system mono — no Google Fonts CDN, the whole page stays readable
+  offline (ADR-001). The masthead now opens with a mono uppercase
+  eyebrow (the milestone), a large editorial title, a balanced dek,
+  and a delicate byline-and-date meta line. The first paragraph
+  carries a serif drop cap. The pull quote takes a single
+  left-rule italic treatment instead of a tinted box. Photos pick
+  up a `saturate(0.92) contrast(1.02)` filter for a print-magazine
+  print feel; the first photo becomes a 16:9 (2.35:1 on desktop)
+  hero, photos 2 and 3 float as inline asymmetric figures inside
+  the prose, and the rest land in an asymmetric scrapbook grid
+  below. A sticky marginalia sidebar on desktop (`≥ 900px`) holds
+  a mono-uppercase facts table (Where / When / Distance / Ascent
+  / Time / Summit) and the elevation sparkline; on mobile the
+  layout collapses to single column and the marginalia continues
+  as a closing reference. Three discrete EN / RU / DE language
+  pills replace the previous single cycling button — each pill is
+  click-targetable (no hidden state), `aria-pressed` reflects the
+  active language, and the underlying class-swap mechanism
+  (ADR-005) is unchanged so RU and DE bodies stay zero-cost.
+  `log` and `encyclopedia` styles are intentionally untouched in
+  this PR.
+
 ### Added
 - **Per-IP rate limit on `POST /generate`** (10 requests / hour /
   client IP, sliding window). Caps abuse cost at the

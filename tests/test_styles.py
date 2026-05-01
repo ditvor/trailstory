@@ -176,15 +176,28 @@ def test_encyclopedia_style_uses_two_column_body_with_drop_cap(
 
 
 def test_editorial_style_keeps_existing_visual_identity(tmp_path: Path) -> None:
-    """Editorial is the original look; markers from the previous template
-    must still be present so we don't silently drift the polished default."""
+    """Editorial is the magazine-feel default. After the Trailpath /
+    Claude Design "Letter" adaptation, the polished defaults to guard
+    against silent drift are: the elevation SVG (still present, restyled),
+    the editorial primitives (eyebrow, drop cap, pull-quote class,
+    marginalia sidebar), and the three discrete EN/RU/DE language pills."""
     html = _render_all_styles(tmp_path)[Style.editorial]
 
+    # Elevation SVG contract preserved across the redesign.
     assert 'class="elevation"' in html
-    assert "EN · RU · DE" in html
-    assert "<blockquote>" in html
-    # Editorial does NOT use figcaptions; that is a log/encyclopedia marker.
-    assert "<figcaption>" not in html
+    # Pull quote uses the editorial single-rule treatment.
+    assert 'class="pull"' in html
+    assert "<blockquote" in html
+    # Drop cap on first paragraph of the active language.
+    assert 'class="prose drop"' in html or "drop" in html
+    # Marginalia sidebar with mono uppercase eyebrow labels.
+    assert 'class="marginalia"' in html
+    assert 'class="eyebrow"' in html
+    # Three-button language toggle (one button per language) replaces
+    # the old single-cycling button. data-lang attrs let JS set state.
+    assert 'data-lang="en"' in html
+    assert 'data-lang="ru"' in html
+    assert 'data-lang="de"' in html
 
 
 # ── shared narrative invariants ─────────────────────────────────────────────
