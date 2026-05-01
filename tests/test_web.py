@@ -37,6 +37,7 @@ from pydantic import SecretStr
 from trailstory.config import Settings
 from trailstory.llm.client import AnthropicClient
 from web.app import create_app
+from web.ratelimit import RateLimiter
 from web.routes import (
     MAX_GPX_BYTES,
     MAX_PHOTO_BYTES,
@@ -130,12 +131,14 @@ def _app_with_storage(
     storage: Storage,
     *,
     client: MagicMock | None = None,
+    rate_limiter: RateLimiter | None = None,
 ) -> tuple[FastAPI, MagicMock]:
     fake = client if client is not None else _make_client()
     app = create_app(
         settings=_settings(),
         storage=storage,
         client_factory=lambda: fake,
+        rate_limiter=rate_limiter,
         enable_sweeper=False,
     )
     return app, fake
@@ -294,6 +297,26 @@ def test_healthz_returns_status_ok(client: TestClient) -> None:
     response = client.get("/healthz")
     assert response.status_code == 200
     assert response.json() == {"status": "ok"}
+
+
+def test_version_reports_git_sha_from_env(
+    client: TestClient, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """``GET /version`` echoes ``GIT_SHA`` for deploy traceability."""
+    monkeypatch.setenv("GIT_SHA", "abc1234")
+    response = client.get("/version")
+    assert response.status_code == 200
+    body = response.json()
+    assert body["git_sha"] == "abc1234"
+    assert body["version"] == "0.1.0"
+
+
+def test_version_falls_back_to_unknown(client: TestClient, monkeypatch: pytest.MonkeyPatch) -> None:
+    """Local runs without ``GIT_SHA`` set still return a well-formed payload."""
+    monkeypatch.delenv("GIT_SHA", raising=False)
+    response = client.get("/version")
+    assert response.status_code == 200
+    assert response.json() == {"version": "0.1.0", "git_sha": "unknown"}
 
 
 # ── happy path ───────────────────────────────────────────────────────────────
@@ -620,6 +643,70 @@ def test_generate_rejects_oversized_photo(
         )
     assert response.status_code == 413
     assert "Photo exceeds" in response.json()["detail"]
+
+
+# ── rate limit ───────────────────────────────────────────────────────────────
+
+
+def test_generate_returns_429_when_over_rate_limit(storage: Storage) -> None:
+    """A second call from the same client after hitting the cap gets 429.
+
+    Uses a tiny limit so the rejection path is reachable in two calls.
+    The 429 must include a positive ``Retry-After`` header — that is
+    the public contract the client UI can rely on.
+    """
+    app, _ = _app_with_storage(
+        storage,
+        rate_limiter=RateLimiter(limit=1, window_seconds=3600),
+    )
+    with TestClient(app) as c:
+        first = c.post(
+            "/generate",
+            data={
+                "description": "The fog cleared just as we reached the ridge.",
+                "style": "editorial",
+            },
+            files=_generate_files(),
+        )
+        second = c.post(
+            "/generate",
+            data={"description": "Same client trying again.", "style": "editorial"},
+            files=_generate_files(),
+        )
+    assert first.status_code == 200
+    assert second.status_code == 429
+    assert int(second.headers["retry-after"]) > 0
+    assert "Too many memory generations" in second.json()["detail"]
+
+
+def test_generate_rate_limit_keys_on_fly_client_ip(storage: Storage) -> None:
+    """Two distinct ``Fly-Client-IP`` values get independent buckets."""
+    app, _ = _app_with_storage(
+        storage,
+        rate_limiter=RateLimiter(limit=1, window_seconds=3600),
+    )
+    with TestClient(app) as c:
+        first = c.post(
+            "/generate",
+            data={"description": "Client A.", "style": "editorial"},
+            files=_generate_files(),
+            headers={"Fly-Client-IP": "203.0.113.1"},
+        )
+        second = c.post(
+            "/generate",
+            data={"description": "Client B.", "style": "editorial"},
+            files=_generate_files(),
+            headers={"Fly-Client-IP": "203.0.113.2"},
+        )
+        third = c.post(
+            "/generate",
+            data={"description": "Client A again.", "style": "editorial"},
+            files=_generate_files(),
+            headers={"Fly-Client-IP": "203.0.113.1"},
+        )
+    assert first.status_code == 200
+    assert second.status_code == 200
+    assert third.status_code == 429
 
 
 # ── memory page / carousel 404s ──────────────────────────────────────────────

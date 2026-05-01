@@ -1,6 +1,6 @@
 """HTTP route handlers for the web builder.
 
-Eight endpoints, all stateless from the user's point of view:
+Nine endpoints, all stateless from the user's point of view:
 
 * ``GET /``                          — landing page + builder form.
 * ``POST /generate``                 — multipart upload; runs the prep
@@ -14,6 +14,8 @@ Eight endpoints, all stateless from the user's point of view:
 * ``POST /memory/{slug}/carousel``   — generates the IG carousel on demand.
 * ``GET /privacy``                   — plain-language privacy page.
 * ``GET /healthz``                   — uptime probe.
+* ``GET /version``                   — build identity (git SHA from the
+                                        deploy image).
 * ``GET /memory/{slug}/carousel/{filename}`` — serves a single slide.
 
 Heavy lifting (parse / load / narrative / render) lives in
@@ -27,12 +29,13 @@ from __future__ import annotations
 
 import json
 import logging
+import os
 import threading
 from collections.abc import Callable, Iterable, Iterator
 from pathlib import Path
 from typing import Annotated, Final
 
-from fastapi import APIRouter, BackgroundTasks, Form, HTTPException, Request, UploadFile
+from fastapi import APIRouter, BackgroundTasks, Depends, Form, HTTPException, Request, UploadFile
 from fastapi.responses import (
     FileResponse,
     HTMLResponse,
@@ -54,6 +57,7 @@ from web.pipeline import (
     render_carousel,
     stream_pipeline,
 )
+from web.ratelimit import enforce_generate_limit
 from web.storage import Storage, Workspace
 
 logger = logging.getLogger(__name__)
@@ -119,10 +123,30 @@ async def healthz() -> dict[str, str]:
     return {"status": "ok"}
 
 
+@router.get("/version")
+async def version() -> dict[str, str]:
+    """Build identity for the running image.
+
+    ``git_sha`` is injected at image build time via the ``GIT_SHA``
+    Docker build arg (see Dockerfile + ``make deploy``); local runs
+    fall through to ``"unknown"``. ``version`` mirrors the value
+    declared in ``pyproject.toml`` so a deployed bug can be tied back
+    to a specific commit + release without log archaeology.
+    """
+    return {
+        "version": "0.1.0",
+        "git_sha": os.environ.get("GIT_SHA", "unknown"),
+    }
+
+
 # ── pipeline ─────────────────────────────────────────────────────────────────
 
 
-@router.post("/generate", response_class=HTMLResponse)
+@router.post(
+    "/generate",
+    response_class=HTMLResponse,
+    dependencies=[Depends(enforce_generate_limit)],
+)
 async def generate(
     request: Request,
     background_tasks: BackgroundTasks,
@@ -138,6 +162,11 @@ async def generate(
     Server-Sent Events to run the LLM call. We persist the parsed inputs
     (``pending.json``) before responding so the SSE endpoint can pick up
     even after the BackgroundTask has wiped the raw uploads.
+
+    The route is rate-limited per client IP via
+    :func:`web.ratelimit.enforce_generate_limit`; an over-quota client
+    gets a 429 with a ``Retry-After`` header before the multipart body
+    is parsed.
 
     Raises a 4xx if the inputs are missing, oversized, or unsupported;
     pipeline parse / photo-load errors surface as 400 here rather than

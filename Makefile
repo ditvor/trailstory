@@ -1,5 +1,5 @@
 .DEFAULT_GOAL := help
-.PHONY: help setup dev install install-hooks test lint format typecheck ci clean generate test-render golden-update eval eval-live eval-update-golden web web-dev
+.PHONY: help setup dev install install-hooks test lint format typecheck ci clean generate test-render golden-update eval eval-live eval-update-golden web web-dev docker-build deploy
 
 PYTHON ?= python3.12
 VENV   := .venv
@@ -108,6 +108,26 @@ web:                ## Run the FastAPI builder against the real Anthropic API (n
 
 web-dev:            ## Run the FastAPI builder with a fake LLM (free, deterministic narrative)
 	$(PY) -m web --fake-llm --reload
+
+# ── Deploy ─────────────────────────────────────────────────────────────────────
+
+# Resolved at make-invocation time so the same value reaches the Dockerfile
+# build arg and the /version endpoint. `--short` keeps the SHA readable.
+GIT_SHA := $(shell git rev-parse --short HEAD 2>/dev/null || echo unknown)
+
+docker-build:       ## Build the production image locally (smoke test before deploy)
+	docker build --build-arg GIT_SHA=$(GIT_SHA) -t trailstory:$(GIT_SHA) -t trailstory:latest .
+
+deploy:             ## Deploy to Fly.io with the current git SHA stamped into /version
+	@command -v flyctl >/dev/null 2>&1 || { \
+		echo "→ flyctl not found. Install: brew install flyctl"; exit 1; \
+	}
+	@if ! git diff-index --quiet HEAD --; then \
+		echo "→ working tree is dirty. Commit or stash before deploying."; \
+		git status --short; \
+		exit 1; \
+	fi
+	flyctl deploy --build-arg GIT_SHA=$(GIT_SHA)
 
 # ── Cleanup ────────────────────────────────────────────────────────────────────
 

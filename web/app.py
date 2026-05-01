@@ -28,6 +28,7 @@ from fastapi.templating import Jinja2Templates
 
 from trailstory.config import Settings, load_settings
 from trailstory.llm.client import AnthropicClient
+from web.ratelimit import GENERATE_LIMIT_PER_HOUR, GENERATE_WINDOW_SECONDS, RateLimiter
 from web.routes import router
 from web.storage import Storage
 
@@ -48,6 +49,7 @@ def create_app(
     settings: Settings | None = None,
     storage: Storage | None = None,
     client_factory: Callable[[], AnthropicClient] | None = None,
+    rate_limiter: RateLimiter | None = None,
     enable_sweeper: bool = True,
 ) -> FastAPI:
     """Build a configured FastAPI app.
@@ -61,6 +63,10 @@ def create_app(
         client_factory: Callable returning a configured
             ``AnthropicClient``. Tests inject a factory that returns a
             ``MagicMock`` so the real SDK is never reached.
+        rate_limiter: Per-IP limiter for ``/generate``. Defaults to a
+            sliding-window ``RateLimiter`` sized at
+            :data:`web.ratelimit.GENERATE_LIMIT_PER_HOUR`. Tests pass
+            a tiny limit so the 429 path is reachable in a few calls.
         enable_sweeper: When ``True`` (default), the retention sweep is
             scheduled on app startup. Tests disable this so they can
             assert sweep behaviour by calling ``Storage.sweep_expired``
@@ -70,6 +76,14 @@ def create_app(
     resolved_storage = storage if storage is not None else Storage()
     resolved_factory = (
         client_factory if client_factory is not None else _default_client_factory(resolved_settings)
+    )
+    resolved_limiter = (
+        rate_limiter
+        if rate_limiter is not None
+        else RateLimiter(
+            limit=GENERATE_LIMIT_PER_HOUR,
+            window_seconds=GENERATE_WINDOW_SECONDS,
+        )
     )
 
     @asynccontextmanager
@@ -103,6 +117,7 @@ def create_app(
     app.state.settings = resolved_settings
     app.state.storage = resolved_storage
     app.state.client_factory = resolved_factory
+    app.state.generate_limiter = resolved_limiter
     app.state.templates = Jinja2Templates(directory=str(TEMPLATE_DIR))
 
     if STATIC_DIR.is_dir():
