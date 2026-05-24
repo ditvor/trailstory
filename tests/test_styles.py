@@ -175,14 +175,33 @@ def test_encyclopedia_style_uses_two_column_body_with_drop_cap(
     assert "<figcaption>" in html
 
 
-def test_editorial_style_keeps_existing_visual_identity(tmp_path: Path) -> None:
-    """Editorial is the original look; markers from the previous template
-    must still be present so we don't silently drift the polished default."""
+def test_editorial_style_keeps_magazine_visual_identity(tmp_path: Path) -> None:
+    """Editorial is the magazine treatment (Source Serif 4 + JetBrains Mono,
+    oklch paper/ink tokens, italic-top / roman-bottom display title, drop
+    cap, marginalia sidebar, reading-progress bar). The markers below
+    are the load-bearing structural signals — if any of them disappear the
+    style has drifted away from the intended design."""
     html = _render_all_styles(tmp_path)[Style.editorial]
 
+    # Embedded WOFF2 fonts (ADR-001 self-contained guarantee).
+    assert "@font-face" in html
+    assert "Editorial Serif" in html
+    assert "Editorial Mono" in html
+    assert "data:font/woff2;base64," in html
+
+    # Design tokens and layout primitives.
+    assert "--paper:" in html and "--ink:" in html
+    assert 'class="display"' in html
+    assert 'class="eyebrow"' in html
+    assert 'class="margin"' in html
+    assert 'class="quote' in html  # the pull-quote callout (may carry extra classes)
     assert 'class="elevation"' in html
-    assert "EN · RU · DE" in html
-    assert "<blockquote>" in html
+
+    # Three discrete language buttons (replaces the older single EN·RU·DE label).
+    assert 'data-lang="en"' in html
+    assert 'data-lang="ru"' in html
+    assert 'data-lang="de"' in html
+
     # Editorial does NOT use figcaptions; that is a log/encyclopedia marker.
     assert "<figcaption>" not in html
 

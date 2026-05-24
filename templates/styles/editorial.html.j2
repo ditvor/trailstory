@@ -2,358 +2,961 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=5">
+<meta name="color-scheme" content="light">
 <title>{{ narrative.title.en }}</title>
 <style>
+  /* ── fonts ─────────────────────────────────────────────────────────
+     Source Serif 4 (variable: opsz 8..60, wght 300..600, italic + roman)
+     stands in for Newsreader because Newsreader has no Cyrillic on
+     Google Fonts and RU is a primary audience. Same opsz feel.
+     Subsets are split into latin + cyrillic so the browser only
+     activates the cyrillic file when it renders Cyrillic glyphs.
+     All payloads base64-embedded → page works offline (ADR-001). */
+  @font-face {
+    font-family: 'Editorial Serif';
+    font-style: italic;
+    font-weight: 300 600;
+    font-display: swap;
+    src: url(data:font/woff2;base64,{{ fonts.serif_italic_latin }}) format('woff2');
+    unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+  }
+  @font-face {
+    font-family: 'Editorial Serif';
+    font-style: italic;
+    font-weight: 300 600;
+    font-display: swap;
+    src: url(data:font/woff2;base64,{{ fonts.serif_italic_cyrillic }}) format('woff2');
+    unicode-range: U+0301, U+0400-045F, U+0490-0491, U+04B0-04B1, U+2116;
+  }
+  @font-face {
+    font-family: 'Editorial Serif';
+    font-style: normal;
+    font-weight: 300 600;
+    font-display: swap;
+    src: url(data:font/woff2;base64,{{ fonts.serif_roman_latin }}) format('woff2');
+    unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+  }
+  @font-face {
+    font-family: 'Editorial Serif';
+    font-style: normal;
+    font-weight: 300 600;
+    font-display: swap;
+    src: url(data:font/woff2;base64,{{ fonts.serif_roman_cyrillic }}) format('woff2');
+    unicode-range: U+0301, U+0400-045F, U+0490-0491, U+04B0-04B1, U+2116;
+  }
+  @font-face {
+    font-family: 'Editorial Mono';
+    font-style: normal;
+    font-weight: 400 500;
+    font-display: swap;
+    src: url(data:font/woff2;base64,{{ fonts.mono_latin }}) format('woff2');
+    unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+  }
+  @font-face {
+    font-family: 'Editorial Mono';
+    font-style: normal;
+    font-weight: 400 500;
+    font-display: swap;
+    src: url(data:font/woff2;base64,{{ fonts.mono_cyrillic }}) format('woff2');
+    unicode-range: U+0301, U+0400-045F, U+0490-0491, U+04B0-04B1, U+2116;
+  }
+
+  /* ── design tokens ─────────────────────────────────────────────── */
+  :root {
+    --paper:    oklch(0.972 0.008 80);
+    --paper-2:  oklch(0.945 0.012 80);
+    --ink:      oklch(0.18 0.01 80);
+    --ink-2:    oklch(0.32 0.01 80);
+    --ink-3:    oklch(0.55 0.01 80);
+    --rule:     oklch(0.18 0.01 80 / 0.18);
+    --hairline: oklch(0.18 0.01 80 / 0.10);
+    --serif: 'Editorial Serif', 'Times New Roman', Georgia, serif;
+    --mono:  'Editorial Mono', ui-monospace, Menlo, monospace;
+  }
+
   *, *::before, *::after { box-sizing: border-box; }
   html, body { margin: 0; padding: 0; }
+  html { scroll-behavior: smooth; }
   body {
-    font-family: ui-serif, Georgia, "Times New Roman", serif;
-    color: #1a1a1a;
-    background: #faf8f4;
-    line-height: 1.6;
+    background: var(--paper);
+    color: var(--ink);
+    font-family: var(--serif);
     -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
   }
-  main { max-width: 720px; margin: 0 auto; padding: 2.5rem 1.25rem 4rem; }
+  ::selection { background: var(--ink); color: var(--paper); }
+  :focus-visible { outline: 2px solid var(--ink); outline-offset: 2px; }
 
-  /* hero */
-  header.hero { text-align: center; margin-bottom: 2rem; }
-  .milestone {
-    display: inline-block;
-    padding: 0.25rem 0.75rem;
-    border: 1px solid #c8b88a;
-    border-radius: 999px;
-    font-size: 0.75rem;
-    letter-spacing: 0.08em;
-    text-transform: uppercase;
-    color: #6b5a2c;
-    background: #fdf6e0;
-    margin-bottom: 1rem;
+  /* Visually hidden but still readable by screen readers and present in the
+     DOM as text. Used to keep the full title text contiguous in the page
+     source even though the visible title is split into italic-top + roman-bot. */
+  .sr-only {
+    position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px;
+    overflow: hidden; clip: rect(0,0,0,0); white-space: nowrap; border: 0;
   }
-  h1 {
-    font-size: clamp(2rem, 5vw, 3rem);
-    margin: 0 0 0.5rem;
-    line-height: 1.15;
-    font-weight: 700;
-  }
-  .subtitle {
-    margin: 0 0 0.75rem;
-    font-size: 1.1rem;
-    font-style: italic;
-    color: #6c6c6c;
-    font-weight: 400;
-  }
-  .meta { font-size: 0.9rem; color: #6c6c6c; }
 
-  /* lang toggle */
-  .lang-toggle { position: fixed; top: 0.75rem; right: 0.75rem; z-index: 10; }
-  .lang-toggle button {
-    background: #1a1a1a;
-    color: #faf8f4;
-    border: 0;
-    border-radius: 999px;
-    padding: 0.4rem 0.9rem;
-    font: inherit;
-    font-size: 0.8rem;
+  /* ── reading progress bar ──────────────────────────────────────── */
+  .progress {
+    position: fixed; top: 0; left: 0; height: 2px;
+    width: 0%; background: var(--ink); z-index: 50;
+    transition: width 120ms linear;
+  }
+
+  /* ── chapter rail (≥1280px) ────────────────────────────────────── */
+  .rail { display: none; }
+  @media (min-width: 1280px) {
+    .rail {
+      display: flex; flex-direction: column; gap: 14px;
+      position: fixed; left: 36px; top: 50%;
+      transform: translateY(-50%); z-index: 5;
+    }
+    .rail button {
+      width: 20px; height: 8px; padding: 0; margin: 0;
+      background: transparent; border: 0; cursor: pointer;
+      display: flex; align-items: center;
+    }
+    .rail .tick {
+      width: 14px; height: 1px; background: var(--ink); opacity: 0.35;
+      transition: opacity 200ms, width 200ms, height 200ms;
+    }
+    .rail button[aria-current="true"] .tick {
+      width: 6px; height: 6px; border-radius: 50%; opacity: 1;
+    }
+    .rail button:focus-visible { outline: 2px solid var(--ink); outline-offset: 2px; }
+  }
+
+  /* ── article shell ─────────────────────────────────────────────── */
+  .article {
+    position: relative;
+    max-width: 1100px; margin: 0 auto;
+    padding: 72px 64px 96px;
+  }
+  @media (max-width: 1023px) { .article { padding: 56px 32px 72px; } }
+  @media (max-width: 767px)  { .article { padding: 40px 24px 56px; } }
+
+  /* ── sticky language toggle ────────────────────────────────────── */
+  .lang {
+    position: absolute; top: 18px; right: 64px; z-index: 20;
+    display: flex; gap: 0;
+    border: 1px solid var(--ink); background: var(--paper);
+    font-family: var(--mono);
+  }
+  @media (max-width: 1023px) { .lang { right: 32px; } }
+  @media (max-width: 767px)  { .lang { right: 24px; top: 12px; } }
+  .lang button {
+    background: var(--paper); color: var(--ink);
+    border: 0; padding: 6px 10px; margin: 0;
+    font: inherit; font-size: 10px;
+    letter-spacing: 0.14em; text-transform: uppercase;
     cursor: pointer;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.15);
   }
+  .lang button + button { border-left: 1px solid var(--ink); }
+  .lang button[aria-pressed="true"] { background: var(--ink); color: var(--paper); }
+  @media (max-width: 767px) { .lang button { padding: 4px 8px; font-size: 9px; } }
 
-  /* tri-lingual swap: body class .lang-en | .lang-ru | .lang-de selects
-     which language's blocks are visible. Default is EN (set on <body>). */
+  /* ── tri-lingual swap ──────────────────────────────────────────── */
   body.lang-en .ru, body.lang-en .de { display: none; }
   body.lang-ru .en, body.lang-ru .de { display: none; }
   body.lang-de .en, body.lang-de .ru { display: none; }
 
-  /* stats */
-  .stats {
+  .swap { transition: opacity 180ms ease; }
+  .swap.is-swapping { opacity: 0.4; }
+
+  /* ── masthead ──────────────────────────────────────────────────── */
+  .eyebrow {
+    font-family: var(--mono); font-size: 11px; font-weight: 400;
+    letter-spacing: 0.14em; text-transform: uppercase;
+    color: var(--ink-2);
+  }
+  .masthead .eyebrow { margin-bottom: 28px; display: block; }
+  .display {
+    margin: 0; font-weight: 400;
+    font-variation-settings: "opsz" 60;
+    letter-spacing: -0.02em; line-height: 0.96;
+    font-size: clamp(48px, 8vw, 96px);
+  }
+  .display .top { font-style: italic; font-weight: 300; display: block; }
+  .display .bot { font-style: normal; font-weight: 500; display: block; }
+  .dek {
+    margin: 28px 0 0; max-width: 580px;
+    font-family: var(--serif); font-weight: 400;
+    font-variation-settings: "opsz" 18;
+    font-size: 18px; line-height: 1.4;
+    color: var(--ink-2);
+  }
+  .meta {
+    margin-top: 22px;
+    font-family: var(--mono); font-size: 11px;
+    letter-spacing: 0.04em; color: var(--ink-3);
+  }
+  .rule { border: 0; border-top: 1px solid var(--rule); margin: 40px 0 0; }
+
+  /* ── layout grid ───────────────────────────────────────────────── */
+  .grid {
+    display: grid; gap: 56px;
+    grid-template-columns: 1fr 240px;
+    margin-top: 48px;
+  }
+  @media (max-width: 1023px) {
+    .grid { grid-template-columns: 1fr; gap: 0; }
+  }
+
+  /* ── prose ─────────────────────────────────────────────────────── */
+  .prose {
+    font-family: var(--serif); font-weight: 400;
+    font-variation-settings: "opsz" 14;
+    font-size: 17px; line-height: 1.55;
+    color: var(--ink);
+    text-wrap: pretty; hyphens: auto;
+  }
+  .prose p { margin: 0 0 1.1em; }
+  .prose p:last-child { margin-bottom: 0; }
+  @media (min-width: 600px) {
+    .prose > .body > p.en:first-of-type::first-letter,
+    .prose > .body > p.ru:first-of-type::first-letter,
+    .prose > .body > p.de:first-of-type::first-letter {
+      font-family: var(--serif);
+      font-weight: 500; font-style: normal;
+      font-variation-settings: "opsz" 60;
+      float: left;
+      font-size: 4.4em;
+      line-height: 0.85;
+      padding: 0.08em 0.12em 0 0;
+      color: var(--ink);
+    }
+  }
+
+  /* ── photo slots (rotating layout variants per index) ──────────── */
+  .figure {
+    margin: 28px 0;
+    background: var(--paper-2);
+  }
+  .figure img {
+    display: block; width: 100%; height: auto;
+    opacity: 0; transition: opacity 240ms ease;
+    filter: saturate(0.92) contrast(1.02);
+  }
+  .figure img.loaded { opacity: 1; }
+  .figure-caption {
+    margin-top: 8px;
+    font-family: var(--mono); font-size: 10px;
+    letter-spacing: 0.04em; text-transform: uppercase;
+    color: var(--ink-3);
+  }
+  @media (min-width: 1024px) {
+    /* variant a — float right, 240w */
+    .figure.v-a {
+      float: right; width: 240px;
+      margin: 6px 0 14px 28px;
+      shape-outside: margin-box;
+    }
+    /* variant b — full column-width block */
+    .figure.v-b { clear: both; }
+    /* variant c — full column-width emphasis block.
+       (The original brief specified a -64px right bleed into the gutter,
+       but our marginalia sidebar lives in that gutter and would be
+       overlapped. Full-column width still gives a strong visual beat
+       without colliding with the facts panel.) */
+    .figure.v-c { clear: both; }
+    /* variant d — 65% column width, left-aligned block */
+    .figure.v-d { clear: both; max-width: 65%; }
+    /* variant e — float left, 200w */
+    .figure.v-e {
+      float: left; width: 200px;
+      margin: 6px 28px 14px 0;
+      shape-outside: margin-box;
+    }
+  }
+
+  /* ── pull quote ────────────────────────────────────────────────── */
+  .quote {
+    margin: 36px 0 32px;
+    padding: 4px 0 4px 24px;
+    border-left: 2px solid var(--ink);
+    font-style: italic; font-weight: 400;
+    font-variation-settings: "opsz" 24;
+    font-size: 24px; line-height: 1.3;
+    color: var(--ink);
+    opacity: 0; transform: translateY(8px);
+    transition: opacity 400ms ease, transform 400ms ease;
+  }
+  .quote.seen { opacity: 1; transform: none; }
+
+  /* ── marginalia (sidebar) ──────────────────────────────────────── */
+  /* Static positioning on desktop too — sticky behaviour interacts badly
+     with headless PDF capture (Puppeteer, wkhtmltopdf), and the page
+     is short enough that "follows the scroll" added little anyway. */
+  .margin {
+    font-family: var(--mono);
+    font-size: 11px; line-height: 1.7;
+  }
+  @media (min-width: 1024px) {
+    .margin { align-self: start; }
+  }
+  .margin section + section { margin-top: 32px; }
+  .margin h3 {
+    margin: 0 0 12px;
+    font-family: var(--mono); font-weight: 400;
+    font-size: 11px; letter-spacing: 0.14em;
+    text-transform: uppercase; color: var(--ink-3);
+  }
+  .facts dl {
     display: grid;
-    grid-template-columns: repeat(4, 1fr);
-    gap: 0.5rem;
-    padding: 1.25rem 0;
-    margin: 2rem 0 1rem;
-    border-top: 1px solid #e6dec8;
-    border-bottom: 1px solid #e6dec8;
-    text-align: center;
+    grid-template-columns: 76px 1fr;
+    gap: 0 12px; margin: 0;
   }
-  .stats .v { font-size: 1.4rem; font-weight: 600; }
-  .stats .l {
-    font-size: 0.7rem;
-    color: #6c6c6c;
-    text-transform: uppercase;
-    letter-spacing: 0.06em;
+  .facts dt, .facts dd {
+    padding: 5px 0;
+    border-top: 1px solid var(--hairline);
+  }
+  .facts dt { color: var(--ink-3); text-transform: uppercase; letter-spacing: 0.06em; }
+  .facts dd { margin: 0; color: var(--ink); }
+  .facts dt:first-of-type, .facts dd:first-of-type { border-top: 0; padding-top: 0; }
+
+  .path-box {
+    border: 1px solid var(--hairline);
+    background: var(--paper-2);
+    padding: 8px; width: 100%;
+  }
+  .path-box svg { display: block; width: 100%; height: auto; }
+  .path-caption, .elev-caption {
+    margin-top: 8px; color: var(--ink-3);
+    font-size: 10px; letter-spacing: 0.04em;
+  }
+  .elevation { display: block; width: 100%; height: 36px; }
+
+  /* mobile: marginalia becomes collapsible band between article and share */
+  @media (max-width: 1023px) {
+    .margin {
+      grid-column: 1; margin-top: 40px;
+      border-top: 1px solid var(--rule);
+      padding-top: 24px;
+    }
+    .margin-toggle {
+      display: flex; justify-content: space-between; align-items: center;
+      width: 100%; padding: 0 0 16px;
+      background: transparent; border: 0;
+      font-family: var(--mono); font-size: 11px;
+      letter-spacing: 0.14em; text-transform: uppercase;
+      color: var(--ink-3); cursor: pointer;
+    }
+    .margin-toggle .sign { font-size: 14px; color: var(--ink); }
+    .margin-body { display: block; }
+    .margin[data-open="false"] .margin-body { display: none; }
+  }
+  @media (min-width: 1024px) {
+    .margin-toggle { display: none; }
   }
 
-  /* elevation profile */
-  .elevation {
-    width: 100%;
-    height: 110px;
-    margin-bottom: 2rem;
-    display: block;
+  /* ── share row ─────────────────────────────────────────────────── */
+  .share {
+    margin-top: 56px;
+    padding-top: 18px;
+    border-top: 1px solid var(--rule);
+    display: flex; flex-wrap: wrap; gap: 8px; align-items: center;
   }
-  .elevation path {
-    fill: rgba(200, 184, 138, 0.35);
-    stroke: #6b5a2c;
-    stroke-width: 0.6;
-    stroke-linejoin: round;
+  .share-label {
+    margin-right: 8px;
+    font-family: var(--mono); font-size: 11px;
+    letter-spacing: 0.14em; text-transform: uppercase;
+    color: var(--ink-2);
   }
-
-  /* article */
-  article p { font-size: 1.08rem; margin: 0 0 1.25rem; }
-  blockquote {
-    border-left: 3px solid #c8b88a;
-    margin: 2rem 0;
-    padding: 0.5rem 1.25rem;
-    font-size: 1.2rem;
-    font-style: italic;
-    color: #4a4032;
-  }
-
-  /* photos */
-  .photos {
-    display: grid;
-    grid-template-columns: 1fr;
-    gap: 0.75rem;
-    margin: 2.5rem 0;
-  }
-  @media (min-width: 540px) {
-    .photos { grid-template-columns: 1fr 1fr; }
-  }
-  .photos img {
-    width: 100%;
-    height: auto;
-    display: block;
-    border-radius: 8px;
-    box-shadow: 0 6px 20px rgba(0,0,0,0.08);
-  }
-
-  /* share */
-  .share { text-align: center; margin: 3rem 0 1rem; }
-  .share a, .share button {
-    display: inline-block;
-    margin: 0.25rem;
-    padding: 0.5rem 1rem;
-    border-radius: 999px;
-    background: #1a1a1a;
-    color: #faf8f4;
+  .share button, .share a {
+    display: inline-block; padding: 10px 14px; margin: 0;
+    font-family: var(--mono); font-size: 11px;
+    letter-spacing: 0.10em; text-transform: uppercase;
+    background: var(--paper); color: var(--ink);
+    border: 1px solid var(--ink); cursor: pointer;
     text-decoration: none;
-    border: 0;
-    font: inherit;
-    font-size: 0.9rem;
-    cursor: pointer;
+    transition: background 120ms ease, color 120ms ease;
+  }
+  .share button:hover, .share a:hover { background: var(--ink); color: var(--paper); }
+  .share button.primary, .share a.primary { background: var(--ink); color: var(--paper); }
+  .share button.primary:hover, .share a.primary:hover { background: var(--ink-2); border-color: var(--ink-2); }
+  .share-status {
+    width: 100%;
+    margin-top: 6px;
+    font-family: var(--mono); font-size: 10px;
+    letter-spacing: 0.04em; color: var(--ink-3);
+    min-height: 1.2em;
+  }
+  .ig-fallback {
+    display: flex; flex-wrap: wrap; gap: 6px;
+    width: 100%; margin-top: 6px;
+  }
+  .ig-fallback a {
+    padding: 6px 10px; font-size: 10px;
+    background: var(--paper-2); border: 1px solid var(--hairline); color: var(--ink-2);
+  }
+  .ig-fallback a:hover { background: var(--ink); color: var(--paper); border-color: var(--ink); }
+
+  /* ── cheatsheet overlay ────────────────────────────────────────── */
+  .cheat {
+    position: fixed; bottom: 24px; right: 24px; z-index: 100;
+    padding: 18px 22px; background: var(--paper); border: 1px solid var(--ink);
+    font-family: var(--mono); font-size: 11px; line-height: 1.8;
+    color: var(--ink); max-width: 280px;
+  }
+  .cheat h4 { margin: 0 0 8px; font-size: 10px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--ink-3); font-weight: 400; }
+  .cheat dl { display: grid; grid-template-columns: 48px 1fr; gap: 2px 12px; margin: 0; }
+  .cheat dt { color: var(--ink-2); }
+  .cheat dd { margin: 0; color: var(--ink); }
+  .cheat[hidden] { display: none; }
+
+  /* ── footer ────────────────────────────────────────────────────── */
+  .colophon {
+    margin-top: 56px; padding-top: 18px;
+    border-top: 1px solid var(--hairline);
+    font-family: var(--mono); font-size: 10px;
+    letter-spacing: 0.04em; color: var(--ink-3);
   }
 
-  footer {
-    text-align: center;
-    color: #999;
-    font-size: 0.75rem;
-    margin-top: 2rem;
+  /* ── print ─────────────────────────────────────────────────────── */
+  @media print {
+    .progress, .rail, .lang, .share, .cheat, .margin-toggle { display: none !important; }
+    html, body { background: var(--paper); color: var(--ink); }
+    body { font-size: 11pt; }
+    .article { padding: 24pt; max-width: none; }
+    .grid { grid-template-columns: 1fr; gap: 0; }
+    .margin { position: static; margin-top: 24pt; page-break-inside: avoid; }
+    .figure img { opacity: 1 !important; }
+    -webkit-print-color-adjust: exact; print-color-adjust: exact;
   }
 </style>
 </head>
 <body class="lang-en style-editorial">
-  <div class="lang-toggle">
-    <button id="langBtn" type="button" aria-label="Switch language">EN · RU · DE</button>
-  </div>
 
-  <main>
-    <header class="hero">
-      <span class="milestone">
+  <div class="progress" id="progress" aria-hidden="true"></div>
+
+  <nav class="rail" id="rail" aria-label="Sections"></nav>
+
+  <article class="article" id="article">
+
+    <div class="lang" role="group" aria-label="Language">
+      <button type="button" data-lang="en" aria-pressed="true">EN</button>
+      <button type="button" data-lang="ru" aria-pressed="false">RU</button>
+      <button type="button" data-lang="de" aria-pressed="false">DE</button>
+    </div>
+
+    <header class="masthead swap">
+      <span class="eyebrow">
         <span class="en">{{ narrative.milestone.en }}</span>
         <span class="ru">{{ narrative.milestone.ru }}</span>
         <span class="de">{{ narrative.milestone.de }}</span>
       </span>
-      <h1>
-        <span class="en">{{ narrative.title.en }}</span>
-        <span class="ru">{{ narrative.title.ru }}</span>
-        <span class="de">{{ narrative.title.de }}</span>
+      {# Split each language's title across two lines: top word italic / rest roman.
+         If the title is one word, both spans get the same text — the italic top
+         then collapses naturally because of the `display: block` on `.bot`. #}
+      <h1 class="display">
+        <span class="en">
+          <span class="sr-only">{{ narrative.title.en }}</span>
+          {% set words = narrative.title.en.split(' ', 1) %}
+          <span class="top" aria-hidden="true">{{ words[0] }}</span>
+          <span class="bot" aria-hidden="true">{{ words[1] if words|length > 1 else '' }}</span>
+        </span>
+        <span class="ru">
+          <span class="sr-only">{{ narrative.title.ru }}</span>
+          {% set words = narrative.title.ru.split(' ', 1) %}
+          <span class="top" aria-hidden="true">{{ words[0] }}</span>
+          <span class="bot" aria-hidden="true">{{ words[1] if words|length > 1 else '' }}</span>
+        </span>
+        <span class="de">
+          <span class="sr-only">{{ narrative.title.de }}</span>
+          {% set words = narrative.title.de.split(' ', 1) %}
+          <span class="top" aria-hidden="true">{{ words[0] }}</span>
+          <span class="bot" aria-hidden="true">{{ words[1] if words|length > 1 else '' }}</span>
+        </span>
       </h1>
-      <p class="subtitle">
+      <p class="dek">
         <span class="en">{{ narrative.subtitle.en }}</span>
         <span class="ru">{{ narrative.subtitle.ru }}</span>
         <span class="de">{{ narrative.subtitle.de }}</span>
       </p>
       {% if meta.location or meta.date %}
       <div class="meta">
-        {% if meta.location %}{{ meta.location }}{% endif %}
-        {% if meta.location and meta.date %} · {% endif %}
+        {% if meta.location %}{{ meta.location | upper }}{% endif %}
+        {% if meta.location and meta.date %} &middot; {% endif %}
         {% if meta.date %}{{ meta.date }}{% endif %}
       </div>
       {% endif %}
+      <hr class="rule">
     </header>
 
-    <section class="stats" aria-label="hike stats">
-      <div><div class="v">{{ stats.distance_km }}</div><div class="l">km</div></div>
-      <div><div class="v">{{ stats.elevation_gain_m | int }}</div><div class="l">m gain</div></div>
-      <div><div class="v">{{ stats.duration_min }}</div><div class="l">min</div></div>
-      <div><div class="v">{{ stats.summit_elev_m | int }}</div><div class="l">m summit</div></div>
-    </section>
+    <div class="grid">
 
-    <svg class="elevation" viewBox="0 0 100 30" preserveAspectRatio="none" aria-hidden="true">
-      <path d="M 0,30
-        {%- for x, y in elevation %} L {{ (x * 100) | round(2) }},{{ (30 - y * 25) | round(2) }}{% endfor -%}
-         L 100,30 Z"/>
-    </svg>
+      <section class="prose" id="prose">
+        {# Hero photo: float-right at top of prose, OUTSIDE the language
+           divs so body text in any language wraps around the same single
+           emission of the base64 payload. #}
+        {% if photos|length > 0 %}
+          <figure class="figure v-a"><img src="{{ photos[0].data_uri }}" alt="" loading="eager"></figure>
+        {% endif %}
 
-    <article>
-      <div class="en">
-        {% for p in narrative.paragraphs.en %}<p>{{ p }}</p>{% endfor %}
-      </div>
-      <div class="ru">
-        {% for p in narrative.paragraphs.ru %}<p>{{ p }}</p>{% endfor %}
-      </div>
-      <div class="de">
-        {% for p in narrative.paragraphs.de %}<p>{{ p }}</p>{% endfor %}
-      </div>
+        {# Mid-body photo: between paragraph blocks. Each language has the
+           same paragraph count; the per-language wrappers around <p>'s use
+           .en/.ru/.de classes so .lang-* on body shows the right one. #}
+        {% set n = narrative.paragraphs.en | length %}
+        {% set mid = (n // 2) if n >= 3 else n %}
+        <div class="body swap">
+          {% for i in range(n) %}
+            <p class="en">{{ narrative.paragraphs.en[i] }}</p>
+            <p class="ru">{{ narrative.paragraphs.ru[i] }}</p>
+            <p class="de">{{ narrative.paragraphs.de[i] }}</p>
+            {%- if loop.index0 == mid - 1 and photos|length > 1 %}
+              <figure class="figure v-c"><img src="{{ photos[1].data_uri }}" alt="" loading="lazy"></figure>
+            {% endif %}
+          {% endfor %}
+        </div>
 
-      <blockquote>
-        <span class="en">{{ narrative.pull_quote.en }}</span>
-        <span class="ru">{{ narrative.pull_quote.ru }}</span>
-        <span class="de">{{ narrative.pull_quote.de }}</span>
-      </blockquote>
-    </article>
+        <blockquote class="quote swap" id="quote">
+          <span class="en">{{ narrative.pull_quote.en }}</span>
+          <span class="ru">{{ narrative.pull_quote.ru }}</span>
+          <span class="de">{{ narrative.pull_quote.de }}</span>
+        </blockquote>
 
-    <section class="photos">
-      {% for photo in photos %}
-      <img src="{{ photo.data_uri }}" alt="" loading="lazy">
-      {% endfor %}
-    </section>
+        {# Remaining photos in two layout variants, rotating, after the quote. #}
+        {% if photos|length > 2 %}
+          {% for ph in photos[2:] %}
+            {% set v = ['v-e', 'v-b', 'v-d', 'v-b'][loop.index0 % 4] %}
+            <figure class="figure {{ v }}">
+              <img src="{{ ph.data_uri }}" alt="" loading="lazy">
+            </figure>
+          {% endfor %}
+        {% endif %}
 
-    <section class="share" aria-label="share">
-      <a id="waLink" href="#" target="_blank" rel="noopener noreferrer">WhatsApp</a>
-      <button id="copyBtn" type="button">Copy text</button>
-      <button id="igBtn" type="button" data-slug="{{ meta.slug }}">Save for Instagram</button>
-      <p id="igStatus" class="ig-status" aria-live="polite"></p>
-    </section>
+        <section class="share" aria-label="Share">
+          <span class="share-label">
+            <span class="en">SHARE &rarr;</span>
+            <span class="ru">ПОДЕЛИТЬСЯ &rarr;</span>
+            <span class="de">TEILEN &rarr;</span>
+          </span>
+          <button id="copyBtn" type="button" class="primary">
+            <span class="en">Copy link</span>
+            <span class="ru">Копировать</span>
+            <span class="de">Link kopieren</span>
+          </button>
+          <a id="waLink" href="#" target="_blank" rel="noopener noreferrer">WhatsApp</a>
+          <button id="igBtn" type="button" data-slug="{{ meta.slug }}">
+            <span class="en">Save for Instagram</span>
+            <span class="ru">Сохранить для Instagram</span>
+            <span class="de">Für Instagram speichern</span>
+          </button>
+          <p id="igStatus" class="share-status" aria-live="polite"></p>
+        </section>
 
-    <footer>{{ meta.slug }}</footer>
-  </main>
+        <footer class="colophon">{{ meta.slug }}</footer>
+      </section>
 
-  <style>
-    .ig-status { font-size: 0.8rem; color: #6c6c6c; margin-top: 0.5rem; min-height: 1.2em; }
-    .ig-fallback { display: flex; flex-wrap: wrap; gap: 0.5rem; justify-content: center; margin-top: 0.75rem; }
-    .ig-fallback a {
-      display: inline-block;
-      padding: 0.4rem 0.8rem;
-      border: 1px solid #c8b88a;
-      background: #fdf6e0;
-      color: #6b5a2c !important;
-      text-decoration: none;
-      border-radius: 4px;
-      font-size: 0.85rem;
-    }
-  </style>
+      <aside class="margin" data-open="true" id="margin">
+        <button type="button" class="margin-toggle" id="marginToggle" aria-expanded="true">
+          <span>
+            <span class="en">The facts &amp; the path</span>
+            <span class="ru">Факты и маршрут</span>
+            <span class="de">Fakten &amp; Route</span>
+          </span>
+          <span class="sign" aria-hidden="true">&minus;</span>
+        </button>
+        <div class="margin-body">
+
+          <section class="facts">
+            <h3>
+              <span class="en">The facts</span>
+              <span class="ru">Факты</span>
+              <span class="de">Fakten</span>
+            </h3>
+            <dl>
+              {% if meta.location %}
+              <dt><span class="en">Where</span><span class="ru">Где</span><span class="de">Wo</span></dt>
+              <dd>{{ meta.location }}</dd>
+              {% endif %}
+              {% if meta.date %}
+              <dt><span class="en">When</span><span class="ru">Когда</span><span class="de">Wann</span></dt>
+              <dd>{{ meta.date }}</dd>
+              {% endif %}
+              <dt><span class="en">Distance</span><span class="ru">Дистанция</span><span class="de">Strecke</span></dt>
+              <dd>{{ stats.distance_km }} km</dd>
+              <dt><span class="en">Ascent</span><span class="ru">Набор</span><span class="de">Anstieg</span></dt>
+              <dd>+{{ stats.elevation_gain_m | int }} m</dd>
+              <dt><span class="en">Time</span><span class="ru">Время</span><span class="de">Zeit</span></dt>
+              <dd>{{ '%dh %02dm' | format(stats.duration_min // 60, stats.duration_min % 60) }}</dd>
+              <dt><span class="en">Summit</span><span class="ru">Пик</span><span class="de">Gipfel</span></dt>
+              <dd>{{ stats.summit_elev_m | int }} m</dd>
+            </dl>
+          </section>
+
+          {% if stats.waypoints | length >= 2 %}
+          <section class="path">
+            <h3>
+              <span class="en">The path</span>
+              <span class="ru">Маршрут</span>
+              <span class="de">Route</span>
+            </h3>
+            <div class="path-box">
+              {# Normalise GPX waypoints into a 0..1 box and draw as polyline. #}
+              {% set lats = stats.waypoints | map(attribute='lat') | list %}
+              {% set lons = stats.waypoints | map(attribute='lon') | list %}
+              {% set min_lat = lats | min %}{% set max_lat = lats | max %}
+              {% set min_lon = lons | min %}{% set max_lon = lons | max %}
+              {% set span_lat = (max_lat - min_lat) or 1e-6 %}
+              {% set span_lon = (max_lon - min_lon) or 1e-6 %}
+              <svg viewBox="0 0 200 160" preserveAspectRatio="xMidYMid meet" aria-hidden="true">
+                <line x1="0" y1="80" x2="200" y2="80" stroke="oklch(0.18 0.01 80 / 0.06)" stroke-width="1"/>
+                <polyline
+                  fill="none"
+                  stroke="oklch(0.18 0.01 80)"
+                  stroke-width="1.3"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  points="{% for w in stats.waypoints %}{{ (((w.lon - min_lon) / span_lon) * 184 + 8) | round(2) }},{{ (152 - ((w.lat - min_lat) / span_lat) * 144) | round(2) }} {% endfor %}"/>
+                {% set first = stats.waypoints[0] %}
+                {% set last  = stats.waypoints[-1] %}
+                <circle cx="{{ (((first.lon - min_lon) / span_lon) * 184 + 8) | round(2) }}"
+                        cy="{{ (152 - ((first.lat - min_lat) / span_lat) * 144) | round(2) }}"
+                        r="3.5" fill="oklch(0.18 0.01 80)"/>
+                <circle cx="{{ (((last.lon - min_lon) / span_lon) * 184 + 8) | round(2) }}"
+                        cy="{{ (152 - ((last.lat - min_lat) / span_lat) * 144) | round(2) }}"
+                        r="3.5" fill="oklch(0.972 0.008 80)" stroke="oklch(0.18 0.01 80)" stroke-width="1.5"/>
+              </svg>
+            </div>
+            <p class="path-caption">
+              <span class="en">&uarr; N &middot; {{ stats.waypoints | length }} waypoints recorded</span>
+              <span class="ru">&uarr; С &middot; {{ stats.waypoints | length }} точек записано</span>
+              <span class="de">&uarr; N &middot; {{ stats.waypoints | length }} Punkte aufgezeichnet</span>
+            </p>
+          </section>
+          {% endif %}
+
+          <section class="elev">
+            <h3>
+              <span class="en">Elevation</span>
+              <span class="ru">Высота</span>
+              <span class="de">Höhe</span>
+            </h3>
+            <svg class="elevation" viewBox="0 0 200 36" preserveAspectRatio="none" aria-hidden="true">
+              <path fill="oklch(0.18 0.01 80 / 0.08)" d="M 0,36{%- for x, y in elevation %} L {{ (x * 200) | round(2) }},{{ (36 - y * 30) | round(2) }}{% endfor -%} L 200,36 Z"/>
+              <polyline fill="none" stroke="oklch(0.18 0.01 80)" stroke-width="1" stroke-linecap="round" stroke-linejoin="round" points="{% for x, y in elevation %}{{ (x * 200) | round(2) }},{{ (36 - y * 30) | round(2) }} {% endfor %}"/>
+            </svg>
+            <p class="elev-caption">
+              {{ stats.start_elev_m | int }}m &rarr;
+              {{ stats.summit_elev_m | int }}m &rarr;
+              {{ stats.start_elev_m | int }}m
+            </p>
+          </section>
+
+        </div>
+      </aside>
+
+    </div>
+  </article>
+
+  <div id="cheat" class="cheat" role="dialog" aria-label="Keyboard shortcuts" hidden>
+    <h4>
+      <span class="en">Keyboard</span>
+      <span class="ru">Клавиатура</span>
+      <span class="de">Tastatur</span>
+    </h4>
+    <dl>
+      <dt>&larr; &rarr;</dt><dd>EN &middot; RU &middot; DE</dd>
+      <dt>J K</dt><dd><span class="en">paragraph</span><span class="ru">абзац</span><span class="de">Absatz</span></dd>
+      <dt>?</dt><dd><span class="en">this help</span><span class="ru">эта справка</span><span class="de">diese Hilfe</span></dd>
+    </dl>
+  </div>
 
   <script>
     (function () {
-      var langs = ['en', 'ru', 'de'];
-      var labels = { en: 'EN · RU · DE', ru: 'RU · DE · EN', de: 'DE · EN · RU' };
-      var btn = document.getElementById('langBtn');
+      var LANGS = ['en', 'ru', 'de'];
+      var STORAGE_KEY = 'trailstory.lang';
+
+      // ── language toggle ───────────────────────────────────────────
+      var langBtns = document.querySelectorAll('.lang button');
+      var swapNodes = document.querySelectorAll('.swap');
 
       function currentLang() {
-        for (var i = 0; i < langs.length; i++) {
-          if (document.body.classList.contains('lang-' + langs[i])) return langs[i];
+        for (var i = 0; i < LANGS.length; i++) {
+          if (document.body.classList.contains('lang-' + LANGS[i])) return LANGS[i];
         }
         return 'en';
       }
 
-      function setLang(next) {
-        for (var i = 0; i < langs.length; i++) {
-          document.body.classList.remove('lang-' + langs[i]);
+      function applyLang(next) {
+        for (var i = 0; i < LANGS.length; i++) {
+          document.body.classList.remove('lang-' + LANGS[i]);
         }
         document.body.classList.add('lang-' + next);
         document.documentElement.lang = next;
-        btn.textContent = labels[next];
+        langBtns.forEach(function (b) {
+          b.setAttribute('aria-pressed', String(b.getAttribute('data-lang') === next));
+        });
+        try { localStorage.setItem(STORAGE_KEY, next); } catch (e) {}
+        updateShareUrls();
       }
 
-      btn.addEventListener('click', function () {
-        var idx = langs.indexOf(currentLang());
-        setLang(langs[(idx + 1) % langs.length]);
-      });
-
-      var titleEn = {{ narrative.title.en | tojson }};
-      var quoteEn = {{ narrative.pull_quote.en | tojson }};
-      var msg = titleEn + ' — ' + quoteEn;
-
-      document.getElementById('waLink').href =
-        'https://wa.me/?text=' + encodeURIComponent(msg);
-
-      document.getElementById('copyBtn').addEventListener('click', function () {
-        if (navigator.clipboard && navigator.clipboard.writeText) {
-          navigator.clipboard.writeText(msg);
+      function setLang(next) {
+        if (next === currentLang()) return;
+        // Soft fade transition. Scroll preservation by paragraph anchor:
+        // remember the y-offset of the first visible <p> in the active body,
+        // then restore the same paragraph's offset after the swap.
+        var anchorY = null;
+        var anchorIdx = null;
+        var activeBody = document.querySelector('.prose .body');
+        if (activeBody) {
+          var ps = activeBody.querySelectorAll('p.' + currentLang());
+          for (var i = 0; i < ps.length; i++) {
+            var r = ps[i].getBoundingClientRect();
+            if (r.bottom > 0) { anchorIdx = i; anchorY = r.top; break; }
+          }
         }
+        swapNodes.forEach(function (n) { n.classList.add('is-swapping'); });
+        window.setTimeout(function () {
+          applyLang(next);
+          swapNodes.forEach(function (n) { n.classList.remove('is-swapping'); });
+          if (anchorIdx !== null) {
+            var nextBody = document.querySelector('.prose .body');
+            if (nextBody) {
+              var nps = nextBody.querySelectorAll('p.' + next);
+              if (nps[anchorIdx]) {
+                var newY = nps[anchorIdx].getBoundingClientRect().top;
+                window.scrollBy({ top: newY - anchorY, behavior: 'instant' });
+              }
+            }
+          }
+        }, 180);
+      }
+
+      langBtns.forEach(function (b) {
+        b.addEventListener('click', function () { setLang(b.getAttribute('data-lang')); });
       });
 
-      // ── Instagram carousel ────────────────────────────────────────
-      var igBtn = document.getElementById('igBtn');
+      // Initial language: stored value → navigator language → 'en'.
+      var stored = null;
+      try { stored = localStorage.getItem(STORAGE_KEY); } catch (e) {}
+      if (stored && LANGS.indexOf(stored) >= 0) {
+        applyLang(stored);
+      } else {
+        var nav = (navigator.language || 'en').toLowerCase();
+        if (nav.indexOf('ru') === 0) applyLang('ru');
+        else if (nav.indexOf('de') === 0) applyLang('de');
+        else applyLang('en');
+      }
+
+      // ── reading progress bar ──────────────────────────────────────
+      var article = document.getElementById('article');
+      var progress = document.getElementById('progress');
+      function tickProgress() {
+        if (!article) return;
+        var r = article.getBoundingClientRect();
+        var total = r.height - window.innerHeight;
+        var read = Math.min(Math.max(-r.top, 0), Math.max(total, 1));
+        var pct = total > 0 ? (read / total) * 100 : 0;
+        progress.style.width = pct.toFixed(2) + '%';
+      }
+      tickProgress();
+      window.addEventListener('scroll', tickProgress, { passive: true });
+      window.addEventListener('resize', tickProgress);
+
+      // ── chapter rail (paragraph ticks on ≥1280px) ────────────────
+      function buildRail() {
+        var rail = document.getElementById('rail');
+        if (!rail || !window.matchMedia('(min-width: 1280px)').matches) return;
+        var activeBody = document.querySelector('.prose .body');
+        if (!activeBody) return;
+        var ps = activeBody.querySelectorAll('p.' + currentLang());
+        rail.innerHTML = '';
+        if (ps.length < 2) return;
+        ps.forEach(function (p, i) {
+          var btn = document.createElement('button');
+          btn.type = 'button';
+          btn.setAttribute('aria-label', 'Jump to paragraph ' + (i + 1));
+          btn.innerHTML = '<span class="tick"></span>';
+          btn.addEventListener('click', function () {
+            p.scrollIntoView({ behavior: 'smooth', block: 'start' });
+          });
+          rail.appendChild(btn);
+        });
+        var io = new IntersectionObserver(function (entries) {
+          entries.forEach(function (e) {
+            if (!e.isIntersecting) return;
+            var idx = Array.prototype.indexOf.call(ps, e.target);
+            Array.prototype.forEach.call(rail.children, function (b, j) {
+              b.setAttribute('aria-current', String(j === idx));
+            });
+          });
+        }, { rootMargin: '-40% 0px -40% 0px' });
+        ps.forEach(function (p) { io.observe(p); });
+      }
+      buildRail();
+
+      // ── pull-quote entrance ──────────────────────────────────────
+      var quote = document.getElementById('quote');
+      if (quote && 'IntersectionObserver' in window) {
+        var qio = new IntersectionObserver(function (entries) {
+          entries.forEach(function (e) {
+            if (e.isIntersecting) { quote.classList.add('seen'); qio.disconnect(); }
+          });
+        }, { threshold: 0.25 });
+        qio.observe(quote);
+      } else if (quote) {
+        quote.classList.add('seen');
+      }
+
+      // ── photo blur-up ────────────────────────────────────────────
+      document.querySelectorAll('.figure img').forEach(function (img) {
+        if (img.complete) { img.classList.add('loaded'); }
+        else { img.addEventListener('load', function () { img.classList.add('loaded'); }); }
+      });
+
+      // ── marginalia collapse (mobile only) ────────────────────────
+      var margin = document.getElementById('margin');
+      var marginToggle = document.getElementById('marginToggle');
+      if (marginToggle && margin) {
+        // On phones, default closed; on tablets, default open.
+        if (window.matchMedia('(max-width: 599px)').matches) {
+          margin.setAttribute('data-open', 'false');
+          marginToggle.setAttribute('aria-expanded', 'false');
+          marginToggle.querySelector('.sign').innerHTML = '+';
+        }
+        marginToggle.addEventListener('click', function () {
+          var open = margin.getAttribute('data-open') !== 'false';
+          margin.setAttribute('data-open', open ? 'false' : 'true');
+          marginToggle.setAttribute('aria-expanded', open ? 'false' : 'true');
+          marginToggle.querySelector('.sign').innerHTML = open ? '+' : '&minus;';
+        });
+      }
+
+      // ── share row ────────────────────────────────────────────────
+      var titles = {
+        en: {{ narrative.title.en | tojson }},
+        ru: {{ narrative.title.ru | tojson }},
+        de: {{ narrative.title.de | tojson }}
+      };
+      var quotes = {
+        en: {{ narrative.pull_quote.en | tojson }},
+        ru: {{ narrative.pull_quote.ru | tojson }},
+        de: {{ narrative.pull_quote.de | tojson }}
+      };
+      var labels = {
+        en: { copied: 'Copied', sending: 'Building carousel…', ready: 'Carousel ready. Click each slide to save.', shared: 'Saved. Open Instagram and pick the slides from your library.', error: 'Could not build carousel: ' },
+        ru: { copied: 'Скопировано', sending: 'Собираем карусель…', ready: 'Карусель готова. Скачайте каждый слайд.', shared: 'Сохранено. Откройте Instagram и выберите слайды из галереи.', error: 'Не удалось собрать карусель: ' },
+        de: { copied: 'Kopiert', sending: 'Karussell wird erstellt…', ready: 'Karussell fertig. Slide einzeln speichern.', shared: 'Gespeichert. Instagram öffnen und Slides aus der Galerie wählen.', error: 'Karussell fehlgeschlagen: ' }
+      };
+
+      var copyBtn = document.getElementById('copyBtn');
+      var waLink  = document.getElementById('waLink');
+      var igBtn   = document.getElementById('igBtn');
       var igStatus = document.getElementById('igStatus');
-      var slug = igBtn.getAttribute('data-slug');
 
-      function setStatus(text) { igStatus.textContent = text || ''; }
+      function shareMessage() {
+        var lg = currentLang();
+        return titles[lg] + ' — ' + quotes[lg];
+      }
 
-      async function fetchSlideAsFile(url) {
-        var res = await fetch(url);
-        if (!res.ok) throw new Error('failed to fetch ' + url);
-        var blob = await res.blob();
-        var name = url.split('/').pop() || 'slide.jpg';
-        return new File([blob], name, { type: blob.type || 'image/jpeg' });
+      function updateShareUrls() {
+        if (waLink) {
+          waLink.href = 'https://wa.me/?text=' + encodeURIComponent(shareMessage());
+        }
+      }
+
+      if (copyBtn) {
+        copyBtn.addEventListener('click', function () {
+          var msg = shareMessage();
+          var done = function () {
+            var original = copyBtn.innerHTML;
+            copyBtn.innerHTML = '✓ ' + labels[currentLang()].copied;
+            window.setTimeout(function () { copyBtn.innerHTML = original; }, 1400);
+          };
+          if (navigator.clipboard && navigator.clipboard.writeText) {
+            navigator.clipboard.writeText(msg).then(done, done);
+          } else { done(); }
+        });
       }
 
       function showFallbackLinks(urls) {
         var existing = document.getElementById('igFallback');
         if (existing) existing.remove();
         var box = document.createElement('div');
-        box.id = 'igFallback';
-        box.className = 'ig-fallback';
+        box.id = 'igFallback'; box.className = 'ig-fallback';
         urls.forEach(function (u, i) {
           var a = document.createElement('a');
-          a.href = u;
-          a.textContent = 'Slide ' + (i + 1);
-          a.setAttribute('download', '');
+          a.href = u; a.textContent = 'Slide ' + (i + 1); a.setAttribute('download', '');
           box.appendChild(a);
         });
         igStatus.parentNode.insertBefore(box, igStatus.nextSibling);
       }
 
-      async function saveForInstagram() {
-        igBtn.disabled = true;
-        setStatus('Building carousel…');
-        try {
-          var manifestRes = await fetch('/memory/' + slug + '/carousel', { method: 'POST' });
-          if (!manifestRes.ok) throw new Error('carousel build failed (' + manifestRes.status + ')');
-          var manifest = await manifestRes.json();
-          var urls = (manifest && manifest.slides) || [];
-          if (!urls.length) throw new Error('no slides returned');
+      if (igBtn) {
+        var slug = igBtn.getAttribute('data-slug');
+        igBtn.addEventListener('click', async function () {
+          var lg = currentLang();
+          igBtn.disabled = true;
+          igStatus.textContent = labels[lg].sending;
+          try {
+            var res = await fetch('/memory/' + slug + '/carousel', { method: 'POST' });
+            if (!res.ok) throw new Error('HTTP ' + res.status);
+            var data = await res.json();
+            var urls = (data && data.slides) || [];
+            if (!urls.length) throw new Error('no slides');
 
-          // navigator.share with files: iOS Safari shows the share
-          // sheet with "Save N Images" / "Save to Photos". Two-tap.
-          if (navigator.canShare) {
-            setStatus('Preparing share sheet…');
-            var files = await Promise.all(urls.map(fetchSlideAsFile));
-            var shareData = { files: files, title: titleEn, text: msg };
-            if (navigator.canShare(shareData)) {
+            if (navigator.canShare) {
               try {
-                await navigator.share(shareData);
-                setStatus('Saved. Open Instagram and pick the slides from your library.');
-                igBtn.disabled = false;
-                return;
-              } catch (err) {
-                // User dismissed the share sheet — that's fine, fall through.
-              }
+                var files = await Promise.all(urls.map(async function (u) {
+                  var fr = await fetch(u);
+                  var blob = await fr.blob();
+                  var name = u.split('/').pop() || 'slide.jpg';
+                  return new File([blob], name, { type: blob.type || 'image/jpeg' });
+                }));
+                var shareData = { files: files, title: titles[lg], text: shareMessage() };
+                if (navigator.canShare(shareData)) {
+                  await navigator.share(shareData);
+                  igStatus.textContent = labels[lg].shared;
+                  igBtn.disabled = false;
+                  return;
+                }
+              } catch (e) { /* user dismissed share sheet → fall through */ }
             }
+            igStatus.textContent = labels[lg].ready;
+            showFallbackLinks(urls);
+          } catch (err) {
+            igStatus.textContent = labels[lg].error + (err && err.message ? err.message : 'unknown');
           }
-
-          // Desktop fallback: render attachment links the user can
-          // click through. Works without navigator.share.
-          setStatus('Carousel ready. Click each slide to download.');
-          showFallbackLinks(urls);
-        } catch (err) {
-          setStatus('Could not build carousel: ' + (err && err.message ? err.message : 'unknown'));
-        }
-        igBtn.disabled = false;
+          igBtn.disabled = false;
+        });
       }
 
-      igBtn.addEventListener('click', saveForInstagram);
+      // ── keyboard shortcuts ───────────────────────────────────────
+      var cheat = document.getElementById('cheat');
+      document.addEventListener('keydown', function (e) {
+        // Ignore if the user is typing somewhere (won't happen on this
+        // static page, but defensive in case).
+        if (e.target && /^(INPUT|TEXTAREA|SELECT)$/.test(e.target.tagName)) return;
+
+        if (cheat && !cheat.hidden && e.key !== '?') {
+          cheat.hidden = true; return;
+        }
+        var lg = currentLang();
+        var idx = LANGS.indexOf(lg);
+        if (e.key === 'ArrowRight') { setLang(LANGS[(idx + 1) % LANGS.length]); e.preventDefault(); }
+        else if (e.key === 'ArrowLeft') { setLang(LANGS[(idx + LANGS.length - 1) % LANGS.length]); e.preventDefault(); }
+        else if (e.key === 'j' || e.key === 'J' || e.key === 'k' || e.key === 'K') {
+          var dir = (e.key === 'j' || e.key === 'J') ? 1 : -1;
+          var body = document.querySelector('.prose .body');
+          if (!body) return;
+          var ps = body.querySelectorAll('p.' + lg);
+          var target = null;
+          for (var i = 0; i < ps.length; i++) {
+            var r = ps[i].getBoundingClientRect();
+            if (dir === 1 && r.top > 24) { target = ps[i]; break; }
+            if (dir === -1 && r.top >= -2) { target = ps[Math.max(0, i - 1)]; break; }
+          }
+          if (target) { target.scrollIntoView({ behavior: 'smooth', block: 'start' }); e.preventDefault(); }
+        }
+        else if (e.key === '?') {
+          cheat.hidden = !cheat.hidden;
+          e.preventDefault();
+        }
+      });
+
+      updateShareUrls();
     })();
   </script>
 </body>

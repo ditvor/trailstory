@@ -14,19 +14,33 @@ from __future__ import annotations
 import base64
 import logging
 from datetime import date
+from functools import lru_cache
 from pathlib import Path
 from typing import Final
 
 from jinja2 import Environment, FileSystemLoader, select_autoescape
 
 from trailstory.gpx import elevation_profile
-from trailstory.models import Memory, PhotoMeta
+from trailstory.models import Memory, PhotoMeta, Style
 
 logger = logging.getLogger(__name__)
 
 TEMPLATE_DIR: Final[Path] = Path(__file__).resolve().parents[2] / "templates"
 TEMPLATE_NAME: Final[str] = "memory.html.j2"
 ELEVATION_POINTS: Final[int] = 40
+
+# Editorial-style WOFF2 subsets — committed under templates/fonts/editorial/
+# and embedded as base64 data URIs so the rendered HTML works offline (ADR-001).
+# Source Serif 4 stands in for Newsreader because the latter has no Cyrillic
+# subset on Google Fonts; see templates/fonts/editorial/LICENSE.md.
+_EDITORIAL_FONT_FILES: Final[dict[str, str]] = {
+    "serif_italic_latin": "SourceSerif4-Italic-VF.latin.woff2",
+    "serif_italic_cyrillic": "SourceSerif4-Italic-VF.cyrillic.woff2",
+    "serif_roman_latin": "SourceSerif4-Roman-VF.latin.woff2",
+    "serif_roman_cyrillic": "SourceSerif4-Roman-VF.cyrillic.woff2",
+    "mono_latin": "JetBrainsMono-VF.latin.woff2",
+    "mono_cyrillic": "JetBrainsMono-VF.cyrillic.woff2",
+}
 
 
 class HtmlRenderError(Exception):
@@ -84,6 +98,7 @@ def render_html(
             "location": location or "",
             "style": memory.style.value,
         },
+        fonts=_editorial_fonts() if memory.style == Style.editorial else {},
     )
 
     output_dir.mkdir(parents=True, exist_ok=True)
@@ -105,6 +120,27 @@ def _environment() -> Environment:
         lstrip_blocks=True,
         keep_trailing_newline=False,
     )
+
+
+@lru_cache(maxsize=1)
+def _editorial_fonts() -> dict[str, str]:
+    """Return editorial WOFF2 fonts as base64 data URIs, keyed by role.
+
+    Read once per process. The returned mapping is what
+    ``templates/styles/editorial.html.j2`` uses inside its ``@font-face``
+    declarations — each value is the base64 payload only (no
+    ``data:font/woff2;base64,`` prefix), so the template can construct
+    full ``src: url(...)`` expressions.
+    """
+    fonts_dir = TEMPLATE_DIR / "fonts" / "editorial"
+    encoded: dict[str, str] = {}
+    for role, filename in _EDITORIAL_FONT_FILES.items():
+        path = fonts_dir / filename
+        try:
+            encoded[role] = base64.b64encode(path.read_bytes()).decode("ascii")
+        except OSError as exc:
+            raise HtmlRenderError(f"unable to read editorial font {path}: {exc}") from exc
+    return encoded
 
 
 def _photo_context(photo: PhotoMeta) -> dict[str, str | int]:
