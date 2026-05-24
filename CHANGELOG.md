@@ -9,7 +9,49 @@ Versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+### Changed
+- **Editorial style — magazine-grade redesign.** Same `editorial` Style
+  enum value, same renderer entrypoint, same `NarrativeOutput` contract;
+  the template is rewritten head-to-toe. New visual identity: oklch
+  paper/ink tokens (no accent colors, no gradients, no rounded corners),
+  Source Serif 4 italic-top / roman-bottom display title, drop cap on
+  the first paragraph, two-column desktop grid with marginalia sidebar
+  (THE FACTS / THE PATH / ELEVATION), mono "eyebrow" labels, hairline
+  rules, photo float-right + mid-body full-bleed + after-quote variants,
+  reading-progress bar, 3-way EN/RU/DE toggle with keyboard shortcuts
+  (`←/→` cycles language, `J/K` jumps paragraph, `?` opens a
+  cheatsheet), `localStorage` language persistence, soft fade swap with
+  paragraph-anchored scroll preservation, photo blur-up on load, print
+  rules, `::selection` style. The `log` and `encyclopedia` styles are
+  untouched.
+- **Marginalia is statically positioned** in the editorial style (no
+  `position: sticky`). Sticky behaviour interacts badly with headless
+  PDF capture (Puppeteer, wkhtmltopdf) and with the user's primary
+  share path, which is "save the page, send the file." Static keeps
+  print-to-PDF and any headless renderer producing the same layout the
+  user sees on screen.
+
 ### Added
+- **Editorial fonts embedded as base64 WOFF2** under
+  `templates/fonts/editorial/`. Six subsets — Source Serif 4 italic +
+  roman variable axes × latin + cyrillic, plus JetBrains Mono variable
+  × latin + cyrillic, ~476 KB on disk. Loaded into the template context
+  by a new `_editorial_fonts()` helper in
+  `trailstory.renderers.html` (memoised with `lru_cache`, only invoked
+  when `memory.style == Style.editorial`) so the rendered memory page
+  carries its own typography and works fully offline — honors ADR-001's
+  "single self-contained HTML, no CDN" guarantee. Newsreader (the
+  family from the original design brief) ships no Cyrillic subset on
+  Google Fonts, so Source Serif 4 stands in: same `opsz` variable
+  axis, same italic + roman pair, full Latin + Cyrillic coverage.
+  License notes in `templates/fonts/editorial/LICENSE.md`.
+- **`examples/wax_saints/` demo render.** Standalone script that
+  extracts photos from a local source HTML, deduplicates by SHA-256,
+  fabricates a small GPX track, and renders the editorial template
+  against the example's tri-lingual text. Useful for dogfooding
+  template changes without paying for a live LLM call. The `photos/`
+  directory is gitignored — personal images do not land in a public
+  repo.
 - **Per-IP rate limit on `POST /generate`** (10 requests / hour /
   client IP, sliding window). Caps abuse cost at the
   most-expensive route — each `/generate` triggers an Anthropic

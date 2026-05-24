@@ -42,6 +42,11 @@ coverage.xml
 output/
 *.log
 
+# Demo photo dumps — examples/*/photos/ hold personal images extracted
+# locally from source HTML and must not land in a public repo.
+examples/*/photos/*
+!examples/*/photos/.gitkeep
+
 # Editors
 .idea/
 .vscode/

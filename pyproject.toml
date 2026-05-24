@@ -70,6 +70,11 @@ ignore = [
 [tool.ruff.lint.isort]
 known-first-party = ["trailstory", "web"]
 
+[tool.ruff.lint.per-file-ignores]
+# Demo scripts under examples/ carry dense paragraphs of Russian narrative
+# (intentional, not lookalike confusables). RUF001 would flag every line.
+"examples/**/*.py" = ["RUF001"]
+
 # ── Mypy ──────────────────────────────────────────────────────────────────────
 
 [tool.mypy]

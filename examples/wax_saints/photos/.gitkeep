@@ -1,0 +1,3 @@
+Placeholder. The render script (../render.py) writes JPEGs here at runtime
+from the source HTML on the operator's local machine. Photos are intentionally
+gitignored — personal images must not land in a public repo.
