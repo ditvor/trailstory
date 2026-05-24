@@ -20,6 +20,38 @@ def parse_gpx(path: Path) -> GpxStats:
         except Exception as exc:
             raise GpxParseError(f"Failed to parse GPX at {path}: {exc}") from exc
 
+    return _stats_from_parsed(gpx, path)
+
+
+def extract_track_name(path: Path) -> str | None:
+    """Return the human-readable name from a GPX file, or ``None``.
+
+    Tries the file-level ``<name>`` first (most exporters set this),
+    then the first track's name. Strips and clips to 120 chars so a
+    pathological file cannot blow up the chip UI. Returns ``None`` on
+    parse failure or when no name is present — the caller decides what
+    to substitute (blank chip, prompt the user, etc.).
+
+    Used by the builder's GPX preview endpoint to populate the
+    AUTO-EXTRACTED location chip with "from track" provenance.
+    """
+    try:
+        with open(path, encoding="utf-8") as fh:
+            gpx = gpxpy.parse(fh)
+    except Exception:
+        return None
+    candidates: list[str | None] = [gpx.name]
+    for track in gpx.tracks:
+        candidates.append(track.name)
+    for candidate in candidates:
+        if candidate:
+            cleaned = candidate.strip()[:120]
+            if cleaned:
+                return cleaned
+    return None
+
+
+def _stats_from_parsed(gpx: gpxpy.gpx.GPX, path: Path) -> GpxStats:
     waypoints: list[Waypoint] = []
     for track in gpx.tracks:
         for segment in track.segments:

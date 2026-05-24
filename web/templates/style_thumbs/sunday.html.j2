@@ -1,0 +1,29 @@
+{# Style thumbnail: joyful, warm cream + coral, sun on cover. Renderer
+   not built yet — the card is gated as coming_soon in web/copy.py. #}
+<div style="background: var(--sunday-paper); height: 100%; padding: 10px 12px; overflow: hidden; position: relative;">
+  <svg viewBox="0 0 60 60" width="44" height="44" style="position: absolute; top: 6px; right: 6px;" aria-hidden="true">
+    {# 12 spokes around (30,30) from r=18 to r=26. #}
+    <line x1="48.00" y1="30.00" x2="56.00" y2="30.00" stroke="var(--sunday-sun)" stroke-width="1.5" stroke-linecap="round"/>
+    <line x1="45.59" y1="39.00" x2="52.52" y2="43.00" stroke="var(--sunday-sun)" stroke-width="1.5" stroke-linecap="round"/>
+    <line x1="39.00" y1="45.59" x2="43.00" y2="52.52" stroke="var(--sunday-sun)" stroke-width="1.5" stroke-linecap="round"/>
+    <line x1="30.00" y1="48.00" x2="30.00" y2="56.00" stroke="var(--sunday-sun)" stroke-width="1.5" stroke-linecap="round"/>
+    <line x1="21.00" y1="45.59" x2="17.00" y2="52.52" stroke="var(--sunday-sun)" stroke-width="1.5" stroke-linecap="round"/>
+    <line x1="14.41" y1="39.00" x2="7.48" y2="43.00" stroke="var(--sunday-sun)" stroke-width="1.5" stroke-linecap="round"/>
+    <line x1="12.00" y1="30.00" x2="4.00" y2="30.00" stroke="var(--sunday-sun)" stroke-width="1.5" stroke-linecap="round"/>
+    <line x1="14.41" y1="21.00" x2="7.48" y2="17.00" stroke="var(--sunday-sun)" stroke-width="1.5" stroke-linecap="round"/>
+    <line x1="21.00" y1="14.41" x2="17.00" y2="7.48" stroke="var(--sunday-sun)" stroke-width="1.5" stroke-linecap="round"/>
+    <line x1="30.00" y1="12.00" x2="30.00" y2="4.00" stroke="var(--sunday-sun)" stroke-width="1.5" stroke-linecap="round"/>
+    <line x1="39.00" y1="14.41" x2="43.00" y2="7.48" stroke="var(--sunday-sun)" stroke-width="1.5" stroke-linecap="round"/>
+    <line x1="45.59" y1="21.00" x2="52.52" y2="17.00" stroke="var(--sunday-sun)" stroke-width="1.5" stroke-linecap="round"/>
+    <circle cx="30" cy="30" r="15" fill="var(--sunday-sun)"/>
+    <circle cx="30" cy="30" r="5" fill="var(--sunday-coral)"/>
+  </svg>
+  <div style="font-family: var(--sans); font-weight: 600; font-size: 7px; letter-spacing: 0.20em; color: var(--sunday-coral);">A GOOD DAY OUT</div>
+  <div style="font-family: var(--sunday-display); font-weight: 500; font-size: 32px; color: var(--sunday-ink); line-height: 0.95; margin-top: 6px;">Bad Tölz</div>
+  <div style="font-family: var(--sunday-display); font-style: italic; font-size: 13px; color: var(--sunday-coral); margin-top: 1px;">in six little stops</div>
+  <div style="position: absolute; left: 12px; bottom: 10px; width: 32px; height: 32px; border-radius: 50%; background: var(--sunday-coral); color: var(--sunday-paper); display: flex; flex-direction: column; align-items: center; justify-content: center; font-family: var(--sans); font-size: 5px; letter-spacing: 0.10em;">
+    <div style="font-weight: 700;">STOP</div>
+    <div style="font-family: var(--sunday-display); font-size: 12px; line-height: 1;">01</div>
+  </div>
+  <div style="position: absolute; left: 52px; bottom: 16px; font-family: var(--sunday-display); font-size: 13px; color: var(--sunday-ink);">Arrival</div>
+</div>

@@ -1,0 +1,100 @@
+{# Base template for builder pages (landing, build, generating once they
+   migrate). Loads the editorial design system CSS and the tri-lingual
+   header. Privacy + the legacy generating template still extend
+   base.html.j2 — they'll move over in phase 4. #}
+<!DOCTYPE html>
+<html
+  lang="{{ active_lang | default('en') }}"
+  data-lang="{{ active_lang | default('en') }}"
+  x-data="builderShell()"
+  x-init="init()"
+>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=5">
+  <meta name="color-scheme" content="light">
+  <title>{% block title %}Trailstory · Builder{% endblock %}</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><text y='26' font-size='28'>🥾</text></svg>">
+
+  <link rel="stylesheet" href="/static/builder.css">
+
+  {# Alpine for the tri-lingual toggle, drop-zone previews, word counter.
+     HTMX is loaded so the chip-edit OOB swaps in phase 2 work without a
+     second toolchain. #}
+  <script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
+  <script src="https://unpkg.com/htmx.org@2.0.4"></script>
+
+  <script>
+    // The Alpine root for every builder page. Persists the active
+    // language to localStorage and writes it back to <html data-lang>
+    // so the CSS visibility rules in builder.css swap on every span
+    // tagged lang-en / lang-ru / lang-de.
+    function builderShell() {
+      return {
+        lang: '{{ active_lang | default('en') }}',
+        init() {
+          const stored = localStorage.getItem('trailstory.lang');
+          if (stored && ['en', 'ru', 'de'].includes(stored)) {
+            this.lang = stored;
+          }
+          this.apply();
+        },
+        setLang(code) {
+          if (!['en', 'ru', 'de'].includes(code)) return;
+          this.lang = code;
+          localStorage.setItem('trailstory.lang', code);
+          this.apply();
+        },
+        apply() {
+          document.documentElement.setAttribute('lang', this.lang);
+          document.documentElement.setAttribute('data-lang', this.lang);
+        },
+      };
+    }
+  </script>
+
+  {% block head_extra %}{% endblock %}
+</head>
+<body>
+  <header class="bp-header">
+    <a href="/" class="bp-logo" aria-label="Trailstory">
+      {# Inline route logo — matches the design proposal. #}
+      <svg width="22" height="22" viewBox="0 0 22 22" aria-hidden="true">
+        <path d="M3 18 Q 7 8, 11 11 T 19 5" stroke="currentColor" stroke-width="1.6" fill="none" stroke-linecap="round"/>
+        <circle cx="3" cy="18" r="1.8" fill="currentColor"/>
+        <circle cx="19" cy="5" r="1.8" fill="none" stroke="currentColor" stroke-width="1.4"/>
+      </svg>
+      <span class="bp-logo-word">TRAILSTORY</span>
+    </a>
+    <nav class="bp-langnav" aria-label="Language">
+      {% for code, label in [('en', 'EN'), ('ru', 'RU'), ('de', 'DE')] %}
+      <button
+        type="button"
+        class="bp-lang-btn"
+        :aria-pressed="lang === '{{ code }}'"
+        @click="setLang('{{ code }}')"
+      >{{ label }}</button>
+      {% endfor %}
+    </nav>
+  </header>
+
+  <main class="bp-main">
+    {% block content %}{% endblock %}
+  </main>
+
+  <footer class="bp-footer">
+    <div>
+      <span class="lang-en">TRAILSTORY · FOR FAMILY ABROAD</span>
+      <span class="lang-ru">TRAILSTORY · ДЛЯ СЕМЬИ ВДАЛИ</span>
+      <span class="lang-de">TRAILSTORY · FÜR FAMILIE FERNAB</span>
+    </div>
+    <div>
+      <a href="/privacy" target="_blank" rel="noopener noreferrer">
+        <span class="lang-en">PRIVACY ↗</span>
+        <span class="lang-ru">ПРИВАТНОСТЬ ↗</span>
+        <span class="lang-de">DATENSCHUTZ ↗</span>
+      </a>
+    </div>
+  </footer>
+</body>
+</html>

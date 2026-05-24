@@ -10,6 +10,77 @@ Versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 ## [Unreleased]
 
 ### Changed
+- **Builder UI redesign — single-page builder, editorial design system.**
+  The builder (`web/`) now uses the same `Editorial Serif` /
+  `Editorial Mono` design system as the rendered memory page, served
+  from `web/static/builder.css` and `web/static/fonts/`. Layout
+  follows the Claude Design proposal: 760px column, sticky header
+  with logo and EN/RU/DE toggle, mono eyebrow + serif display hero,
+  four numbered sections (`01` track, `02` photos, `03` description,
+  `04` style), bespoke drop zones, client-side photo preview grid
+  (Alpine + `URL.createObjectURL`), description textarea with word
+  counter, optional location text input, 5-card style picker, and a
+  generate CTA. The flow stays single-page: everything posts to
+  `POST /generate` in one shot. Builder UI is tri-lingual EN/RU/DE —
+  all three languages bake into the page, a CSS attribute selector
+  hides the inactive two, and a small Alpine root persists language
+  choice to `localStorage`. The audience promise from ADR-005 now
+  applies to the chrome, not just the rendered memory.
+- **Style picker matches the design's five names.** The cards are
+  `The Letter` (Editorial · magazine essay), `The Zine` (Riso ·
+  two-color · loud), `Sunday` (Joyful · warm cream + coral),
+  `Postcard Set` (Vintage travel · seven cards), and `Album`
+  (Scrapbook · polaroid + tape). Only `The Letter` is buildable in
+  v0 — it maps to the existing `editorial` renderer. The other four
+  carry SOON pills and `disabled` radios; their renderers haven't
+  been built yet. The legacy `log` and `encyclopedia` renderers stay
+  in the codebase (and accept direct `POST /generate` submissions)
+  but are intentionally not surfaced in the picker because their
+  visual treatment doesn't match what `The Zine` / `Sunday` promise.
+
+### Added
+- **`web/static/builder.css`** — full design-system bundle for the
+  builder: paper/ink/rule oklch tokens, drop zones, populated
+  track-loaded card, photo grid, AUTO-EXTRACTED chips (inline-edit
+  state), style picker, live SSE draft block, generate CTA, sticky
+  header, language toggle, responsive breakpoints for ≤720px.
+  Style-card thumbnails are small CSS-only Jinja partials under
+  `web/templates/style_thumbs/` (one per design card).
+- **Live preview endpoints** for the builder's "drop and see"
+  experience. `POST /preview/gpx` parses a GPX file in-memory (round
+  trips through a tmp file the request unlinks before returning) and
+  returns filename + point count + distance / ascent / time / summit /
+  detected-location + an SVG ``d`` path for the mini-route. `POST
+  /preview/photo` reads EXIF `DateTimeOriginal` from a single photo
+  in-memory and returns its ISO date. Both endpoints are read-only:
+  no workspace is created, nothing is persisted, the rate limiter
+  isn't touched — they exist purely to populate the track-loaded
+  card and the AUTO-EXTRACTED date chip the moment the user picks a
+  file.
+- **AUTO-EXTRACTED chips** below the description textarea: 📍
+  location (editable inline; pre-filled from GPX track name when
+  available) and ◷ date (read-only display; photo EXIF wins over
+  GPX waypoint time when both are present). Each chip carries a
+  source label that reflects the actual origin ("from track" /
+  "from photo EXIF" / "you typed").
+- **`web/copy.py`** — tri-lingual builder UI metadata: `STYLE_CARDS`
+  display table (name/sub/desc per language, `coming_soon` flag),
+  `accepted_style_values()` helper, `resolve_lang()` query-param
+  coercion, `SUPPORTED_LANGS`.
+- **`trailstory.gpx.extract_track_name`** — pulls the file-level
+  `<name>` or first `<trk><name>` from a GPX file. Clipped to 120
+  chars and trimmed; returns ``None`` on parse failure or when no
+  name is present.
+- **`trailstory.photos.read_exif_date`** — reads EXIF
+  DateTimeOriginal / Digitized / DateTime from raw photo bytes,
+  without falling back to file mtime. Used by the `/preview/photo`
+  endpoint so the date chip's "from photo EXIF" provenance is
+  honest.
+- **Self-hosted builder fonts** at `web/static/fonts/` — the same
+  variable Source Serif 4 + JetBrains Mono pair the editorial output
+  renderer uses, with latin / cyrillic subset split.
+
+### Changed
 - **Editorial style — magazine-grade redesign.** Same `editorial` Style
   enum value, same renderer entrypoint, same `NarrativeOutput` contract;
   the template is rewritten head-to-toe. New visual identity: oklch

@@ -246,17 +246,20 @@ def _complete_generation(
 
 
 def test_landing_page_returns_form(client: TestClient) -> None:
+    """The single-page builder collects everything on ``/`` and posts to
+    ``/generate``: GPX + photos + description + location + style."""
     response = client.get("/")
     assert response.status_code == 200
     body = response.text
     assert "<form" in body
+    assert 'action="/generate"' in body
     assert 'name="gpx"' in body
     assert 'name="photos"' in body
     assert 'name="description"' in body
-    # All three styles render as radio options.
+    assert 'name="location"' in body
+    assert 'name="style"' in body
+    # The single buildable style id renders as a radio value.
     assert 'value="editorial"' in body
-    assert 'value="log"' in body
-    assert 'value="encyclopedia"' in body
 
 
 def test_landing_page_links_to_privacy_in_new_tab(client: TestClient) -> None:
@@ -267,6 +270,229 @@ def test_landing_page_links_to_privacy_in_new_tab(client: TestClient) -> None:
     assert "How we handle your photos" in body
     # The link to /privacy near the form should have target="_blank".
     assert 'href="/privacy" target="_blank"' in body
+
+
+def test_landing_page_loads_editorial_design_assets(client: TestClient) -> None:
+    """Landing extends ``builder_base.html.j2`` and pulls in the editorial CSS.
+
+    Locks the visual refresh in: a regression that drops the design
+    system (e.g. someone reverts ``builder_base.html.j2`` to the old
+    Tailwind-only shell) would fail this.
+    """
+    body = client.get("/").text
+    assert '<link rel="stylesheet" href="/static/builder.css">' in body
+    assert "bp-header" in body
+    assert "bp-langnav" in body
+    assert "bp-main" in body
+
+
+def test_landing_page_renders_all_three_languages(client: TestClient) -> None:
+    """EN / RU / DE copy is baked into the page — the CSS toggles
+    visibility client-side, so all three must be present in the HTML for
+    the lang switcher to work without a roundtrip."""
+    body = client.get("/").text
+    # Hero copy in each language — these are exact strings, so a typo in
+    # any of them surfaces here.
+    assert "Drop your day in." in body
+    assert "Загрузи свой день." in body
+    assert "Lade deinen Tag hoch." in body
+    # Eyebrow.
+    assert "MAKE A HIKE LETTER" in body
+    assert "ПИСЬМО О ПОХОДЕ" in body  # noqa: RUF001
+    assert "EIN WANDERBRIEF" in body
+
+
+def test_landing_page_includes_three_lang_toggle_buttons(client: TestClient) -> None:
+    """Header carries an EN / RU / DE toggle wired to ``setLang()``."""
+    body = client.get("/").text
+    for code, label in (("en", "EN"), ("ru", "RU"), ("de", "DE")):
+        assert f"setLang('{code}')" in body
+        # Each label appears inside the langnav.
+        assert f">{label}</button>" in body
+
+
+def test_landing_page_honours_lang_query_param(client: TestClient) -> None:
+    """``?lang=ru`` paints the page with Russian active on first load."""
+    body = client.get("/?lang=ru").text
+    assert 'lang="ru"' in body
+    assert 'data-lang="ru"' in body
+
+
+def test_landing_page_falls_back_to_en_on_invalid_lang(client: TestClient) -> None:
+    """Crafted ``?lang=xyz`` falls back to English."""
+    body = client.get("/?lang=xyz").text
+    assert 'lang="en"' in body
+    assert 'data-lang="en"' in body
+
+
+def test_landing_page_renders_all_five_style_cards(client: TestClient) -> None:
+    """All five cards from the design proposal render in the picker:
+    The Letter / The Zine / Sunday / Postcard Set / Album."""
+    body = client.get("/").text
+    assert "The Letter" in body
+    assert "The Zine" in body
+    assert ">Sunday<" in body
+    assert "Postcard Set" in body
+    assert ">Album<" in body
+
+
+def test_landing_page_marks_coming_soon_cards(client: TestClient) -> None:
+    """Four of the five cards (everything except The Letter) carry the
+    ``bp-stylecard--soon`` modifier and a SOON pill — only The Letter
+    is buildable in v0."""
+    body = client.get("/").text
+    assert "bp-stylecard--soon" in body
+    # Each gated card has a disabled radio at its value.
+    for value in ("zine", "sunday", "postcard", "album"):
+        assert f'value="{value}"' in body
+    # The SOON pill appears in all three languages.
+    assert ">SOON<" in body
+    assert ">СКОРО<" in body  # noqa: RUF001
+    assert ">BALD<" in body
+    # The Letter is the only buildable card — its radio is not disabled.
+    # We look for the editorial radio's <input> line without ``disabled``.
+    # Search the body for the editorial radio markup.
+    import re
+
+    editorial_radio = re.search(
+        r'<input[^>]*name="style"[^>]*value="editorial"[^>]*>',
+        body,
+    )
+    assert editorial_radio is not None
+    assert "disabled" not in editorial_radio.group(0)
+
+
+def test_generate_rejects_coming_soon_style(client: TestClient) -> None:
+    """A crafted POST /generate with a SOON style id is a 400.
+
+    Browsers honour the ``disabled`` attribute on the radio, but an
+    HTTP client (or an attacker) can still submit any value — the
+    server-side validation (``accepted_style_values()``) rejects
+    anything other than the one buildable style.
+    """
+    for value in ("zine", "sunday", "postcard", "album"):
+        response = client.post(
+            "/generate",
+            data={"description": "x", "style": value},
+            files=_generate_files(),
+        )
+        assert response.status_code == 400, value
+        assert "Unknown style" in response.json()["detail"]
+
+
+def test_preview_gpx_returns_parsed_stats(client: TestClient) -> None:
+    """``POST /preview/gpx`` parses a GPX file in-memory and returns
+    the stats the landing page needs to render the track-loaded card.
+
+    Stateless: nothing should land on disk in the storage root."""
+    response = client.post(
+        "/preview/gpx",
+        files={"gpx": ("track.gpx", SAMPLE_GPX.read_bytes(), "application/gpx+xml")},
+    )
+    assert response.status_code == 200, response.text
+    body = response.json()
+    assert body["filename"] == "track.gpx"
+    assert body["n_points"] > 0
+    assert body["distance_km"] > 0
+    assert "elevation_gain_m" in body
+    assert "duration_min" in body
+    assert "summit_m" in body
+    # location_name may be None if the sample GPX has no <name>; the
+    # field must still be present so the JS doesn't crash.
+    assert "location_name" in body
+    # SVG path + endpoints for the mini-route preview.
+    assert body["track_d"].startswith("M")
+    assert isinstance(body["endpoints"], list)
+    assert len(body["endpoints"]) == 2
+
+
+def test_preview_gpx_rejects_invalid_payload(client: TestClient) -> None:
+    response = client.post(
+        "/preview/gpx",
+        files={"gpx": ("garbage.gpx", b"not actually GPX", "application/gpx+xml")},
+    )
+    assert response.status_code == 400
+
+
+def test_preview_gpx_rejects_missing_file(client: TestClient) -> None:
+    response = client.post("/preview/gpx")
+    assert response.status_code in (400, 422)
+
+
+def test_preview_gpx_does_not_persist_to_storage(client: TestClient, storage: Storage) -> None:
+    """The preview endpoint is read-only. After the call there should be
+    no workspace under the storage root — that contract matters because
+    rate-limiting and retention sweeps are scoped to created workspaces."""
+    before = list(storage.root.iterdir()) if storage.root.is_dir() else []
+    client.post(
+        "/preview/gpx",
+        files={"gpx": ("track.gpx", SAMPLE_GPX.read_bytes(), "application/gpx+xml")},
+    )
+    after = list(storage.root.iterdir()) if storage.root.is_dir() else []
+    assert before == after
+
+
+def test_preview_photo_returns_exif_date(client: TestClient) -> None:
+    """``POST /preview/photo`` reads EXIF DateTimeOriginal from a single
+    photo without persisting. The fixture photos have EXIF stamps."""
+    name, data, ctype = _read_sample_photos(1)[0]
+    response = client.post("/preview/photo", files={"photo": (name, data, ctype)})
+    assert response.status_code == 200, response.text
+    body = response.json()
+    # The fixtures have EXIF dates, so we expect ISO date string.
+    assert "hike_date" in body
+    if body["hike_date"]:
+        # ISO date shape (YYYY-MM-DD).
+        assert len(body["hike_date"]) == 10
+        assert body["hike_date"][4] == "-"
+
+
+def test_preview_photo_handles_unreadable_file_gracefully(client: TestClient) -> None:
+    """A garbage upload returns ``hike_date=None`` rather than 500.
+
+    The preview is best-effort — the user's actual upload to /generate
+    will surface the real error if the photo is truly broken."""
+    response = client.post(
+        "/preview/photo",
+        files={"photo": ("not-a-photo.jpg", b"\x00\x01\x02 not actually a jpeg", "image/jpeg")},
+    )
+    assert response.status_code == 200, response.text
+    assert response.json() == {"hike_date": None}
+
+
+def test_preview_photo_rejects_missing_file(client: TestClient) -> None:
+    response = client.post("/preview/photo")
+    assert response.status_code in (400, 422)
+
+
+def test_landing_page_wires_preview_endpoints(client: TestClient) -> None:
+    """The landing template's Alpine root calls ``/preview/gpx`` and
+    ``/preview/photo`` on file select. Lock the wire-up so a regression
+    that drops the preview JS would fail here."""
+    body = client.get("/").text
+    assert "/preview/gpx" in body
+    assert "/preview/photo" in body
+    # The track-loaded card markup must be present (Alpine-toggled
+    # visible after the AJAX call returns).
+    assert "bp-track-card" in body
+    assert "bp-track-replace" in body
+    # AUTO-EXTRACTED chip scaffold.
+    assert "AUTO-EXTRACTED" in body
+    assert "bp-chip" in body
+
+
+def test_accepted_style_values_only_editorial() -> None:
+    """The :func:`accepted_style_values` helper is the source of truth
+    for which style ids the form is allowed to submit. Only ``editorial``
+    has a built renderer that matches its design promise (The Letter);
+    the other four cards (Zine, Sunday, Postcard, Album) are placeholders
+    until their renderers ship."""
+    from web.copy import accepted_style_values
+
+    accepted = accepted_style_values()
+    assert accepted == frozenset({"editorial"})
+    for placeholder in ("zine", "sunday", "postcard", "album"):
+        assert placeholder not in accepted
 
 
 def test_privacy_page_mentions_retention_and_repo(client: TestClient) -> None:

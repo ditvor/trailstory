@@ -127,19 +127,14 @@ def prepare_pipeline(
     photo_quality: int,
     location: str | None = None,
 ) -> None:
-    """Run parse + load_photos and persist a pending state for streaming.
+    """Parse + load photos + persist pending state for the streaming step.
 
-    This is the first half of the pipeline split that the SSE flow
-    requires: ``POST /generate`` does the cheap, deterministic input
-    parsing here so any 4xx surfaces immediately, then returns the
-    "generating" page. ``GET /generate/{slug}/stream`` picks up by
-    reading the persisted pending state and runs the streaming LLM
-    call.
-
-    Inputs (raw GPX + photos) must already exist under
-    ``workspace.gpx_dir`` and ``workspace.photos_dir``; resized photos
-    land in ``workspace.resized_dir`` and survive the
-    ``BackgroundTask`` cleanup that wipes the raw uploads.
+    Reads exactly one GPX from ``workspace.gpx_dir`` and every photo
+    from ``workspace.photos_dir``, writes resized JPEGs to
+    ``workspace.resized_dir`` (which survives the BackgroundTask
+    cleanup of the raw uploads), and writes ``pending.json`` so the
+    SSE endpoint can resume with a streaming LLM call without
+    re-reading the inputs.
 
     Raises :class:`PipelineError` for parse/load failures.
     """

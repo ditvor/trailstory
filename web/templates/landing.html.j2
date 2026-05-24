@@ -1,16 +1,23 @@
-{% extends "base.html.j2" %}
+{% extends "builder_base.html.j2" %}
 
-{% block title %}Trailstory — build a memory{% endblock %}
+{% block title %}Trailstory · Build a memory{% endblock %}
 
 {% block content %}
-<section class="mt-2">
-  <h1 class="text-3xl sm:text-4xl font-bold leading-tight tracking-tight">
-    Share the hike,<br>not just the steps.
+<section class="bp-hero">
+  <div class="bp-eyebrow">
+    <span class="lang-en">MAKE A HIKE LETTER</span>
+    <span class="lang-ru">ПИСЬМО О ПОХОДЕ</span>
+    <span class="lang-de">EIN WANDERBRIEF</span>
+  </div>
+  <h1 class="bp-h1">
+    <span class="lang-en">Drop your day in.<br>We write the letter.</span>
+    <span class="lang-ru">Загрузи свой день.<br>Мы напишем письмо.</span>
+    <span class="lang-de">Lade deinen Tag hoch.<br>Wir schreiben den Brief.</span>
   </h1>
-  <p class="mt-3 text-base text-[color:var(--subtle)] leading-relaxed">
-    Upload your GPX track and a few photos. Add a sentence about how the day
-    felt. We'll write it up in English, Russian, and German — one self-contained
-    page you can send to family on any messenger.
+  <p class="bp-dek">
+    <span class="lang-en">Track, photos, and a few sentences about how it felt. Pick a style. Out comes a page you can send home in one click.</span>
+    <span class="lang-ru">Трек, фотографии и пара предложений о том, как было. Выбери стиль. На выходе — страница, которую можно отправить домой в один клик.</span>
+    <span class="lang-de">Track, Fotos und ein paar Sätze, wie es war. Wähle einen Stil. Heraus kommt eine Seite, die du in einem Klick nach Hause schicken kannst.</span>
   </p>
 </section>
 
@@ -18,114 +25,614 @@
   action="/generate"
   method="post"
   enctype="multipart/form-data"
-  x-data="{
-    gpxName: '',
-    photoCount: 0,
-    submitting: false,
-    onGpx(e) { this.gpxName = e.target.files[0]?.name || ''; },
-    onPhotos(e) { this.photoCount = e.target.files.length; },
-  }"
+  x-data="builderForm()"
   @submit="submitting = true"
-  class="mt-8 space-y-6"
 >
-  <!-- GPX -->
-  <label class="block">
-    <span class="block text-sm font-semibold mb-2">1. GPX track</span>
-    <div class="border border-dashed border-[color:var(--rule)] rounded-lg p-4 bg-white">
-      <input
-        type="file"
-        name="gpx"
-        accept=".gpx,application/gpx+xml"
-        required
-        @change="onGpx($event)"
-        class="block w-full text-sm tap file:mr-3 file:py-2 file:px-4 file:rounded-md file:border-0 file:bg-[color:var(--accent-soft)] file:text-[color:var(--accent)] file:text-sm file:font-medium hover:file:bg-yellow-50"
-      >
-      <p x-show="gpxName" x-cloak class="mt-2 text-xs text-[color:var(--subtle)] truncate" x-text="gpxName"></p>
+  {# 01 — GPX track: dropzone OR populated track-loaded card #}
+  <section class="bp-section">
+    <div class="bp-section-head">
+      <span class="bp-section-num">01</span>
+      <h2 class="bp-section-title">
+        <span class="lang-en">Your track</span>
+        <span class="lang-ru">Трек</span>
+        <span class="lang-de">Dein Track</span>
+      </h2>
+      <span class="bp-section-hint">
+        <span class="lang-en">GPX · UNDER 50 MB</span>
+        <span class="lang-ru">GPX · ДО 50 МБ</span>
+        <span class="lang-de">GPX · BIS 50 MB</span>
+      </span>
     </div>
-  </label>
-
-  <!-- Photos -->
-  <label class="block">
-    <span class="block text-sm font-semibold mb-2">2. Photos (multiple)</span>
-    <div class="border border-dashed border-[color:var(--rule)] rounded-lg p-4 bg-white">
-      <input
-        type="file"
-        name="photos"
-        accept="image/*,.heic,.heif"
-        multiple
-        required
-        @change="onPhotos($event)"
-        class="block w-full text-sm tap file:mr-3 file:py-2 file:px-4 file:rounded-md file:border-0 file:bg-[color:var(--accent-soft)] file:text-[color:var(--accent)] file:text-sm file:font-medium hover:file:bg-yellow-50"
-      >
-      <p x-show="photoCount" x-cloak class="mt-2 text-xs text-[color:var(--subtle)]">
-        <span x-text="photoCount"></span> photo<span x-show="photoCount !== 1">s</span> selected
-      </p>
-    </div>
-  </label>
-
-  <!-- Description -->
-  <label class="block">
-    <span class="block text-sm font-semibold mb-2">3. How did the day feel?</span>
-    <textarea
-      name="description"
-      required
-      minlength="1"
-      maxlength="1000"
-      rows="4"
-      placeholder="Two or three sentences. The fog, the summit, the moment that stuck."
-      class="block w-full rounded-lg border border-[color:var(--rule)] bg-white p-3 text-base focus:border-[color:var(--accent)] focus:ring-[color:var(--accent)]"
-    ></textarea>
-  </label>
-
-  <!-- Optional location -->
-  <label class="block">
-    <span class="block text-sm font-semibold mb-2">4. Location <span class="text-[color:var(--subtle)] font-normal">(optional)</span></span>
-    <input
-      type="text"
-      name="location"
-      maxlength="120"
-      placeholder="Bavarian Alps, Tegernsee, …"
-      class="block w-full rounded-lg border border-[color:var(--rule)] bg-white p-3 text-base focus:border-[color:var(--accent)] focus:ring-[color:var(--accent)]"
-    >
-  </label>
-
-  <!-- Style -->
-  <fieldset class="block">
-    <legend class="block text-sm font-semibold mb-2">5. Visual style</legend>
-    <div class="grid grid-cols-3 gap-2">
-      {% for s in styles %}
-      <label class="flex">
+    <div class="bp-section-body">
+      {# Dropzone — visible until a GPX has been parsed by /preview/gpx #}
+      <label class="bp-dropzone" x-show="!track" x-cloak>
         <input
-          type="radio"
-          name="style"
-          value="{{ s }}"
-          class="peer sr-only"
-          {% if s == default_style %}checked{% endif %}
+          type="file"
+          name="gpx"
+          accept=".gpx,application/gpx+xml"
+          required
+          class="bp-dropzone-input"
+          x-ref="gpxInput"
+          @change="onGpx($event)"
         >
-        <span class="tap flex-1 cursor-pointer rounded-lg border border-[color:var(--rule)] bg-white text-center px-2 py-3 text-sm capitalize peer-checked:border-[color:var(--accent)] peer-checked:bg-[color:var(--accent-soft)] peer-checked:text-[color:var(--accent)] peer-checked:font-semibold">
-          {{ s }}
-        </span>
+        <div class="bp-dropzone-icon" aria-hidden="true">
+          <svg width="40" height="40" viewBox="0 0 40 40">
+            <path d="M6 32 Q 14 14, 22 22 T 34 8" stroke="currentColor" stroke-width="1.8" fill="none" stroke-linecap="round"/>
+            <circle cx="6" cy="32" r="2.6" fill="currentColor"/>
+            <circle cx="34" cy="8" r="2.6" fill="none" stroke="currentColor" stroke-width="1.6"/>
+            <circle cx="22" cy="22" r="1.8" fill="none" stroke="currentColor" stroke-width="1.4"/>
+          </svg>
+        </div>
+        <div class="bp-dropzone-title">
+          <span class="lang-en">Drag a GPX file here</span>
+          <span class="lang-ru">Перетащи файл GPX</span>
+          <span class="lang-de">GPX-Datei hierher ziehen</span>
+        </div>
+        <div class="bp-dropzone-hint">
+          <span class="lang-en">OR CLICK TO CHOOSE FROM YOUR PHONE</span>
+          <span class="lang-ru">ИЛИ НАЖМИ, ЧТОБЫ ВЫБРАТЬ С ТЕЛЕФОНА</span>
+          <span class="lang-de">ODER ANTIPPEN, UM VOM HANDY ZU WÄHLEN</span>
+        </div>
+        <p
+          class="bp-dropzone-filename"
+          x-show="gpxName && !track"
+          x-cloak
+          x-text="trackError || ('Parsing ' + gpxName + '…')"
+        ></p>
       </label>
-      {% endfor %}
+
+      {# Populated track-loaded card — visible once /preview/gpx has returned #}
+      <div class="bp-track-card" x-show="track" x-cloak>
+        <div class="bp-track-row">
+          <div class="bp-track-icon" aria-hidden="true">
+            <svg width="22" height="22" viewBox="0 0 40 40">
+              <path d="M6 32 Q 14 14, 22 22 T 34 8" stroke="currentColor" stroke-width="1.8" fill="none" stroke-linecap="round"/>
+              <circle cx="6" cy="32" r="2.6" fill="currentColor"/>
+              <circle cx="34" cy="8" r="2.6" fill="none" stroke="currentColor" stroke-width="1.6"/>
+            </svg>
+          </div>
+          <div class="bp-track-filemeta">
+            <div class="bp-track-filename" x-text="track?.filename"></div>
+            <div class="bp-track-parsed">
+              <span x-text="track?.n_points"></span>
+              <span class="lang-en"> points · parsed</span>
+              <span class="lang-ru"> точек · разобрано</span>
+              <span class="lang-de"> Punkte · gelesen</span>
+            </div>
+          </div>
+          <button
+            type="button"
+            class="bp-track-replace"
+            @click="resetTrack()"
+          >
+            <span class="lang-en">REPLACE</span>
+            <span class="lang-ru">ЗАМЕНИТЬ</span>
+            <span class="lang-de">ERSETZEN</span>
+          </button>
+        </div>
+        <hr class="bp-track-divider">
+        <div class="bp-track-summary">
+          <div class="bp-track-stats">
+            <div class="bp-stat">
+              <div class="bp-stat-k">
+                <span class="lang-en">DISTANCE</span>
+                <span class="lang-ru">ДИСТАНЦИЯ</span>
+                <span class="lang-de">DISTANZ</span>
+              </div>
+              <div class="bp-stat-v" x-text="track ? track.distance_km.toFixed(1) + ' km' : ''"></div>
+            </div>
+            <div class="bp-stat">
+              <div class="bp-stat-k">
+                <span class="lang-en">ASCENT</span>
+                <span class="lang-ru">ПОДЪЁМ</span>
+                <span class="lang-de">AUFSTIEG</span>
+              </div>
+              <div class="bp-stat-v" x-text="track ? '+' + Math.round(track.elevation_gain_m) + ' m' : ''"></div>
+            </div>
+            <div class="bp-stat">
+              <div class="bp-stat-k">
+                <span class="lang-en">TIME</span>
+                <span class="lang-ru">ВРЕМЯ</span>
+                <span class="lang-de">DAUER</span>
+              </div>
+              <div class="bp-stat-v" x-text="track ? formatDuration(track.duration_min) : ''"></div>
+            </div>
+            <div class="bp-stat">
+              <div class="bp-stat-k">
+                <span class="lang-en">DETECTED</span>
+                <span class="lang-ru">МЕСТО</span>
+                <span class="lang-de">ERKANNT</span>
+              </div>
+              <div class="bp-stat-v" x-text="track?.location_name || (lang === 'ru' ? '—' : '—')"></div>
+            </div>
+          </div>
+          <div class="bp-track-mini" aria-hidden="true" x-show="track?.track_d" x-cloak>
+            <svg viewBox="0 0 220 110" preserveAspectRatio="xMidYMid meet">
+              <path
+                :d="track?.track_d || ''"
+                fill="none"
+                stroke="var(--ink)"
+                stroke-width="1.4"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              />
+              <template x-if="track?.endpoints && track.endpoints.length >= 2">
+                <g>
+                  <circle :cx="track.endpoints[0][0].toFixed(2)" :cy="track.endpoints[0][1].toFixed(2)" r="3" fill="var(--ink)"/>
+                  <circle :cx="track.endpoints[1][0].toFixed(2)" :cy="track.endpoints[1][1].toFixed(2)" r="3" fill="var(--paper)" stroke="var(--ink)" stroke-width="1.2"/>
+                </g>
+              </template>
+            </svg>
+          </div>
+        </div>
+      </div>
     </div>
-    <p class="mt-2 text-xs text-[color:var(--subtle)]">
-      One narrative, three layouts. The text is the same; only the look changes.
-    </p>
-  </fieldset>
+  </section>
 
-  <!-- Submit -->
-  <button
-    type="submit"
-    :disabled="submitting"
-    class="tap w-full rounded-lg bg-[color:var(--ink)] px-5 py-3 text-base font-semibold text-[color:var(--paper)] disabled:opacity-60"
-  >
-    <span x-show="!submitting">Generate memory</span>
-    <span x-show="submitting" x-cloak>Working… this can take a minute.</span>
-  </button>
+  {# 02 — Photos: dropzone OR client-side preview grid #}
+  <section class="bp-section">
+    <div class="bp-section-head">
+      <span class="bp-section-num">02</span>
+      <h2 class="bp-section-title">
+        <span class="lang-en">Photos</span>
+        <span class="lang-ru">Фотографии</span>
+        <span class="lang-de">Fotos</span>
+      </h2>
+      <span class="bp-section-hint" x-text="(photos.length || 0) + ' / 60'">0 / 60</span>
+    </div>
+    <div class="bp-section-body">
+      <label class="bp-dropzone" x-show="!photos.length" x-cloak>
+        <input
+          type="file"
+          name="photos"
+          accept="image/*,.heic,.heif"
+          multiple
+          required
+          class="bp-dropzone-input"
+          @change="onPhotos($event)"
+        >
+        <div class="bp-dropzone-icon" aria-hidden="true">
+          <svg width="40" height="40" viewBox="0 0 40 40">
+            <rect x="4" y="10" width="32" height="22" stroke="currentColor" stroke-width="1.8" fill="none"/>
+            <circle cx="14" cy="20" r="3" stroke="currentColor" stroke-width="1.6" fill="none"/>
+            <path d="M4 28 L 14 20 L 22 26 L 32 16 L 36 20" stroke="currentColor" stroke-width="1.6" fill="none" stroke-linejoin="round"/>
+          </svg>
+        </div>
+        <div class="bp-dropzone-title">
+          <span class="lang-en">Drag photos here</span>
+          <span class="lang-ru">Перетащи фотографии</span>
+          <span class="lang-de">Fotos hierher ziehen</span>
+        </div>
+        <div class="bp-dropzone-hint">
+          <span class="lang-en">JPG / HEIC · UP TO 60</span>
+          <span class="lang-ru">JPG / HEIC · ДО 60</span>
+          <span class="lang-de">JPG / HEIC · BIS ZU 60</span>
+        </div>
+      </label>
 
-  <p class="text-xs text-center text-[color:var(--subtle)]">
-    Files are deleted as soon as your page is rendered.
-    <a class="underline" href="/privacy" target="_blank" rel="noopener noreferrer">How we handle your photos →</a>
-  </p>
+      <div x-show="photos.length" x-cloak>
+        <div class="bp-photogrid">
+          <template x-for="(p, i) in photos" :key="i">
+            <div class="bp-phototile">
+              <img :src="p.url" alt="" loading="lazy">
+              <div class="bp-phototile-num" x-text="String(i + 1).padStart(2, '0')"></div>
+            </div>
+          </template>
+        </div>
+        <p class="bp-mini">
+          <span class="lang-en"><span x-text="photos.length"></span> photo<span x-show="photos.length !== 1">s</span> selected · Claude picks 6–8 for the letter.</span>
+          <span class="lang-ru"><span x-text="photos.length"></span> фото · Claude выберет 6–8 для письма.</span>
+          <span class="lang-de"><span x-text="photos.length"></span> Foto<span x-show="photos.length !== 1">s</span> · Claude wählt 6–8 für den Brief.</span>
+          <button
+            type="button"
+            @click="resetPhotos()"
+            style="border:0;background:transparent;cursor:pointer;font:inherit;color:var(--ink);text-decoration:underline;margin-left:8px;"
+          >
+            <span class="lang-en">Replace</span>
+            <span class="lang-ru">Заменить</span>
+            <span class="lang-de">Ersetzen</span>
+          </button>
+        </p>
+        <input
+          x-ref="photoInput"
+          type="file"
+          name="photos"
+          accept="image/*,.heic,.heif"
+          multiple
+          class="bp-dropzone-input"
+          @change="onPhotos($event)"
+        >
+      </div>
+    </div>
+  </section>
+
+  {# 03 — Tell us about it: textarea + AUTO-EXTRACTED chips #}
+  <section class="bp-section">
+    <div class="bp-section-head">
+      <span class="bp-section-num">03</span>
+      <h2 class="bp-section-title">
+        <span class="lang-en">Tell us about it</span>
+        <span class="lang-ru">Расскажи как было</span>
+        <span class="lang-de">Erzähl uns davon</span>
+      </h2>
+      <span class="bp-section-hint">
+        <span class="lang-en">RU · EN · DE — ANY ONE</span>
+        <span class="lang-ru">RU · EN · DE — ЛЮБОЙ</span>
+        <span class="lang-de">RU · EN · DE — EGAL</span>
+      </span>
+    </div>
+    <div class="bp-section-body">
+      <textarea
+        class="bp-textarea"
+        name="description"
+        required
+        minlength="1"
+        maxlength="1000"
+        rows="8"
+        @input="onDesc($event)"
+        x-bind:placeholder="lang === 'ru' ? 'Мы начали с городской площади сразу после полудня…' : (lang === 'de' ? 'Wir starteten am Marktplatz kurz nach Mittag…' : 'We started at the town square just after noon…')"
+      ></textarea>
+      <div class="bp-textarea-foot">
+        <span>
+          <span x-text="descLen"></span>
+          <span class="lang-en"> / 1000 chars</span>
+          <span class="lang-ru"> / 1000 симв.</span>
+          <span class="lang-de"> / 1000 Zeichen</span>
+        </span>
+        <span x-show="descLen > 0" x-cloak>
+          <span class="lang-en">auto-saved</span>
+          <span class="lang-ru">сохранено</span>
+          <span class="lang-de">gespeichert</span>
+        </span>
+      </div>
+
+      {# AUTO-EXTRACTED chips. Visible once at least one source has
+         filled a value. The location chip is editable inline; the
+         date chip is read-only display. #}
+      <div class="bp-chips" x-show="hasChips()" x-cloak>
+        <span class="bp-chip-label">
+          <span class="lang-en">AUTO-EXTRACTED</span>
+          <span class="lang-ru">АВТОМАТИЧЕСКИ</span>
+          <span class="lang-de">AUTOMATISCH</span>
+        </span>
+
+        {# Location chip — editable. Hidden form input below carries the
+           final value into the POST. #}
+        <template x-if="locationValue || track">
+          <span
+            class="bp-chip"
+            x-show="!editingLocation"
+            @click="startEditLocation()"
+            tabindex="0"
+            @keydown.enter.prevent="startEditLocation()"
+            role="button"
+          >
+            <span class="bp-chip-icon" aria-hidden="true">📍</span>
+            <span
+              class="bp-chip-val"
+              x-text="locationValue || (lang === 'ru' ? 'Без места' : (lang === 'de' ? 'Kein Ort' : 'No location'))"
+            ></span>
+            <span class="bp-chip-src">
+              ·
+              <span x-text="locationSourceLabel()"></span>
+            </span>
+            <span class="bp-chip-edit" aria-hidden="true">✎</span>
+          </span>
+        </template>
+        <span class="bp-chip bp-chip--editing" x-show="editingLocation" x-cloak>
+          <span class="bp-chip-icon" aria-hidden="true">📍</span>
+          <input
+            x-ref="locationInput"
+            class="bp-chip-input"
+            type="text"
+            x-model="locationDraft"
+            maxlength="120"
+            @keydown.enter.prevent="saveLocation()"
+            @keydown.escape.prevent="cancelLocation()"
+          >
+          <button type="button" class="bp-chip-act" @click="saveLocation()" aria-label="Save">✓</button>
+          <button type="button" class="bp-chip-act bp-chip-act--cancel" @click="cancelLocation()" aria-label="Cancel">×</button>
+        </span>
+        <input type="hidden" name="location" :value="locationValue">
+
+        {# Date chip — read-only #}
+        <template x-if="dateValue">
+          <span class="bp-chip bp-chip--static">
+            <span class="bp-chip-icon" aria-hidden="true">◷</span>
+            <span class="bp-chip-val" x-text="formatDate(dateValue)"></span>
+            <span class="bp-chip-src">
+              ·
+              <span x-text="dateSourceLabel()"></span>
+            </span>
+          </span>
+        </template>
+      </div>
+    </div>
+  </section>
+
+  {# 04 — Pick a style. 5 cards. Only The Letter is buildable in v0. #}
+  <section class="bp-section">
+    <div class="bp-section-head">
+      <span class="bp-section-num">04</span>
+      <h2 class="bp-section-title">
+        <span class="lang-en">Pick a style</span>
+        <span class="lang-ru">Выбери стиль</span>
+        <span class="lang-de">Wähle einen Stil</span>
+      </h2>
+      <span class="bp-section-hint">
+        <span class="lang-en">ALL FIVE USE THE SAME DATA</span>
+        <span class="lang-ru">ВСЕ ПЯТЬ — ОДНИ ДАННЫЕ</span>
+        <span class="lang-de">ALLE FÜNF, GLEICHE DATEN</span>
+      </span>
+    </div>
+    <div class="bp-section-body">
+      <div class="bp-stylegrid">
+        {% for s in styles %}
+        <label class="bp-stylecard{% if s.coming_soon %} bp-stylecard--soon{% endif %}">
+          <input
+            type="radio"
+            name="style"
+            value="{{ s.value }}"
+            {% if s.coming_soon %}disabled aria-disabled="true"{% endif %}
+            {% if s.value == default_style %}checked{% endif %}
+          >
+          <div class="bp-stylecard-thumb">
+            {% include "style_thumbs/" + s.value + ".html.j2" ignore missing %}
+          </div>
+          <div class="bp-stylecard-body">
+            <div class="bp-stylecard-head">
+              <div class="bp-stylecard-name">
+                <span class="lang-en">{{ s.name_en }}</span>
+                <span class="lang-ru">{{ s.name_ru }}</span>
+                <span class="lang-de">{{ s.name_de }}</span>
+              </div>
+              {% if s.coming_soon %}
+              <span class="bp-stylecard-tag">
+                <span class="lang-en">SOON</span>
+                <span class="lang-ru">СКОРО</span>
+                <span class="lang-de">BALD</span>
+              </span>
+              {% endif %}
+            </div>
+            <div class="bp-stylecard-sub">
+              <span class="lang-en">{{ s.sub_en }}</span>
+              <span class="lang-ru">{{ s.sub_ru }}</span>
+              <span class="lang-de">{{ s.sub_de }}</span>
+            </div>
+            <p class="bp-stylecard-desc">
+              <span class="lang-en">{{ s.desc_en }}</span>
+              <span class="lang-ru">{{ s.desc_ru }}</span>
+              <span class="lang-de">{{ s.desc_de }}</span>
+            </p>
+          </div>
+        </label>
+        {% endfor %}
+      </div>
+    </div>
+  </section>
+
+  {# Generate #}
+  <section class="bp-generate">
+    <button type="submit" class="bp-cta" :disabled="submitting">
+      <span x-show="!submitting">
+        <span class="lang-en">Generate the letter</span>
+        <span class="lang-ru">Написать письмо</span>
+        <span class="lang-de">Brief schreiben</span>
+      </span>
+      <span x-show="submitting" x-cloak>
+        <span class="lang-en">Writing it now…</span>
+        <span class="lang-ru">Пишем…</span>
+        <span class="lang-de">Wir schreiben…</span>
+      </span>
+      <span class="bp-cta-arrow" aria-hidden="true">→</span>
+    </button>
+    <div class="bp-generate-meta">
+      <span>
+        <span class="lang-en">~ 30 SECONDS</span>
+        <span class="lang-ru">≈ 30 СЕКУНД</span>
+        <span class="lang-de">~ 30 SEKUNDEN</span>
+      </span>
+      <span class="bp-dot" aria-hidden="true">·</span>
+      <span>
+        <span class="lang-en">YOUR PHOTOS STAY ON YOUR DEVICE UNTIL YOU PUBLISH</span>
+        <span class="lang-ru">ФОТО ОСТАЮТСЯ У ВАС, ПОКА ВЫ НЕ ОПУБЛИКУЕТЕ</span>
+        <span class="lang-de">DEINE FOTOS BLEIBEN BEI DIR, BIS DU TEILST</span>
+      </span>
+      <span class="bp-dot" aria-hidden="true">·</span>
+      <span>
+        <a href="/privacy" target="_blank" rel="noopener noreferrer">
+          <span class="lang-en">How we handle your photos ↗</span>
+          <span class="lang-ru">Как мы обращаемся с фото ↗</span>
+          <span class="lang-de">Umgang mit deinen Fotos ↗</span>
+        </a>
+      </span>
+    </div>
+  </section>
 </form>
+
+<script>
+  // Alpine root for the single-page builder form. Lives at form-scope.
+  // Drives:
+  //   - GPX track preview (track-loaded card + AUTO-EXTRACTED chips)
+  //   - photo preview grid + EXIF date extraction for the date chip
+  //   - inline-editable location chip
+  //   - word count + auto-saved indicator
+  //   - submit-busy state
+  function builderForm() {
+    return {
+      // GPX
+      gpxName: '',
+      track: null,            // {filename, n_points, distance_km, ...}
+      trackError: '',         // populated on preview failure
+      // Photos
+      photos: [],             // [{name, url}]
+      photoDate: null,        // ISO date from photo EXIF
+      // Description
+      descLen: 0,
+      // Location chip (inline-edit)
+      editingLocation: false,
+      locationDraft: '',
+      locationValue: '',
+      // Submit busy
+      submitting: false,
+
+      // Bridge to <html data-lang>; built by builderShell() in
+      // builder_base.html.j2.
+      get lang() {
+        return document.documentElement.getAttribute('data-lang') || 'en';
+      },
+
+      // The current date the chip displays. Photo EXIF wins over GPX
+      // waypoint time when both are present (the design's promise).
+      get dateValue() {
+        return this.photoDate || (this.track && this.track.hike_date) || null;
+      },
+
+      // ──────────────────────────────────────────────────────────────
+      // GPX preview
+      // ──────────────────────────────────────────────────────────────
+      async onGpx(e) {
+        const file = e.target.files && e.target.files[0];
+        if (!file) { this.gpxName = ''; return; }
+        this.gpxName = file.name;
+        this.trackError = '';
+        const fd = new FormData();
+        fd.append('gpx', file);
+        try {
+          const r = await fetch('/preview/gpx', { method: 'POST', body: fd });
+          if (!r.ok) {
+            const j = await r.json().catch(() => ({}));
+            this.trackError = j.detail || 'Could not parse GPX';
+            return;
+          }
+          this.track = await r.json();
+          // Seed the location chip if no user override is set.
+          if (!this.locationValue && this.track && this.track.location_name) {
+            this.locationValue = this.track.location_name;
+            this.locationSource = 'track';
+          }
+        } catch (err) {
+          this.trackError = 'Network error';
+        }
+      },
+
+      resetTrack() {
+        this.track = null;
+        this.gpxName = '';
+        this.trackError = '';
+        // Reset the file input so re-uploading the same file triggers
+        // the change handler again.
+        if (this.$refs.gpxInput) this.$refs.gpxInput.value = '';
+        // Don't clear locationValue if the user has edited it manually.
+        if (this.locationSource === 'track') {
+          this.locationValue = '';
+          this.locationSource = '';
+        }
+      },
+
+      // ──────────────────────────────────────────────────────────────
+      // Photo preview — client-side thumbnails + first-photo EXIF date
+      // ──────────────────────────────────────────────────────────────
+      async onPhotos(e) {
+        const files = Array.from(e.target.files || []);
+        this.photos = files.map(function (f) {
+          return { name: f.name, url: URL.createObjectURL(f) };
+        });
+        this.photoDate = null;
+        if (!files.length) return;
+        // Send the first photo (smallest payload) to /preview/photo for
+        // EXIF date extraction. The bytes are never persisted.
+        const fd = new FormData();
+        fd.append('photo', files[0]);
+        try {
+          const r = await fetch('/preview/photo', { method: 'POST', body: fd });
+          if (!r.ok) return;
+          const j = await r.json();
+          if (j.hike_date) this.photoDate = j.hike_date;
+        } catch (_) { /* best-effort */ }
+      },
+
+      resetPhotos() {
+        this.photos.forEach(function (p) {
+          try { URL.revokeObjectURL(p.url); } catch (_) {}
+        });
+        this.photos = [];
+        this.photoDate = null;
+        if (this.$refs.photoInput) this.$refs.photoInput.value = '';
+      },
+
+      // ──────────────────────────────────────────────────────────────
+      // Description word count
+      // ──────────────────────────────────────────────────────────────
+      onDesc(e) {
+        this.descLen = e.target.value.length;
+      },
+
+      // ──────────────────────────────────────────────────────────────
+      // Location chip inline edit
+      // ──────────────────────────────────────────────────────────────
+      locationSource: '',     // 'track' | 'user' | ''
+      startEditLocation() {
+        this.editingLocation = true;
+        this.locationDraft = this.locationValue;
+        this.$nextTick(() => this.$refs.locationInput && this.$refs.locationInput.focus());
+      },
+      saveLocation() {
+        this.locationValue = this.locationDraft.trim();
+        this.locationSource = 'user';
+        this.editingLocation = false;
+      },
+      cancelLocation() {
+        this.editingLocation = false;
+        this.locationDraft = this.locationValue;
+      },
+
+      // ──────────────────────────────────────────────────────────────
+      // Chip helpers
+      // ──────────────────────────────────────────────────────────────
+      hasChips() {
+        return !!(this.locationValue || this.track || this.dateValue);
+      },
+      locationSourceLabel() {
+        const code = this.lang;
+        if (this.locationSource === 'user') {
+          return code === 'ru' ? 'вы ввели' : (code === 'de' ? 'manuell' : 'you typed');
+        }
+        // Default: GPX track name.
+        return code === 'ru' ? 'из трека' : (code === 'de' ? 'aus Track' : 'from track');
+      },
+      dateSourceLabel() {
+        const code = this.lang;
+        if (this.photoDate) {
+          return code === 'ru' ? 'из EXIF фото' : (code === 'de' ? 'aus Foto-EXIF' : 'from photo EXIF');
+        }
+        return code === 'ru' ? 'из трека' : (code === 'de' ? 'aus Track' : 'from track');
+      },
+
+      // ──────────────────────────────────────────────────────────────
+      // Formatters
+      // ──────────────────────────────────────────────────────────────
+      formatDuration(mins) {
+        const h = Math.floor(mins / 60);
+        const m = mins % 60;
+        if (h <= 0) return m + 'm';
+        return h + 'h ' + String(m).padStart(2, '0') + 'm';
+      },
+      formatDate(iso) {
+        const d = new Date(iso);
+        if (isNaN(d.getTime())) return iso;
+        const code = this.lang;
+        const months = {
+          en: ['January','February','March','April','May','June','July','August','September','October','November','December'],
+          ru: ['января','февраля','марта','апреля','мая','июня','июля','августа','сентября','октября','ноября','декабря'],
+          de: ['Januar','Februar','März','April','Mai','Juni','Juli','August','September','Oktober','November','Dezember'],
+        };
+        const m = months[code] || months.en;
+        return code === 'en'
+          ? `${m[d.getMonth()]} ${d.getDate()}, ${d.getFullYear()}`
+          : `${d.getDate()} ${m[d.getMonth()]} ${d.getFullYear()}`;
+      },
+    };
+  }
+</script>
 {% endblock %}
