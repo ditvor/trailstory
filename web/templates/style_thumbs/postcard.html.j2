@@ -1,0 +1,22 @@
+{# Style thumbnail: vintage travel postcard set. The renderer for this
+   style does not exist yet — the card is gated as coming_soon in
+   web/copy.py. #}
+<div style="background: var(--pc-paper); height: 100%; padding: 8px; overflow: hidden; position: relative;">
+  <div style="background: var(--pc-card); border: 1px solid oklch(0.20 0.02 50 / 0.18); box-shadow: 0 4px 10px -4px rgba(60,30,10,0.18); transform: rotate(-2deg); height: 100%; padding: 6px 10px; display: flex; flex-direction: column; justify-content: space-between;">
+    <div style="display: flex; justify-content: space-between; align-items: baseline; border-bottom: 1px solid var(--pc-red); padding-bottom: 3px;">
+      <div style="font-family: var(--serif); color: var(--pc-red); font-size: 10px; letter-spacing: 0.10em; font-weight: 600;">POST CARD</div>
+      <div style="font-family: var(--mono); font-size: 6px; color: var(--pc-ink); letter-spacing: 0.18em; opacity: 0.7;">PAR AVION</div>
+    </div>
+    <div style="font-family: var(--serif); font-size: 24px; color: var(--pc-red); line-height: 0.9; letter-spacing: 0.01em; font-weight: 700;">BAD TÖLZ</div>
+    <div style="display: flex; justify-content: space-between; align-items: flex-end;">
+      <svg viewBox="0 0 50 50" width="32" height="32" aria-hidden="true">
+        <circle cx="25" cy="25" r="22" fill="none" stroke="var(--pc-red)" stroke-width="1"/>
+        <circle cx="25" cy="25" r="17" fill="none" stroke="var(--pc-red)" stroke-width="0.4" stroke-dasharray="1 1.5"/>
+        <line x1="8" y1="25" x2="42" y2="25" stroke="var(--pc-red)" stroke-width="0.7"/>
+        <text x="25" y="22" text-anchor="middle" style="font-family: var(--serif); font-size: 5px; fill: var(--pc-red); font-weight: 700;">BAD TÖLZ</text>
+        <text x="25" y="34" text-anchor="middle" style="font-family: var(--serif); font-size: 6px; fill: var(--pc-red); font-weight: 700;">12:04</text>
+      </svg>
+      <div style="width: 28px; height: 34px; background: var(--pc-blue); box-shadow: 0 0 0 1px var(--pc-ink), 0 0 0 2px var(--pc-card); display: flex; align-items: center; justify-content: center; color: var(--pc-card); font-family: var(--serif); font-size: 5px; letter-spacing: 0.06em; text-align: center; padding: 2px; font-weight: 700; line-height: 1.1;">TRAIL<br>STORY</div>
+    </div>
+  </div>
+</div>

@@ -101,17 +101,47 @@ def load_photos(
 
 
 def _extract_timestamp(img: Image.Image, path: Path) -> datetime:
+    parsed = _exif_datetime_from_image(img)
+    if parsed is not None:
+        return parsed
+    return datetime.fromtimestamp(path.stat().st_mtime)
+
+
+def _exif_datetime_from_image(img: Image.Image) -> datetime | None:
+    """Return an EXIF DateTimeOriginal / Digitized / DateTime, or None.
+
+    Pure EXIF read — never falls back to file mtime, so this is safe to
+    use against in-memory image data (the web preview path that hands
+    around photo bytes without a file path).
+    """
     exif = img.getexif()
-    if exif:
-        sub_ifd = exif.get_ifd(_EXIF_SUB_IFD_TAG)
-        for tag in (_EXIF_DATETIME_ORIGINAL, _EXIF_DATETIME_DIGITIZED):
-            parsed = _parse_exif_datetime(sub_ifd.get(tag))
-            if parsed is not None:
-                return parsed
-        parsed = _parse_exif_datetime(exif.get(_EXIF_DATETIME))
+    if not exif:
+        return None
+    sub_ifd = exif.get_ifd(_EXIF_SUB_IFD_TAG)
+    for tag in (_EXIF_DATETIME_ORIGINAL, _EXIF_DATETIME_DIGITIZED):
+        parsed = _parse_exif_datetime(sub_ifd.get(tag))
         if parsed is not None:
             return parsed
-    return datetime.fromtimestamp(path.stat().st_mtime)
+    return _parse_exif_datetime(exif.get(_EXIF_DATETIME))
+
+
+def read_exif_date(data: bytes) -> datetime | None:
+    """Read an EXIF date from raw photo bytes without persisting anything.
+
+    Used by the builder's photo-preview endpoint so the AUTO-EXTRACTED
+    date chip can be populated with "from photo EXIF" provenance before
+    any workspace is created. Returns ``None`` if the image cannot be
+    opened or carries no usable date tag.
+    """
+    import io
+
+    try:
+        with Image.open(io.BytesIO(data)) as raw:
+            return _exif_datetime_from_image(raw)
+    except (OSError, Image.DecompressionBombError):
+        # Image.open also raises UnidentifiedImageError on garbage bytes;
+        # it's a subclass of OSError, so the bare OSError catch covers it.
+        return None
 
 
 def _parse_exif_datetime(raw: object) -> datetime | None:

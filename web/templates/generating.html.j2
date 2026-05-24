@@ -1,10 +1,10 @@
-{% extends "base.html.j2" %}
+{% extends "builder_base.html.j2" %}
 
-{% block title %}Trailstory — writing your memory…{% endblock %}
+{% block title %}Trailstory · Writing your memory…{% endblock %}
 
 {% block content %}
 <section
-  class="mt-2"
+  class="bp-hero"
   x-data="{
     phase: 'writing',
     chunks: '',
@@ -37,54 +37,83 @@
   data-slug="{{ slug }}"
   data-style="{{ style }}"
 >
-  <h1 class="text-2xl sm:text-3xl font-bold leading-tight tracking-tight">
-    <span x-show="phase === 'writing'">Writing your memory…</span>
-    <span x-show="phase === 'regenerating'" x-cloak>One more pass — the model needed a tidier draft…</span>
-    <span x-show="phase === 'rendering'" x-cloak>Rendering the page…</span>
-  </h1>
-  <p class="mt-3 text-sm text-[color:var(--subtle)] leading-relaxed">
-    The page will open as soon as the narrative is ready. You can keep this
-    tab in the foreground; closing it doesn't lose the work — the page is
-    cached for {{ retention_minutes if retention_minutes else 30 }} minutes
-    at <code>/memory/{{ slug }}</code>.
-  </p>
-
-  <!-- live writing area -->
-  <div
-    role="status"
-    aria-live="polite"
-    class="mt-6 min-h-[12rem] rounded-lg border border-[color:var(--rule)] bg-white p-4 text-sm leading-relaxed whitespace-pre-wrap font-mono"
-    x-text="chunks || 'Starting up…'"
-  ></div>
-
-  <p
-    class="mt-4 text-xs text-[color:var(--subtle)]"
-    x-show="phase === 'regenerating'"
-    x-cloak
-  >
-    The first draft didn't parse cleanly. We're trying once more before
-    giving up — usually fixes itself.
-  </p>
-
-  <!-- error state -->
-  <div
-    x-show="error"
-    x-cloak
-    class="mt-6 rounded-lg border border-red-300 bg-red-50 p-4 text-sm text-red-800"
-    role="alert"
-  >
-    <p class="font-semibold">We couldn't generate the memory.</p>
-    <p class="mt-1" x-text="error"></p>
-    <p class="mt-3">
-      <a href="/" class="underline">← Try again from the form</a>
-    </p>
+  <div class="bp-eyebrow">
+    <span class="lang-en">STEP 3 / 3 · GENERATING</span>
+    <span class="lang-ru">ШАГ 3 / 3 · ГЕНЕРАЦИЯ</span>
+    <span class="lang-de">SCHRITT 3 / 3 · WIR SCHREIBEN</span>
   </div>
+  <h1 class="bp-h1">
+    <span x-show="phase === 'writing'">
+      <span class="lang-en"><span class="bp-h1-em">Writing</span><br>your memory…</span>
+      <span class="lang-ru"><span class="bp-h1-em">Пишем</span><br>ваше воспоминание…</span>
+      <span class="lang-de"><span class="bp-h1-em">Wir schreiben</span><br>deine Erinnerung…</span>
+    </span>
+    <span x-show="phase === 'regenerating'" x-cloak>
+      <span class="lang-en"><span class="bp-h1-em">One more pass</span><br>tidier draft…</span>
+      <span class="lang-ru"><span class="bp-h1-em">Ещё один проход</span><br>чтобы стало чище…</span>
+      <span class="lang-de"><span class="bp-h1-em">Noch einmal</span><br>für einen klareren Entwurf…</span>
+    </span>
+    <span x-show="phase === 'rendering'" x-cloak>
+      <span class="lang-en"><span class="bp-h1-em">Rendering</span><br>the page…</span>
+      <span class="lang-ru"><span class="bp-h1-em">Собираем</span><br>страницу…</span>
+      <span class="lang-de"><span class="bp-h1-em">Wir setzen</span><br>die Seite…</span>
+    </span>
+  </h1>
+  <p class="bp-dek">
+    <span class="lang-en">The page will open as soon as the narrative is ready. Closing this tab doesn't lose the work — your memory is cached for {{ retention_minutes if retention_minutes else 30 }} minutes at <code>/memory/{{ slug }}</code>.</span>
+    <span class="lang-ru">Страница откроется, как только текст будет готов. Если закроете вкладку — ничего не пропадёт: воспоминание хранится {{ retention_minutes if retention_minutes else 30 }} минут по адресу <code>/memory/{{ slug }}</code>.</span>
+    <span class="lang-de">Die Seite öffnet sich, sobald der Text fertig ist. Tab schließen ist kein Problem — deine Erinnerung bleibt {{ retention_minutes if retention_minutes else 30 }} Minuten unter <code>/memory/{{ slug }}</code> abrufbar.</span>
+  </p>
 
-  <!-- privacy reminder -->
-  <p class="mt-8 text-xs text-center text-[color:var(--subtle)]">
-    Your raw upload has already been deleted. Only the privacy-stripped
-    JPEGs and the rendered page remain.
-    <a class="underline" href="/privacy" target="_blank" rel="noopener noreferrer">Privacy details.</a>
+  <section class="bp-section">
+    <div class="bp-section-head">
+      <span class="bp-section-num">→</span>
+      <h2 class="bp-section-title">
+        <span class="lang-en">Live draft</span>
+        <span class="lang-ru">Черновик в реальном времени</span>
+        <span class="lang-de">Entwurf live</span>
+      </h2>
+    </div>
+    <div class="bp-section-body">
+      <div
+        role="status"
+        aria-live="polite"
+        class="bp-livedraft"
+        x-text="chunks || (lang === 'ru' ? 'Запускаемся…' : (lang === 'de' ? 'Wir starten…' : 'Starting up…'))"
+      ></div>
+
+      <p
+        class="bp-mini"
+        x-show="phase === 'regenerating'"
+        x-cloak
+      >
+        <span class="lang-en">The first draft didn't parse cleanly. Trying once more before giving up — usually fixes itself.</span>
+        <span class="lang-ru">Первый черновик не разобрался. Пробуем ещё раз — обычно проходит.</span>
+        <span class="lang-de">Der erste Entwurf war nicht sauber. Noch ein Versuch — meistens reicht das.</span>
+      </p>
+    </div>
+  </section>
+
+  <section class="bp-section bp-error" x-show="error" x-cloak role="alert">
+    <div class="bp-eyebrow">
+      <span class="lang-en">SOMETHING WENT WRONG</span>
+      <span class="lang-ru">ЧТО-ТО ПОШЛО НЕ ТАК</span>
+      <span class="lang-de">ETWAS IST SCHIEFGEGANGEN</span>
+    </div>
+    <p x-text="error" style="margin-top: 8px;"></p>
+    <p style="margin-top: 12px;">
+      <a href="/" style="color: inherit; text-decoration: underline;">
+        <span class="lang-en">← Start over from the form</span>
+        <span class="lang-ru">← Начать заново</span>
+        <span class="lang-de">← Von vorn beginnen</span>
+      </a>
+    </p>
+  </section>
+
+  <p class="bp-mini" style="margin-top: 32px; text-align: center;">
+    <span class="lang-en">Your raw upload has already been deleted. Only the privacy-stripped JPEGs and the rendered page remain. <a href="/privacy" target="_blank" rel="noopener noreferrer" style="color: inherit;">Privacy details ↗</a></span>
+    <span class="lang-ru">Сырая загрузка уже удалена. Остаются только обезличенные JPEG и итоговая страница. <a href="/privacy" target="_blank" rel="noopener noreferrer" style="color: inherit;">Подробности ↗</a></span>
+    <span class="lang-de">Die Rohdaten wurden bereits gelöscht. Nur die privatsphärefreundlichen JPEGs und die fertige Seite bleiben. <a href="/privacy" target="_blank" rel="noopener noreferrer" style="color: inherit;">Datenschutz ↗</a></span>
   </p>
 </section>
 {% endblock %}

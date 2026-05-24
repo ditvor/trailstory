@@ -31,7 +31,7 @@ import json
 import logging
 import os
 import threading
-from collections.abc import Callable, Iterable, Iterator
+from collections.abc import Callable, Iterable, Iterator, Sequence
 from pathlib import Path
 from typing import Annotated, Final
 
@@ -46,7 +46,10 @@ from fastapi.responses import (
 from fastapi.templating import Jinja2Templates
 
 from trailstory.config import Settings
+from trailstory.gpx import GpxParseError, extract_track_name, parse_gpx
 from trailstory.llm.client import AnthropicClient
+from trailstory.photos import read_exif_date
+from web.copy import STYLE_CARDS, resolve_lang
 from web.pipeline import (
     PipelineError,
     PipelineStreamChunk,
@@ -96,11 +99,22 @@ def _templates(request: Request) -> Jinja2Templates:
 
 @router.get("/", response_class=HTMLResponse)
 async def landing(request: Request) -> Response:
-    """Builder form. Mobile-first; everything fits in one column."""
+    """Builder form. Mobile-first; everything fits in one column.
+
+    The page renders all UI copy in EN / RU / DE simultaneously; the
+    active language is driven client-side by ``builderShell()`` in
+    ``builder_base.html.j2``. ``?lang=`` is honoured for first paint
+    so a shared link can land in the right language.
+    """
+    active_lang = resolve_lang(request.query_params.get("lang"))
     return _templates(request).TemplateResponse(
         request,
         "landing.html.j2",
-        {"styles": [s.value for s in Style], "default_style": Style.default().value},
+        {
+            "styles": STYLE_CARDS,
+            "default_style": Style.default().value,
+            "active_lang": active_lang,
+        },
     )
 
 
@@ -115,6 +129,98 @@ async def privacy(request: Request) -> Response:
             "repo_url": REPO_URL,
         },
     )
+
+
+# ── live preview (no persistence) ────────────────────────────────────────────
+
+
+@router.post("/preview/gpx")
+async def preview_gpx(gpx: UploadFile | None = None) -> Response:
+    """Parse a GPX file in-memory and return its stats as JSON.
+
+    Used by the builder's landing page to render the "track loaded"
+    card immediately after the user drops a GPX file — filename,
+    point count, distance / ascent / time / detected-location, and
+    a path string for the mini-route SVG.
+
+    Nothing is persisted: the bytes are written to a temp file just
+    long enough for :func:`parse_gpx` to read them, then unlinked.
+    No workspace is created. The same GPX still has to be uploaded
+    again with the final form submit; that's intentional — the
+    preview endpoint is read-only and stateless.
+    """
+    if gpx is None or not gpx.filename:
+        raise HTTPException(status_code=400, detail="GPX file is required")
+    body = await gpx.read()
+    if not body:
+        raise HTTPException(status_code=400, detail="Empty GPX file")
+    if len(body) > MAX_GPX_BYTES:
+        raise HTTPException(
+            status_code=413,
+            detail=f"GPX exceeds {MAX_GPX_BYTES // (1024 * 1024)} MB",
+        )
+
+    # parse_gpx wants a Path, so round-trip the bytes through a tmp
+    # file and delete it on the way out. The tmp lives in the system
+    # tmp dir (NamedTemporaryFile) so it's swept on reboot even if
+    # the unlink races.
+    import tempfile
+
+    with tempfile.NamedTemporaryFile(suffix=".gpx", delete=False) as fh:
+        tmp_path = Path(fh.name)
+        fh.write(body)
+    try:
+        try:
+            stats = parse_gpx(tmp_path)
+        except GpxParseError as exc:
+            raise HTTPException(status_code=400, detail=str(exc)) from exc
+        location_name = extract_track_name(tmp_path)
+    finally:
+        tmp_path.unlink(missing_ok=True)
+
+    hike_date = next((w.time.date() for w in stats.waypoints if w.time), None)
+    track_d, endpoints = _track_svg_from_waypoints(stats.waypoints)
+
+    return JSONResponse(
+        {
+            "filename": gpx.filename,
+            "n_points": len(stats.waypoints),
+            "distance_km": stats.distance_km,
+            "elevation_gain_m": stats.elevation_gain_m,
+            "duration_min": stats.duration_min,
+            "summit_m": stats.summit_elev_m,
+            "location_name": location_name,
+            "hike_date": hike_date.isoformat() if hike_date else None,
+            "track_d": track_d,
+            "endpoints": endpoints,
+        }
+    )
+
+
+@router.post("/preview/photo")
+async def preview_photo(photo: UploadFile | None = None) -> Response:
+    """Read EXIF DateTimeOriginal from a single photo without persisting.
+
+    Used by the builder's landing page to populate the AUTO-EXTRACTED
+    date chip with "from photo EXIF" provenance before any workspace
+    is created. The photo bytes are read into memory just long enough
+    to pull the EXIF date tag; nothing is written to disk and the
+    GPS sub-IFD is intentionally never touched (the privacy contract
+    promises we don't surface photo GPS — see ADR-001 + the privacy
+    page).
+    """
+    if photo is None or not photo.filename:
+        raise HTTPException(status_code=400, detail="Photo is required")
+    body = await photo.read()
+    if not body:
+        raise HTTPException(status_code=400, detail="Empty photo")
+    if len(body) > MAX_PHOTO_BYTES:
+        raise HTTPException(
+            status_code=413,
+            detail=f"Photo exceeds {MAX_PHOTO_BYTES // (1024 * 1024)} MB",
+        )
+    parsed = read_exif_date(body)
+    return JSONResponse({"hike_date": parsed.date().isoformat() if parsed else None})
 
 
 @router.get("/healthz")
@@ -177,6 +283,15 @@ async def generate(
     if not photos or all(not p.filename for p in photos):
         raise HTTPException(status_code=400, detail="At least one photo is required")
 
+    # ``Style(style)`` rejects anything outside the enum, which already
+    # covers the SOON placeholders (``zine``/``sunday``/``postcard``/
+    # ``album``) — they aren't enum members. The picker's
+    # ``coming_soon`` flag is a UX-layer concern (disabled radio,
+    # ``accepted_style_values()`` for tests) and doesn't need a second
+    # server-side gate. The ``log`` and ``encyclopedia`` renderers
+    # remain accepted at the backend even though the picker hides them,
+    # so direct POSTs (the carousel + IG button tests rely on this)
+    # keep working.
     try:
         chosen_style = Style(style)
     except ValueError as exc:
@@ -457,6 +572,56 @@ def _sse_event(name: str, data: dict[str, object]) -> bytes:
     """
     payload = json.dumps(data, ensure_ascii=False)
     return f"event: {name}\ndata: {payload}\n\n".encode()
+
+
+# ── SVG track helpers ────────────────────────────────────────────────────────
+
+
+# The mini-route SVG drawn in the track-loaded card. Geometry mirrors
+# the design proposal's BPMiniTrack — 220 by 110 viewBox with 8px padding.
+_TRACK_VIEWBOX_W: Final[int] = 220
+_TRACK_VIEWBOX_H: Final[int] = 110
+_TRACK_VIEWBOX_PAD: Final[int] = 8
+_TRACK_MAX_POINTS: Final[int] = 80
+
+
+def _track_svg_from_waypoints(
+    waypoints: Sequence[object],
+) -> tuple[str, list[tuple[float, float]]]:
+    """Project (lon, lat) waypoints onto the mini-route SVG box.
+
+    Returns ``(svg_d, endpoints)`` where ``svg_d`` is the path's ``d``
+    attribute and ``endpoints`` is the two-point list ``[start, end]``
+    used to draw the start (filled) and finish (hollow) markers.
+
+    Returns ``("", [])`` if there are fewer than two waypoints — the
+    template renders no SVG in that case.
+    """
+    if not waypoints or len(waypoints) < 2:
+        return "", []
+    xs = [getattr(w, "lon", 0.0) for w in waypoints]
+    ys = [-getattr(w, "lat", 0.0) for w in waypoints]  # negate so north is up
+    min_x, max_x = min(xs), max(xs)
+    min_y, max_y = min(ys), max(ys)
+    span_x = max_x - min_x or 1.0
+    span_y = max_y - min_y or 1.0
+    inner_w = _TRACK_VIEWBOX_W - 2 * _TRACK_VIEWBOX_PAD
+    inner_h = _TRACK_VIEWBOX_H - 2 * _TRACK_VIEWBOX_PAD
+    step = max(1, len(waypoints) // _TRACK_MAX_POINTS)
+    sampled = list(zip(xs[::step], ys[::step], strict=False))
+    if (xs[-1], ys[-1]) != sampled[-1]:
+        sampled.append((xs[-1], ys[-1]))
+    points: list[tuple[float, float]] = [
+        (
+            _TRACK_VIEWBOX_PAD + (x - min_x) / span_x * inner_w,
+            _TRACK_VIEWBOX_PAD + (y - min_y) / span_y * inner_h,
+        )
+        for x, y in sampled
+    ]
+    svg_d = " ".join(
+        ("M" if i == 0 else "L") + f"{x:.2f},{y:.2f}" for i, (x, y) in enumerate(points)
+    )
+    return svg_d, [points[0], points[-1]]
 
 
 # ── counter ──────────────────────────────────────────────────────────────────

@@ -74,6 +74,9 @@ known-first-party = ["trailstory", "web"]
 # Demo scripts under examples/ carry dense paragraphs of Russian narrative
 # (intentional, not lookalike confusables). RUF001 would flag every line.
 "examples/**/*.py" = ["RUF001"]
+# Builder UI copy: Russian style descriptions are intentional Cyrillic
+# text, not Latin lookalikes.
+"web/copy.py" = ["RUF001"]
 
 # ── Mypy ──────────────────────────────────────────────────────────────────────
 
