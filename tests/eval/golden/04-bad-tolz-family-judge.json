@@ -5,34 +5,29 @@
   "photo_selection_plausibility": 3.0,
   "claim_verdicts": [
     {
-      "claim": "There were four people: Katya, Olga, Igor, and little Danny",
-      "verdict": "SUPPORTED",
-      "quote": "It was four of us: Katya, Olga, Igor and little Danny"
-    },
-    {
-      "claim": "They arrived at the parking spot a little after noon",
+      "claim": "They arrived around midday",
       "verdict": "SUPPORTED",
       "quote": "We arrived to the parking spot around 12"
     },
     {
-      "claim": "It was a bright, generous April day",
+      "claim": "The four hikers were Katya, Olga, Igor and little Danny",
+      "verdict": "SUPPORTED",
+      "quote": "It was four of us: Katya, Olga, Igor and little Danny"
+    },
+    {
+      "claim": "They parked the car",
+      "verdict": "SUPPORTED",
+      "quote": "We arrived to the parking spot around 12"
+    },
+    {
+      "claim": "They went to the town centre for brunch",
+      "verdict": "SUPPORTED",
+      "quote": "Went to the city centre and enjoyed some brunch"
+    },
+    {
+      "claim": "The weather was spring sun / clean blue sky",
       "verdict": "INFERRED",
       "quote": "The weather was amazing"
-    },
-    {
-      "claim": "They wandered toward the city centre",
-      "verdict": "SUPPORTED",
-      "quote": "Went to the city centre"
-    },
-    {
-      "claim": "They had brunch in the city centre",
-      "verdict": "SUPPORTED",
-      "quote": "enjoyed some brunch"
-    },
-    {
-      "claim": "Everyone loved little Danny",
-      "verdict": "SUPPORTED",
-      "quote": "Everyone loved little Danny"
     },
     {
       "claim": "They walked along the Isar river",
@@ -40,17 +35,12 @@
       "quote": "we started our trip along the river Isar"
     },
     {
-      "claim": "The Isar river was high and clear, still half-remembering the snow",
-      "verdict": "UNSUPPORTED",
-      "quote": ""
+      "claim": "Danny took in everything at his own height",
+      "verdict": "INFERRED",
+      "quote": "Everyone loved little Danny"
     },
     {
-      "claim": "Danny was carried (in a carrier) during the hike",
-      "verdict": "UNSUPPORTED",
-      "quote": ""
-    },
-    {
-      "claim": "Danny was small and solemn, with light moving over his face",
+      "claim": "The river had a particular voice — bright, a little cold",
       "verdict": "UNSUPPORTED",
       "quote": ""
     },
@@ -60,29 +50,29 @@
       "quote": "we visited an old church"
     },
     {
-      "claim": "Inside the church were wax figures behind glass",
+      "claim": "The church contained wax figures",
       "verdict": "SUPPORTED",
       "quote": "those wax figures were waiting for us in unexpected places"
     },
     {
-      "claim": "The figures depicted Jesus and his friends",
+      "claim": "Jesus was among the wax figures",
       "verdict": "SUPPORTED",
       "quote": "very strange figures of Jesus and his friends"
     },
     {
-      "claim": "The wax figures' painted eyes caught the light at wrong angles",
+      "claim": "The wax faces were pale and still",
       "verdict": "UNSUPPORTED",
       "quote": ""
     },
     {
-      "claim": "The church and figures were creepy/unsettling",
+      "claim": "The figures appeared in unexpected places",
       "verdict": "SUPPORTED",
-      "quote": "It was creepy"
+      "quote": "those wax figures were waiting for us in unexpected places"
     },
     {
-      "claim": "They did not linger in the church",
-      "verdict": "INFERRED",
-      "quote": "It was creepy and those wax figures were waiting for us in unexpected places"
+      "claim": "The church felt creepy",
+      "verdict": "SUPPORTED",
+      "quote": "It was creepy"
     },
     {
       "claim": "They picked up Asian food to go",
@@ -90,26 +80,26 @@
       "quote": "we grabbed some Asian food to go"
     },
     {
-      "claim": "They ate dinner near the water/river",
+      "claim": "They ate dinner near the water",
       "verdict": "SUPPORTED",
       "quote": "enjoyed our dinner near the water"
     },
     {
-      "claim": "The light lowered behind rooftops as they ate",
-      "verdict": "UNSUPPORTED",
-      "quote": ""
+      "claim": "The river was still running past while they ate",
+      "verdict": "INFERRED",
+      "quote": "enjoyed our dinner near the water"
     },
     {
-      "claim": "Danny was tired by evening",
-      "verdict": "UNSUPPORTED",
-      "quote": ""
+      "claim": "They used takeaway containers",
+      "verdict": "INFERRED",
+      "quote": "we grabbed some Asian food to go"
     },
     {
-      "claim": "Nobody hurried at the end of the day",
-      "verdict": "UNSUPPORTED",
-      "quote": ""
+      "claim": "Danny and the others enjoyed the hike",
+      "verdict": "SUPPORTED",
+      "quote": "Danny and us enjoyed the hike a lot"
     }
   ],
-  "notes": "Warmth is high: the prose avoids boilerplate and uses specific, intimate sensory phrasing ('the river in April has a particular voice', 'Danny took it all in… small and solemn'). The narrative arc is well-shaped — arrival, brunch, riverside walk, creepy church, evening meal — each paragraph earns its place, though the 'effort' beat is essentially absent given this is a gentle town walk. Russian is excellent: register matches, idioms are natural ('хорошей усталостью', 'вынырнуть на поверхность'), no calques or stiff constructions detectable. Photo indices are simply 0–5 in sequence without apparent editorial reasoning, which is plausible but mechanically clustered rather than narratively curated.",
-  "faithfulness": 3.1
+  "notes": "The English prose is genuinely warm and specific — phrases like 'the kind that ends with everyone leaning back' and 'the sunlight felt twice as good' avoid boilerplate and feel personal. The arc is well-shaped: arrival/brunch → river walk → church interlude → evening meal, each paragraph earning its place, though the 'effort' beat is thin since this is a leisurely town walk rather than a climb. Russian is excellent — idiomatic, natural register, no calques; 'по коже пробежал неожиданный холодок' is a fine equivalent for 'a creep we hadn't expected'. Photo indices [0-5] are simply the first six in sequence with no narrative reasoning shown, so plausibility is assumed rather than demonstrated.",
+  "faithfulness": 3.95
 }

@@ -1,12 +1,29 @@
 from __future__ import annotations
 
+import json
+import logging
 from datetime import datetime
+from json import JSONDecodeError
 from pathlib import Path
+from typing import Any
 
 from PIL import Image, ImageOps
 from pillow_heif import register_heif_opener
+from pydantic import ValidationError
 
-from trailstory.models import PhotoMeta
+from trailstory.llm.client import (
+    AnthropicClient,
+    LLMResponseError,
+    LLMRetryExhaustedError,
+)
+from trailstory.llm.prompts import (
+    SYSTEM_PHOTO_DESCRIBER,
+    USER_PHOTO_DESCRIBER_RETRY_SUFFIX,
+    USER_PHOTO_DESCRIBER_TEMPLATE,
+)
+from trailstory.models import PhotoDescription, PhotoMeta
+
+logger = logging.getLogger(__name__)
 
 register_heif_opener()
 
@@ -33,6 +50,18 @@ _EXIF_DATETIME_FORMAT = "%Y:%m:%d %H:%M:%S"
 
 class PhotoLoadError(Exception):
     """Raised when the photo directory is missing or contains no usable images."""
+
+
+class PhotoDescriptionError(Exception):
+    """Raised when the vision describer pass ultimately fails for a photo.
+
+    Phase 3 / ADR-010. Mirrors :class:`LedgerExtractionError`'s policy:
+    client-level errors and twice-unparseable responses surface
+    immediately; schema-validation failures do not retry. Higher
+    layers may decide to treat a single failed photo as a soft error
+    (skip + warn) rather than failing the whole render — see
+    :func:`describe_photos`.
+    """
 
 
 def load_photos(
@@ -151,3 +180,153 @@ def _parse_exif_datetime(raw: object) -> datetime | None:
         return datetime.strptime(str(raw), _EXIF_DATETIME_FORMAT)
     except ValueError:
         return None
+
+
+# ── vision describer (Phase 3 / ADR-010) ─────────────────────────────────────
+#
+# The describer pass calls Claude vision once per photo. The output is a
+# typed :class:`PhotoDescription` that gets attached to the photo's
+# :class:`PhotoMeta` and feeds into the ledger extractor. Failure of a
+# single photo is non-fatal at the orchestrator layer
+# (:func:`describe_photos`) so a flaky vision call does not block the
+# whole render — the writer simply gets less photo grounding for that
+# beat.
+
+
+def describe_photo(path: Path, *, client: AnthropicClient) -> PhotoDescription:
+    """Send one photo through the vision describer and validate the response.
+
+    Args:
+        path: Filesystem path to the image. Must be readable; supported
+            formats follow ``trailstory.llm.client._MEDIA_TYPES``
+            (jpg / jpeg / png / gif / webp, with anything else falling
+            through to JPEG).
+        client: Anthropic client configured with a vision-capable model
+            (typically ``Settings.vision_model``). Injected so tests
+            can mock the SDK.
+
+    Returns:
+        Validated :class:`PhotoDescription`.
+
+    Raises:
+        PhotoDescriptionError: LLM call failed, response did not parse
+            as JSON twice in a row, or the parsed JSON did not validate
+            against :class:`PhotoDescription`.
+    """
+    parsed = _vision_call_and_parse(client, path, USER_PHOTO_DESCRIBER_TEMPLATE)
+    if parsed is None:
+        logger.warning(
+            "photo describer response did not parse as JSON; retrying with explicit directive"
+        )
+        retry_prompt = USER_PHOTO_DESCRIBER_TEMPLATE + USER_PHOTO_DESCRIBER_RETRY_SUFFIX
+        parsed = _vision_call_and_parse(client, path, retry_prompt)
+        if parsed is None:
+            raise PhotoDescriptionError(
+                f"Photo describer returned non-JSON output on both attempts for {path.name}"
+            )
+
+    try:
+        return PhotoDescription.model_validate(parsed)
+    except ValidationError as exc:
+        raise PhotoDescriptionError(
+            f"Photo describer JSON did not match PhotoDescription schema for {path.name}: {exc}"
+        ) from exc
+
+
+def describe_photos(
+    photos: list[PhotoMeta],
+    *,
+    client: AnthropicClient,
+    enabled: bool = True,
+) -> list[PhotoMeta]:
+    """Walk a photo list and attach vision-derived descriptions to each.
+
+    Returns a fresh list of :class:`PhotoMeta` copies (the model is
+    frozen, so updates flow via ``model_copy(update={"description": ...})``).
+    When ``enabled`` is ``False``, returns the input list unchanged —
+    the opt-out path for users / dev modes who want speed and cost over
+    photo grounding (per ``Settings.use_photo_grounding``).
+
+    A single photo's failure is **non-fatal**: the function logs a
+    warning, leaves that photo's ``description`` as ``None``, and
+    continues with the rest. The ledger extractor handles a partial
+    description list (missing photos are simply not grounded against);
+    failing the whole render because one vision call timed out would be
+    a regression in the user's eyes.
+
+    Args:
+        photos: The list of photos to describe. Typically the output of
+            :func:`load_photos`.
+        client: Anthropic client configured with a vision-capable
+            model (typically ``Settings.vision_model``).
+        enabled: When ``False``, skip every vision call and return the
+            input list unchanged. Defaults to ``True``.
+
+    Returns:
+        A new list of :class:`PhotoMeta` instances, in the same order as
+        the input, each with ``description`` set when the vision call
+        succeeded.
+    """
+    if not enabled:
+        return photos
+
+    out: list[PhotoMeta] = []
+    for photo in photos:
+        try:
+            description = describe_photo(photo.path, client=client)
+        except PhotoDescriptionError as exc:
+            logger.warning(
+                "photo describer failed for %s (idx=%d); proceeding without description: %s",
+                photo.path.name,
+                photo.index,
+                exc,
+            )
+            out.append(photo)
+            continue
+        out.append(photo.model_copy(update={"description": description}))
+    return out
+
+
+# -- internal helpers ----------------------------------------------------
+
+
+def _vision_call_and_parse(
+    client: AnthropicClient, image_path: Path, prompt: str
+) -> dict[str, Any] | None:
+    """One vision call + JSON parse. Returns None on parse failure for retry.
+
+    Client-level errors are funnelled into
+    :class:`PhotoDescriptionError` immediately because retrying them
+    would duplicate the client's own retry policy.
+    """
+    try:
+        raw = client.complete_vision(
+            prompt=prompt, system=SYSTEM_PHOTO_DESCRIBER, image_path=image_path
+        )
+    except (LLMResponseError, LLMRetryExhaustedError) as exc:
+        raise PhotoDescriptionError(f"Vision LLM call failed for {image_path.name}: {exc}") from exc
+
+    cleaned = _strip_code_fences(raw)
+    try:
+        result = json.loads(cleaned)
+    except JSONDecodeError:
+        return None
+    return result if isinstance(result, dict) else None
+
+
+def _strip_code_fences(text: str) -> str:
+    """Remove a leading / trailing markdown code fence if present.
+
+    Mirrors the helper in ``trailstory.llm.narrative`` — kept duplicated
+    so the photos module does not import private helpers from the
+    narrative orchestrator.
+    """
+    s = text.strip()
+    if not s.startswith("```"):
+        return s
+    lines = s.split("\n")
+    if lines[0].startswith("```"):
+        lines = lines[1:]
+    if lines and lines[-1].rstrip().startswith("```"):
+        lines = lines[:-1]
+    return "\n".join(lines).strip()

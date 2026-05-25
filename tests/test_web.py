@@ -154,20 +154,44 @@ def _make_ledger_client() -> MagicMock:
     return fake
 
 
+def _make_vision_client() -> MagicMock:
+    """Mocked VISION Anthropic client (ADR-010).
+
+    Returns a deterministic PhotoDescription JSON for every photo. The
+    web pipeline runs the describer per-photo before opening the SSE
+    response; using a constant keeps test setup small.
+    """
+    fake = MagicMock(spec=AnthropicClient)
+    fake.model = "claude-haiku-4-5-vision-test"
+    fake.complete_vision.return_value = json.dumps(
+        {
+            "people_visible": ["a hiker in a jacket"],
+            "objects_visible": ["a forest path"],
+            "location_clues": ["evergreen forest"],
+            "season_clues": ["overcast light"],
+            "body_language_notes": ["walking forward"],
+        }
+    )
+    return fake
+
+
 def _app_with_storage(
     storage: Storage,
     *,
     client: MagicMock | None = None,
     ledger_client: MagicMock | None = None,
+    vision_client: MagicMock | None = None,
     rate_limiter: RateLimiter | None = None,
 ) -> tuple[FastAPI, MagicMock]:
     fake = client if client is not None else _make_client()
     fake_ledger = ledger_client if ledger_client is not None else _make_ledger_client()
+    fake_vision = vision_client if vision_client is not None else _make_vision_client()
     app = create_app(
         settings=_settings(),
         storage=storage,
         client_factory=lambda: fake,
         ledger_client_factory=lambda: fake_ledger,
+        vision_client_factory=lambda: fake_vision,
         rate_limiter=rate_limiter,
         enable_sweeper=False,
     )
@@ -817,6 +841,7 @@ def test_carousel_returns_n_slides_for_n_photos(
         storage=Storage(retention_seconds=RETENTION_SECONDS),
         client_factory=lambda: fake,
         ledger_client_factory=lambda: _make_ledger_client(),
+        vision_client_factory=lambda: _make_vision_client(),
         enable_sweeper=False,
     )
     with TestClient(app) as c:
@@ -1087,15 +1112,21 @@ def test_fake_client_factory_drives_full_pipeline(storage: Storage) -> None:
     ``NarrativeOutput`` (a new required field would break the fake JSON
     silently otherwise).
     """
-    from web.dev import make_fake_client_factory, make_fake_ledger_client_factory
+    from web.dev import (
+        make_fake_client_factory,
+        make_fake_ledger_client_factory,
+        make_fake_vision_client_factory,
+    )
 
     factory = make_fake_client_factory()
     ledger_factory = make_fake_ledger_client_factory()
+    vision_factory = make_fake_vision_client_factory()
     app = create_app(
         settings=_settings(),
         storage=storage,
         client_factory=factory,
         ledger_client_factory=ledger_factory,
+        vision_client_factory=vision_factory,
         enable_sweeper=False,
     )
     with TestClient(app) as c:

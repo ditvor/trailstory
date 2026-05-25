@@ -28,7 +28,7 @@ from trailstory.gpx import GpxParseError, parse_gpx
 from trailstory.llm.client import AnthropicClient
 from trailstory.llm.narrative import NarrativeGenerationError, generate_narrative
 from trailstory.models import GpxStats, HikeInput, Memory, PhotoMeta, Style
-from trailstory.photos import PhotoLoadError, load_photos
+from trailstory.photos import PhotoLoadError, describe_photos, load_photos
 from trailstory.renderers.html import HtmlRenderError, render_html
 from trailstory.renderers.instagram import InstagramRenderError, render_instagram_carousel
 
@@ -152,6 +152,20 @@ def generate(
                 max_tokens=settings.narrative_max_tokens,
                 max_retries=settings.narrative_max_retries,
             )
+            # Phase 3 (ADR-010): per-photo vision describer. Same model
+            # family as the ledger extractor by default (both Haiku-class);
+            # split client so vision can be overridden / disabled via
+            # Settings independently of the ledger pass.
+            vision_client = AnthropicClient(
+                settings.anthropic_api_key,
+                model=settings.vision_model,
+                max_tokens=settings.narrative_max_tokens,
+                max_retries=settings.narrative_max_retries,
+            )
+
+            if settings.use_photo_grounding:
+                with console.status("Describing photos…", spinner="dots"):
+                    photos = describe_photos(photos, client=vision_client, enabled=True)
             with console.status("Generating narrative…", spinner="dots"):
                 narrative = generate_narrative(
                     hike_input,

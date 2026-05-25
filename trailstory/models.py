@@ -38,10 +38,49 @@ class GpxStats(BaseModel):
     waypoints: list[Waypoint]
 
 
+class PhotoDescription(BaseModel):
+    """Structured description of a single photo, produced by Claude vision.
+
+    Phase 3 / ADR-010 grounding source for the ledger extractor: the
+    extractor sees these alongside the seed text so its
+    ``chronology[*].objects_mentioned`` reflects what the photos actually
+    show, not just what the seed names. Conservative by design — the
+    describer prompt only emits what is visible, not inferred
+    relationships or motives.
+    """
+
+    model_config = ConfigDict(frozen=True)
+
+    # Coarse count + brief descriptors ("a man with a beard", "a baby in a
+    # green hat"). Identities, names, and inferred relationships are NOT
+    # emitted by the describer — only what a viewer can see at a glance.
+    people_visible: list[str] = Field(default_factory=list)
+    # Concrete objects in frame ("a picnic blanket", "a lake", "a calisthenics
+    # pull-up bar"). Generic backgrounds (sky, grass) are skipped.
+    objects_visible: list[str] = Field(default_factory=list)
+    # Hints about where the photo was taken ("parking lot with cars",
+    # "lakeside with mountains in the distance"). Empty when ambiguous.
+    location_clues: list[str] = Field(default_factory=list)
+    # Hints about season / time of day / weather ("bright midday sun",
+    # "spring foliage", "overcast sky"). Empty when ambiguous.
+    season_clues: list[str] = Field(default_factory=list)
+    # Notes on body language and facial expression visible to a viewer
+    # ("smiling", "concentrating on the pull-up bar"). Not emotion
+    # inferred from context — only what is on the face.
+    body_language_notes: list[str] = Field(default_factory=list)
+
+
 class PhotoMeta(BaseModel):
     path: Path
     timestamp: datetime
     index: int = Field(ge=0)
+    # Optional vision-derived description (ADR-010). None when the
+    # vision pass is disabled (``Settings.use_photo_grounding=False``)
+    # or has not yet run for this photo. Frozen ``PhotoMeta`` with a
+    # default allows the existing ``load_photos`` pipeline to keep its
+    # contract; ``describe_photos`` produces updated copies via
+    # ``model_copy(update={...})``.
+    description: PhotoDescription | None = None
 
 
 class HikeInput(BaseModel):

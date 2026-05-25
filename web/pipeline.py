@@ -46,7 +46,7 @@ from trailstory.llm.narrative import (
 )
 from trailstory.models import GpxStats, HikeInput, Memory, NarrativeOutput, PhotoMeta
 from trailstory.models import Style as _ModelStyle
-from trailstory.photos import PhotoLoadError, load_photos
+from trailstory.photos import PhotoLoadError, describe_photos, load_photos
 from trailstory.renderers.html import HtmlRenderError, render_html
 from trailstory.renderers.instagram import InstagramRenderError, render_instagram_carousel
 from web.storage import Workspace
@@ -184,27 +184,42 @@ def stream_pipeline(
     *,
     client: AnthropicClient,
     ledger_client: AnthropicClient,
+    vision_client: AnthropicClient,
+    use_photo_grounding: bool = True,
 ) -> Iterator[PipelineStreamEvent]:
     """Resume a prepared pipeline run and stream the narrative.
 
-    Reads the pending state written by :func:`prepare_pipeline`, calls
-    the streaming LLM (now two passes per ADR-009 — a Haiku-class
-    extractor synchronously up front, then the Opus writer streamed to
-    the client), yields :class:`PipelineStreamEvent` instances as chunks
-    arrive, and on success renders the HTML and persists the final
+    Reads the pending state written by :func:`prepare_pipeline`, runs
+    the Phase 3 (ADR-010) vision describer over the photos (one Haiku
+    vision call per photo, synchronous), then calls the two-pass
+    narrative pipeline (ADR-009 — Haiku ledger extractor + Opus
+    writer). Yields :class:`PipelineStreamEvent` instances as writer
+    chunks arrive; on success renders the HTML and persists the final
     ``state.json``. The terminal event is always
     :class:`PipelineStreamRendered`.
+
+    The vision pass + extractor pass land before the SSE writer chunks
+    start streaming. Latency-wise that's the first ~3-5 seconds of the
+    "Generating…" spinner; the user sees the writer's prose appear
+    after that. Set ``use_photo_grounding=False`` to skip vision
+    (cheaper, faster start, writer loses photo-grounded specifics).
 
     Raises :class:`PipelineError` if the workspace has no pending state,
     the LLM call fails, validation fails, or HTML rendering fails.
     """
     pending = _load_pending_state(workspace)
+    # Phase 3: describe photos before the writer runs. Failures inside
+    # describe_photos are non-fatal (per-photo skip + warn); the
+    # narrative pipeline handles a partial description list.
+    photos_with_descriptions = describe_photos(
+        pending.photos, client=vision_client, enabled=use_photo_grounding
+    )
     try:
         narrative: NarrativeOutput | None = None
         for event in generate_narrative_stream(
             pending.hike_input,
             pending.gpx_stats,
-            pending.photos,
+            photos_with_descriptions,
             client=client,
             ledger_client=ledger_client,
         ):

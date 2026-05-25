@@ -11,10 +11,12 @@ are all that live here.
 
 from __future__ import annotations
 
+import base64
 import logging
 import random
 import time
 from collections.abc import Iterator
+from pathlib import Path
 from typing import Any, Final
 
 import anthropic
@@ -237,6 +239,96 @@ class AnthropicClient:
             f"Rate-limit retries exhausted after {self._max_retries} attempts"
         ) from last_rate_limit
 
+    def complete_vision(self, prompt: str, system: str, image_path: Path) -> str:
+        """Send a user message containing one image and a text prompt.
+
+        Phase 3 / ADR-010: enables Claude vision for photo description.
+        Mirrors :meth:`complete`'s retry policy and error translation —
+        rate-limit retries with backoff, non-retryable errors funnelled
+        into :class:`LLMResponseError`, response-shape validation via
+        :meth:`_validate_text`.
+
+        The image is read from disk, base64-encoded, and sent as an
+        ``image`` content block before the text. JPEG, PNG, GIF, and
+        WEBP are supported by the Anthropic API; this method infers the
+        media type from the file extension and assumes JPEG when the
+        extension is missing or unrecognised (Trailstory's pipeline only
+        ever ships JPEGs at this point, but the fallback keeps the
+        method robust if callers pass HEIC-converted intermediates).
+
+        Args:
+            prompt: User-role text content to send alongside the image.
+            system: System prompt (persona / output discipline).
+            image_path: Local filesystem path to the image. Must exist;
+                bytes are read synchronously and held in memory long
+                enough to base64-encode (per Anthropic SDK convention).
+
+        Returns:
+            The concatenated text from the assistant's response,
+            stripped of surrounding whitespace.
+
+        Raises:
+            LLMRetryExhaustedError: All rate-limit retries were used up.
+            LLMResponseError: Empty / too-short response, a non-retryable
+                API error, or an unreadable image file.
+        """
+        try:
+            image_bytes = image_path.read_bytes()
+        except OSError as exc:
+            raise LLMResponseError(f"Could not read image at {image_path}: {exc}") from exc
+
+        media_type = _media_type_for(image_path)
+        b64 = base64.standard_b64encode(image_bytes).decode("ascii")
+        # Typed as Any[] so the heterogeneous image+text block list matches
+        # the SDK's MessageParam content union without an explicit cast.
+        content: list[Any] = [
+            {
+                "type": "image",
+                "source": {
+                    "type": "base64",
+                    "media_type": media_type,
+                    "data": b64,
+                },
+            },
+            {"type": "text", "text": prompt},
+        ]
+
+        last_rate_limit: RateLimitError | None = None
+
+        for attempt in range(1, self._max_retries + 1):
+            try:
+                message = self._client.messages.create(
+                    model=self._model,
+                    max_tokens=self._max_tokens,
+                    system=system,
+                    messages=[{"role": "user", "content": content}],
+                )
+            except RateLimitError as exc:
+                last_rate_limit = exc
+                if attempt >= self._max_retries:
+                    break
+                delay = self._compute_backoff(attempt)
+                logger.warning(
+                    "anthropic vision rate-limited (attempt %d/%d); sleeping %.2fs",
+                    attempt,
+                    self._max_retries,
+                    delay,
+                )
+                time.sleep(delay)
+                continue
+            except APIStatusError as exc:
+                raise LLMResponseError(f"Anthropic API error {exc.status_code}: {exc}") from exc
+            except APIError as exc:
+                raise LLMResponseError(f"Anthropic API error: {exc}") from exc
+
+            text = self._extract_text(message)
+            self._validate_text(text)
+            return text
+
+        raise LLMRetryExhaustedError(
+            f"Rate-limit retries exhausted after {self._max_retries} attempts"
+        ) from last_rate_limit
+
     # -- internal helpers ----------------------------------------------------
 
     def _compute_backoff(self, attempt: int) -> float:
@@ -272,3 +364,22 @@ class AnthropicClient:
                 f"Anthropic API response too short "
                 f"({len(text)} chars, expected ≥ {MIN_RESPONSE_CHARS})."
             )
+
+
+# Map a small allowlist of image extensions to the media types the Anthropic
+# vision API accepts. Trailstory's pipeline ships JPEGs by the time the vision
+# call happens (HEIC inputs are converted upstream in :mod:`trailstory.photos`),
+# so the default fallback is JPEG — anything unknown is treated as JPEG rather
+# than rejected outright, matching the existing pipeline's permissive shape.
+_MEDIA_TYPES: Final[dict[str, str]] = {
+    ".jpg": "image/jpeg",
+    ".jpeg": "image/jpeg",
+    ".png": "image/png",
+    ".gif": "image/gif",
+    ".webp": "image/webp",
+}
+
+
+def _media_type_for(path: Path) -> str:
+    """Return the Anthropic-API media type for an image path."""
+    return _MEDIA_TYPES.get(path.suffix.lower(), "image/jpeg")

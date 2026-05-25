@@ -77,6 +77,27 @@ Versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   visual treatment doesn't match what `The Zine` / `Sunday` promise.
 
 ### Added
+- **Multimodal photo grounding via Claude vision (Phase 3 of the
+  narrative-faithfulness initiative;
+  [ADR-010](docs/adr/010-photo-grounding-via-vision.md)).** Per-photo
+  vision describer pass: each photo is sent through a cheap Haiku
+  vision call (`Settings.vision_model`, default `claude-haiku-4-5`) and
+  validated as a typed `PhotoDescription` (people visible, objects
+  visible, location clues, season clues, body-language notes). The
+  ledger extractor receives these via a new `{photo_descriptions_json}`
+  placeholder; the writer's chronology beats can now reference
+  photo-grounded facts (a baby's hat colour, a lake in the background)
+  the seed text never bothered to name. Hard rules from ADR-009 still
+  apply: the writer can only reference what is in the ledger; vision
+  enriches the ledger, it does not bypass the constraint. `Settings.use_photo_grounding`
+  (default `True`) is the master switch — set to `False` for
+  cost-sensitive batch runs or to bisect a quality regression to the
+  vision pass. Per-photo failures soft-fail (logged + skipped) so a
+  flaky vision call doesn't tank a whole render. New `complete_vision()`
+  method on `AnthropicClient`; new `describe_photo` / `describe_photos`
+  in `trailstory/photos.py`; new third client factory plumbing in
+  `web.app` + `web/__main__.py` + `tests/eval/run.py`. Renderers
+  unchanged.
 - **Faithfulness eval axis (Phase 0 of the narrative-faithfulness
   initiative; [ADR-007](docs/adr/007-faithfulness-eval-axis.md)).** The
   paid LLM judge now extracts every concrete factual claim from the

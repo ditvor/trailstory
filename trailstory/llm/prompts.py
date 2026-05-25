@@ -260,11 +260,16 @@ Always output valid JSON. No markdown fences, no commentary.
 #
 # Required placeholders (the orchestrator must supply every one):
 #   location, hike_date, season, distance_km, duration_min, n_photos,
-#   first_photo_time, last_photo_time, seed_text
+#   first_photo_time, last_photo_time, seed_text, photo_descriptions_json
 #
 # Photo timestamps bracket the activity; the extractor uses them to place
 # beats on the morning/afternoon/evening axis even when the seed is
-# elliptical. JSON braces in the embedded skeleton are doubled.
+# elliptical. Phase 3 / ADR-010 adds photo_descriptions_json — a JSON
+# array of per-photo descriptions from the vision pass, in time order.
+# Empty array when vision is disabled (Settings.use_photo_grounding=False)
+# or photos have no extractable content; extractor falls back to
+# seed-only grounding as in Phase 2. JSON braces in the embedded
+# skeleton are doubled.
 USER_LEDGER_EXTRACTOR_TEMPLATE: str = """\
 Hike context (for grounding only — copy nothing you do not need):
 - Location: {location}
@@ -277,7 +282,17 @@ Hiker's seed text:
 {seed_text}
 \"\"\"
 
-Extract a fact ledger from the seed text. Three sections:
+Per-photo descriptions (from the vision pass, in time order; an empty
+array means the vision pass was disabled or returned no useful detail):
+{photo_descriptions_json}
+
+Extract a fact ledger from the seed text and the photo descriptions
+together. Specifics that the seed text omits but the photos clearly
+show (a baby's hat colour, a lake in the background, a picnic blanket)
+are valid additions to chronology[*].objects_mentioned — they are
+grounded in the photo evidence, not invented. Specifics that the
+photos contradict (a "summit" beat when no photo shows elevation)
+should be omitted or softened. Three sections:
 
 1. people — list of named people in the hike. For each:
    - "name": the name the seed uses (preserve spelling and language)
@@ -329,3 +344,88 @@ shape:
 # Suffix appended to the extractor prompt on a JSON-parse-failure retry.
 # Same shape and intent as USER_NARRATIVE_RETRY_SUFFIX above.
 USER_LEDGER_RETRY_SUFFIX: str = "\n\noutput only valid JSON, no prose"
+
+
+# ── SYSTEM_PHOTO_DESCRIBER ───────────────────────────────────────────────────
+#
+# Phase 3 / ADR-010. Per-photo vision call: describe a single image into
+# the structured :class:`trailstory.models.PhotoDescription` shape so
+# the downstream ledger extractor (and, through it, the writer) has
+# concrete photo-grounded facts to draw on. Conservative on purpose —
+# the describer must not invent relationships, names, emotions, or
+# locations beyond what is visible at a glance. Phase 4's
+# sentence-level provenance UI will let the user correct any drift,
+# but the describer is the first line of defence against that drift
+# appearing at all.
+SYSTEM_PHOTO_DESCRIBER: str = """\
+You are a careful photo describer. The user shows you one image at a
+time and asks for a structured description. You describe only what is
+visible at a glance — no inferred relationships, no inferred names,
+no inferred emotions beyond facial expression, no guesses about the
+broader context the photo was taken in.
+
+You do NOT make up details. If a field has nothing to fill, you
+return an empty list. The downstream writer will work strictly from
+your description plus the hiker's own seed text — anything you omit
+or invent shapes whether the final memory is truthful.
+
+Always output valid JSON. No markdown fences, no commentary.
+"""
+
+
+# ── USER_PHOTO_DESCRIBER_TEMPLATE ────────────────────────────────────────────
+#
+# No placeholders — the same instruction prompt sits alongside every
+# image, the image itself is the per-call variation. JSON braces in the
+# embedded skeleton are doubled (``{{`` / ``}}``) so ``str.format()`` is
+# a no-op if someone wraps this in one (we currently do not).
+USER_PHOTO_DESCRIBER_TEMPLATE: str = """\
+Describe the photo above into the JSON shape below.
+
+Five sections; every field is a list of short strings (empty list if
+nothing applies):
+
+- people_visible: brief descriptors of each person in frame ("a man
+  with a beard wearing a cap", "a baby in a green striped hat",
+  "a woman in glasses"). Do NOT guess names, ages, or relationships.
+  Coarse age band (baby / child / adult / older adult) is fine.
+
+- objects_visible: concrete objects in the foreground or middle
+  ground ("a picnic blanket", "a lake", "a calisthenics pull-up bar",
+  "wax figures"). Skip generic backgrounds (sky, grass, distant
+  trees). Skip things that are too small to identify confidently.
+
+- location_clues: short phrases hinting at where this was taken
+  ("parking lot with cars", "lakeside with mountains in the
+  distance", "city street with painted facades"). Empty list if the
+  setting is ambiguous.
+
+- season_clues: short phrases hinting at season / time of day /
+  weather ("bright midday sun", "spring foliage", "overcast sky",
+  "leaves on the ground"). Empty list if ambiguous.
+
+- body_language_notes: short phrases on body language and facial
+  expression that a viewer can see directly ("smiling", "looking
+  away from the camera", "holding the baby in a carrier"). Not
+  inferred mood — only what is on the face or in the posture.
+
+Be conservative. If you are unsure whether something is in the
+photo, leave it out. The downstream writer cannot reference what
+your description does not contain — empty is safer than wrong.
+
+Output only JSON — no markdown fences, no commentary — matching this
+exact shape:
+
+{{
+  "people_visible": ["string", "..."],
+  "objects_visible": ["string", "..."],
+  "location_clues": ["string", "..."],
+  "season_clues": ["string", "..."],
+  "body_language_notes": ["string", "..."]
+}}
+"""
+
+
+# Suffix appended to the photo-describer prompt on a JSON-parse-failure
+# retry. Mirrors USER_LEDGER_RETRY_SUFFIX and USER_NARRATIVE_RETRY_SUFFIX.
+USER_PHOTO_DESCRIBER_RETRY_SUFFIX: str = "\n\noutput only valid JSON, no prose"

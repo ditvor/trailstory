@@ -49,15 +49,27 @@ _FAKE_LEDGER_JSON = json.dumps(
 )
 
 
-def _make_fake_client() -> MagicMock:
-    """Mocked Anthropic client that serves both ADR-009 passes.
+_FAKE_PHOTO_DESCRIPTION_JSON = json.dumps(
+    {
+        "people_visible": ["a hiker in a jacket"],
+        "objects_visible": ["a forest path"],
+        "location_clues": ["evergreen forest"],
+        "season_clues": ["overcast light"],
+        "body_language_notes": ["walking forward"],
+    }
+)
 
-    The CLI constructs two ``AnthropicClient`` instances per generate run
-    (writer + ledger extractor). Both come through the patched
-    ``trailstory.cli.AnthropicClient`` constructor, which in these tests
-    returns this single fake. The fake therefore needs to dispatch each
+
+def _make_fake_client() -> MagicMock:
+    """Mocked Anthropic client that serves all three ADR-009/010 passes.
+
+    The CLI constructs three ``AnthropicClient`` instances per generate run
+    (writer + ledger extractor + vision describer). All come through the
+    patched ``trailstory.cli.AnthropicClient`` constructor, which in these
+    tests returns this single fake. The fake therefore dispatches each
     ``complete`` call to the right canned response based on the system
-    prompt — the writer's persona vs the ledger extractor's.
+    prompt — the writer's persona vs the ledger extractor's — and serves
+    a canned PhotoDescription for every ``complete_vision`` call.
 
     ``.model`` is a real string because the cache key uses it as a dict
     value; ``MagicMock(spec=...)`` would expose ``.model`` as a MagicMock
@@ -78,6 +90,9 @@ def _make_fake_client() -> MagicMock:
         return str(result) if not isinstance(result, str) else result
 
     fake.complete.side_effect = _dispatch
+    # Phase 3: the vision pass uses complete_vision(); return a constant
+    # PhotoDescription so describe_photos succeeds in CLI tests.
+    fake.complete_vision.return_value = _FAKE_PHOTO_DESCRIPTION_JSON
     return fake
 
 
@@ -385,11 +400,12 @@ def test_generate_passes_model_env_override_into_client(
     )
 
     assert result.exit_code == 0, result.output
-    # Writer client built first; ledger client built second (ADR-009).
+    # Writer client built first, ledger client second (ADR-009), vision
+    # client third (ADR-010).
     assert "claude-sonnet-4-6" in captured_models, captured_models
-    # Both passes happened — sanity check the two-pass shape didn't
-    # silently collapse to one.
-    assert len(captured_models) == 2, captured_models
+    # All three passes happened — sanity check the multi-pass shape
+    # didn't silently collapse.
+    assert len(captured_models) == 3, captured_models
 
 
 # ── helpers ──────────────────────────────────────────────────────────────────

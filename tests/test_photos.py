@@ -1,15 +1,29 @@
 from __future__ import annotations
 
+import json
 import os
 from datetime import datetime
 from itertools import pairwise
 from pathlib import Path
+from unittest.mock import MagicMock
 
 import pytest
 from PIL import Image
 from PIL.TiffImagePlugin import IFDRational
 
-from trailstory.photos import PhotoLoadError, load_photos
+from trailstory.llm.client import (
+    AnthropicClient,
+    LLMResponseError,
+    LLMRetryExhaustedError,
+)
+from trailstory.models import PhotoDescription, PhotoMeta
+from trailstory.photos import (
+    PhotoDescriptionError,
+    PhotoLoadError,
+    describe_photo,
+    describe_photos,
+    load_photos,
+)
 
 EXIF_ORIENTATION = 0x0112
 EXIF_SUB_IFD = 0x8769
@@ -263,3 +277,201 @@ def test_load_photos_strips_gps_and_applies_exif_transpose(tmp_path: Path) -> No
         rgb = out.convert("RGB")
         r, g, b = rgb.getpixel((95, 25))
         assert r > 200 and g < 60 and b < 60
+
+
+# ── describe_photo + describe_photos (Phase 3 / ADR-010) ────────────────────
+#
+# Vision describer tests. All paths mock the Anthropic client per CLAUDE.md
+# — never call the real API in unit tests. The describer's contract is small
+# (one PhotoDescription per photo, retry-once on JSON parse failure, no retry
+# on schema-validation failure, soft-fail per-photo at the orchestrator
+# layer).
+
+
+def _valid_description_dict(**overrides: object) -> dict[str, object]:
+    base: dict[str, object] = {
+        "people_visible": ["a hiker in a jacket"],
+        "objects_visible": ["a forest path"],
+        "location_clues": ["evergreen forest"],
+        "season_clues": ["overcast light"],
+        "body_language_notes": ["walking forward"],
+    }
+    base.update(overrides)
+    return base
+
+
+def _valid_description_json(**overrides: object) -> str:
+    return json.dumps(_valid_description_dict(**overrides))
+
+
+def _vision_client(*responses: str | Exception) -> MagicMock:
+    """Mocked vision client whose ``complete_vision`` yields each item."""
+    fake = MagicMock(spec=AnthropicClient)
+    fake.model = "claude-haiku-4-5-vision-test"
+    fake.complete_vision.side_effect = list(responses)
+    return fake
+
+
+def _photo(path: Path, *, index: int = 0) -> PhotoMeta:
+    return PhotoMeta(path=path, timestamp=datetime(2026, 4, 18, 10, 0, 0), index=index)
+
+
+def test_describe_photo_happy_path(tmp_path: Path) -> None:
+    p = tmp_path / "x.jpg"
+    _make_jpeg(p, size=(100, 100))
+    client = _vision_client(_valid_description_json())
+
+    desc = describe_photo(p, client=client)
+
+    assert isinstance(desc, PhotoDescription)
+    assert desc.people_visible == ["a hiker in a jacket"]
+    assert client.complete_vision.call_count == 1
+
+
+def test_describe_photo_strips_markdown_fences(tmp_path: Path) -> None:
+    p = tmp_path / "x.jpg"
+    _make_jpeg(p, size=(100, 100))
+    fenced = "```json\n" + _valid_description_json() + "\n```"
+    client = _vision_client(fenced)
+
+    desc = describe_photo(p, client=client)
+
+    assert desc.people_visible == ["a hiker in a jacket"]
+
+
+def test_describe_photo_retries_once_on_unparseable_first_attempt(
+    tmp_path: Path,
+) -> None:
+    p = tmp_path / "x.jpg"
+    _make_jpeg(p, size=(100, 100))
+    client = _vision_client("here is what I see: a forest", _valid_description_json())
+
+    desc = describe_photo(p, client=client)
+
+    assert desc.people_visible == ["a hiker in a jacket"]
+    assert client.complete_vision.call_count == 2
+
+
+def test_describe_photo_raises_after_two_unparseable_attempts(tmp_path: Path) -> None:
+    p = tmp_path / "x.jpg"
+    _make_jpeg(p, size=(100, 100))
+    client = _vision_client("prose one", "prose two")
+
+    with pytest.raises(PhotoDescriptionError, match="non-JSON output on both"):
+        describe_photo(p, client=client)
+
+
+def test_describe_photo_does_not_retry_on_validation_error(tmp_path: Path) -> None:
+    """Schema-validation failures are model bugs; another paid call won't help."""
+    p = tmp_path / "x.jpg"
+    _make_jpeg(p, size=(100, 100))
+    bad = json.dumps({"people_visible": "not a list"})
+    client = _vision_client(bad, _valid_description_json())
+
+    with pytest.raises(PhotoDescriptionError, match="schema"):
+        describe_photo(p, client=client)
+    assert client.complete_vision.call_count == 1
+
+
+def test_describe_photo_translates_llm_errors(tmp_path: Path) -> None:
+    p = tmp_path / "x.jpg"
+    _make_jpeg(p, size=(100, 100))
+    client = _vision_client(LLMResponseError("empty"))
+
+    with pytest.raises(PhotoDescriptionError, match="Vision LLM call failed"):
+        describe_photo(p, client=client)
+
+
+def test_describe_photo_translates_retry_exhausted(tmp_path: Path) -> None:
+    p = tmp_path / "x.jpg"
+    _make_jpeg(p, size=(100, 100))
+    client = _vision_client(LLMRetryExhaustedError("rate-limited 3x"))
+
+    with pytest.raises(PhotoDescriptionError, match="Vision LLM call failed"):
+        describe_photo(p, client=client)
+
+
+def test_describe_photos_attaches_descriptions_in_order(tmp_path: Path) -> None:
+    p1 = tmp_path / "01.jpg"
+    p2 = tmp_path / "02.jpg"
+    _make_jpeg(p1, size=(100, 100))
+    _make_jpeg(p2, size=(100, 100))
+    photos = [_photo(p1, index=0), _photo(p2, index=1)]
+    client = _vision_client(
+        _valid_description_json(objects_visible=["lake"]),
+        _valid_description_json(objects_visible=["forest"]),
+    )
+
+    described = describe_photos(photos, client=client, enabled=True)
+
+    assert len(described) == 2
+    assert described[0].description is not None
+    assert described[0].description.objects_visible == ["lake"]
+    assert described[1].description is not None
+    assert described[1].description.objects_visible == ["forest"]
+
+
+def test_describe_photos_returns_unchanged_when_disabled(tmp_path: Path) -> None:
+    """The opt-out path — used when Settings.use_photo_grounding=False."""
+    p = tmp_path / "x.jpg"
+    _make_jpeg(p, size=(100, 100))
+    photos = [_photo(p)]
+    client = _vision_client()  # No responses queued; would fail if called.
+
+    result = describe_photos(photos, client=client, enabled=False)
+
+    assert result is photos  # Same list, no copy
+    assert client.complete_vision.call_count == 0
+
+
+def test_describe_photos_skips_failed_photo_and_continues(tmp_path: Path) -> None:
+    """A single photo's vision failure must NOT block the whole render —
+    the writer simply gets less grounding for that beat."""
+    p1 = tmp_path / "01.jpg"
+    p2 = tmp_path / "02.jpg"
+    _make_jpeg(p1, size=(100, 100))
+    _make_jpeg(p2, size=(100, 100))
+    photos = [_photo(p1, index=0), _photo(p2, index=1)]
+    # First photo: vision LLM errors out hard. Second photo: succeeds.
+    client = _vision_client(
+        LLMResponseError("boom"),  # photo 1: errors
+        _valid_description_json(objects_visible=["lake"]),  # photo 2: ok
+    )
+
+    described = describe_photos(photos, client=client, enabled=True)
+
+    assert len(described) == 2
+    assert described[0].description is None  # failed photo: no description
+    assert described[1].description is not None
+    assert described[1].description.objects_visible == ["lake"]
+
+
+def test_describe_photos_empty_list_returns_empty(tmp_path: Path) -> None:
+    client = _vision_client()
+    result = describe_photos([], client=client, enabled=True)
+    assert result == []
+    assert client.complete_vision.call_count == 0
+
+
+def test_describe_photo_sends_correct_system_prompt(tmp_path: Path) -> None:
+    p = tmp_path / "x.jpg"
+    _make_jpeg(p, size=(100, 100))
+    client = _vision_client(_valid_description_json())
+
+    describe_photo(p, client=client)
+
+    system = client.complete_vision.call_args.kwargs["system"]
+    # The describer is conservative — its prompt names the discipline.
+    assert "do not" in system.lower() or "no inferred" in system.lower()
+    # JSON output discipline.
+    assert "json" in system.lower()
+
+
+def test_describe_photo_passes_image_path(tmp_path: Path) -> None:
+    p = tmp_path / "x.jpg"
+    _make_jpeg(p, size=(100, 100))
+    client = _vision_client(_valid_description_json())
+
+    describe_photo(p, client=client)
+
+    assert client.complete_vision.call_args.kwargs["image_path"] == p

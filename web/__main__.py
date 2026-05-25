@@ -47,6 +47,7 @@ def _build_app() -> FastAPI:
             banner,
             make_fake_client_factory,
             make_fake_ledger_client_factory,
+            make_fake_vision_client_factory,
         )
 
         # ``Settings`` requires ``ANTHROPIC_API_KEY``. In fake-LLM mode
@@ -56,12 +57,13 @@ def _build_app() -> FastAPI:
         # their shell.
         os.environ.setdefault("ANTHROPIC_API_KEY", "sk-dev-fake-llm-mode")
         logging.getLogger(__name__).warning(banner())
-        # Both passes (extractor + writer, see ADR-009) get fake clients
-        # so the SSE flow exercises the full two-pass shape without
-        # paying for any Anthropic calls.
+        # All three passes (vision + extractor + writer, see ADR-009 +
+        # ADR-010) get fake clients so the SSE flow exercises the full
+        # three-pass shape without paying for any Anthropic calls.
         return create_app(
             client_factory=make_fake_client_factory(),
             ledger_client_factory=make_fake_ledger_client_factory(),
+            vision_client_factory=make_fake_vision_client_factory(),
         )
     return create_app()
 

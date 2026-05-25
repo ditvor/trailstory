@@ -50,6 +50,7 @@ def create_app(
     storage: Storage | None = None,
     client_factory: Callable[[], AnthropicClient] | None = None,
     ledger_client_factory: Callable[[], AnthropicClient] | None = None,
+    vision_client_factory: Callable[[], AnthropicClient] | None = None,
     rate_limiter: RateLimiter | None = None,
     enable_sweeper: bool = True,
 ) -> FastAPI:
@@ -68,6 +69,10 @@ def create_app(
             ``AnthropicClient`` (Haiku-class, per ADR-009). Defaults to
             a factory built from ``Settings.ledger_model``. Tests inject
             a mock factory the same way as ``client_factory``.
+        vision_client_factory: Callable returning a configured VISION
+            ``AnthropicClient`` (Haiku-class, per ADR-010). Defaults to
+            a factory built from ``Settings.vision_model``. Tests inject
+            a mock factory the same way as the other two.
         rate_limiter: Per-IP limiter for ``/generate``. Defaults to a
             sliding-window ``RateLimiter`` sized at
             :data:`web.ratelimit.GENERATE_LIMIT_PER_HOUR`. Tests pass
@@ -86,6 +91,11 @@ def create_app(
         ledger_client_factory
         if ledger_client_factory is not None
         else _default_ledger_client_factory(resolved_settings)
+    )
+    resolved_vision_factory = (
+        vision_client_factory
+        if vision_client_factory is not None
+        else _default_vision_client_factory(resolved_settings)
     )
     resolved_limiter = (
         rate_limiter
@@ -128,6 +138,7 @@ def create_app(
     app.state.storage = resolved_storage
     app.state.client_factory = resolved_factory
     app.state.ledger_client_factory = resolved_ledger_factory
+    app.state.vision_client_factory = resolved_vision_factory
     app.state.generate_limiter = resolved_limiter
     app.state.templates = Jinja2Templates(directory=str(TEMPLATE_DIR))
 
@@ -172,6 +183,26 @@ def _default_ledger_client_factory(settings: Settings) -> Callable[[], Anthropic
         return AnthropicClient(
             settings.anthropic_api_key,
             model=settings.ledger_model,
+            max_tokens=settings.narrative_max_tokens,
+            max_retries=settings.narrative_max_retries,
+        )
+
+    return factory
+
+
+def _default_vision_client_factory(settings: Settings) -> Callable[[], AnthropicClient]:
+    """Build a real VISION ``AnthropicClient`` from settings.
+
+    Phase 3 (ADR-010): the per-photo describer uses
+    ``Settings.vision_model`` (Haiku-class by default, must be
+    vision-capable). Same per-request fresh-instance pattern as the
+    other two factories.
+    """
+
+    def factory() -> AnthropicClient:
+        return AnthropicClient(
+            settings.anthropic_api_key,
+            model=settings.vision_model,
             max_tokens=settings.narrative_max_tokens,
             max_retries=settings.narrative_max_retries,
         )
