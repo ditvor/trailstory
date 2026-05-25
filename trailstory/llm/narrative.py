@@ -60,6 +60,7 @@ from trailstory.models import (
     NarrativeOutput,
     Person,
     PhotoMeta,
+    ProvenanceSource,
 )
 
 logger = logging.getLogger(__name__)
@@ -306,6 +307,7 @@ def generate_narrative(
     ledger_client: AnthropicClient,
     location: str = "the trail",
     use_cache: bool = True,
+    max_inferred_ratio: float | None = 0.5,
 ) -> NarrativeOutput:
     """Generate a tri-lingual narrative via the two-pass pipeline (ADR-009).
 
@@ -331,6 +333,13 @@ def generate_narrative(
             first and write any newly generated narrative back to it.
             Set to ``False`` for tests that need to assert call counts on
             the mocked client, and from the CLI's ``--no-cache`` flag.
+        max_inferred_ratio: Phase 2.5 / ADR-011 verifier ceiling. If the
+            writer's first draft tags more than this share of sentences as
+            INFERRED, regenerate once with feedback. ``None`` disables the
+            verifier (one writer call, no checks). Default ``0.5`` keeps
+            the writer honest without being so strict it produces stiff
+            prose. Settable from the CLI / web layer; tests can pin to
+            ``None`` to assert call counts.
 
     Returns:
         Validated ``NarrativeOutput``.
@@ -389,9 +398,84 @@ def generate_narrative(
             f"LLM JSON did not match NarrativeOutput schema: {exc}"
         ) from exc
 
+    # Phase 2.5 / ADR-011: self-reported provenance verifier. Compute the
+    # share of sentences the writer tagged INFERRED; if it exceeds the
+    # configured ceiling, regenerate once with feedback that asks the
+    # writer to lean harder on grounded sentences. Cheap (no extra LLM
+    # call at this point) and uses Phase 4's structured tags directly.
+    if max_inferred_ratio is not None and max_inferred_ratio < 1.0:
+        ratio = _inferred_ratio(narrative)
+        if ratio > max_inferred_ratio:
+            logger.warning(
+                "writer self-reported inferred_ratio=%.2f > ceiling %.2f; regenerating",
+                ratio,
+                max_inferred_ratio,
+            )
+            feedback = _verifier_feedback(ratio, max_inferred_ratio)
+            regen_prompt = base_prompt + feedback
+            regen_parsed = _call_and_parse(client, regen_prompt)
+            if regen_parsed is not None:
+                try:
+                    regen = NarrativeOutput.model_validate(regen_parsed)
+                except ValidationError as exc:
+                    logger.warning(
+                        "verifier-regenerated draft failed schema validation (%s); "
+                        "keeping the original",
+                        exc,
+                    )
+                else:
+                    new_ratio = _inferred_ratio(regen)
+                    # Only swap in the regenerated draft if it actually
+                    # improved the ratio — otherwise the noise of a fresh
+                    # call has produced something equivalent or worse and
+                    # the original is the safer pick.
+                    if new_ratio < ratio:
+                        logger.info(
+                            "verifier accepted regen: inferred_ratio %.2f -> %.2f",
+                            ratio,
+                            new_ratio,
+                        )
+                        narrative = regen
+                    else:
+                        logger.info(
+                            "verifier rejected regen: ratio %.2f did not improve on %.2f",
+                            new_ratio,
+                            ratio,
+                        )
+
     if key is not None:
         narrative_cache.put(key, narrative)
     return narrative
+
+
+def _inferred_ratio(narrative: NarrativeOutput) -> float:
+    """Self-reported INFERRED-sentence share. Used by the Phase 2.5 verifier.
+
+    Returns ``0.0`` for an empty narrative (defensive — the schema
+    requires paragraphs, so this should not happen in practice).
+    """
+    total = 0
+    inferred = 0
+    for paragraph in narrative.paragraphs:
+        for sentence in paragraph:
+            total += 1
+            if sentence.provenance.source == ProvenanceSource.INFERRED:
+                inferred += 1
+    if total == 0:
+        return 0.0
+    return inferred / total
+
+
+def _verifier_feedback(observed: float, ceiling: float) -> str:
+    """Build the regeneration-feedback suffix for the writer prompt."""
+    return (
+        f"\n\nYour previous draft tagged {observed:.0%} of its sentences as "
+        f"INFERRED, exceeding the {ceiling:.0%} ceiling. Rewrite with more "
+        f"sentences whose provenance is seed / photo / gpx — preserve the "
+        f"chronology and voice, but lean harder on what the ledger actually "
+        f"says rather than literary reconstruction. Output JSON in the same "
+        f"shape as before, no markdown fences, no commentary."
+    )
 
 
 def generate_narrative_stream(

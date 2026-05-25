@@ -402,7 +402,10 @@ def test_describe_photos_attaches_descriptions_in_order(tmp_path: Path) -> None:
         _valid_description_json(objects_visible=["forest"]),
     )
 
-    described = describe_photos(photos, client=client, enabled=True)
+    # concurrency=1 forces serial execution so mock side_effect responses
+    # are consumed in input order. Parallel order is non-deterministic
+    # under threads (covered by the soft-fail test below).
+    described = describe_photos(photos, client=client, enabled=True, concurrency=1, use_cache=False)
 
     assert len(described) == 2
     assert described[0].description is not None
@@ -438,7 +441,7 @@ def test_describe_photos_skips_failed_photo_and_continues(tmp_path: Path) -> Non
         _valid_description_json(objects_visible=["lake"]),  # photo 2: ok
     )
 
-    described = describe_photos(photos, client=client, enabled=True)
+    described = describe_photos(photos, client=client, enabled=True, concurrency=1, use_cache=False)
 
     assert len(described) == 2
     assert described[0].description is None  # failed photo: no description

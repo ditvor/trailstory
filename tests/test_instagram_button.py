@@ -30,6 +30,7 @@ from fastapi import FastAPI
 from fastapi.testclient import TestClient
 from pydantic import SecretStr
 
+from tests.conftest import paragraphs_dict_from_strings
 from trailstory.config import Settings
 from trailstory.llm.client import AnthropicClient
 from web.app import create_app
@@ -55,7 +56,7 @@ def _settings() -> Settings:
 def _valid_response_json(n_photos: int = 5) -> str:
     return json.dumps(
         {
-            "schema_version": 2,
+            "schema_version": 3,
             "title": {
                 "en": "Above the fog line",
                 "ru": "Над линией тумана",
@@ -66,11 +67,11 @@ def _valid_response_json(n_photos: int = 5) -> str:
                 "ru": "Утро над морем облаков",
                 "de": "Ein Morgen über dem Wolkenmeer",
             },
-            "paragraphs": {
-                "en": ["First light.", "Saddle. Cloud thinning."],
-                "ru": ["Первые лучи.", "Седловина. Облака редеют."],
-                "de": ["Erstes Licht.", "Sattel. Wolke lichtet sich."],
-            },
+            "paragraphs": paragraphs_dict_from_strings(
+                en=["First light.", "Saddle. Cloud thinning."],
+                ru=["Первые лучи.", "Седловина. Облака редеют."],
+                de=["Erstes Licht.", "Sattel. Wolke lichtet sich."],
+            ),
             "pull_quote": {
                 "en": "The fog cleared just as we reached the ridge.",
                 "ru": "Туман рассеялся как раз когда мы вышли на хребет.",

@@ -29,6 +29,29 @@ class Settings(BaseSettings):
     # contract). Useful for cost-sensitive batch runs or when an
     # operator wants to bisect a quality regression to the vision pass.
     use_photo_grounding: bool = True
+    # Phase 3.2 / ADR-013: parallelism for the vision pass. Each photo
+    # gets its own thread; the SDK is thread-safe and the GIL releases on
+    # HTTP wait. Default 4 = a 6-photo hike completes in ~1 photo's worth
+    # of wall time + coordination overhead. Lower if rate-limited.
+    vision_concurrency: int = Field(
+        default=4,
+        ge=1,
+        description="Max parallel vision describer calls per render.",
+    )
+    # Phase 2.5 / ADR-011: verifier ceiling on writer-self-reported
+    # INFERRED-sentence share. If the writer's first draft exceeds this
+    # share, the orchestrator regenerates once with feedback. 0.5 keeps
+    # the writer honest without making the prose stiff. Set to 1.0 to
+    # disable the verifier entirely (one writer call always).
+    max_inferred_ratio: float = Field(
+        default=0.5,
+        ge=0.0,
+        le=1.0,
+        description=(
+            "Ceiling on the writer's self-reported INFERRED-sentence ratio "
+            "before the Phase 2.5 verifier regenerates the draft. 1.0 disables."
+        ),
+    )
     output_dir: Path = Path("./output")
     log_level: str = "INFO"
 

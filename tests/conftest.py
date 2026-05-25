@@ -19,10 +19,13 @@ from tempfile import TemporaryDirectory
 from trailstory.gpx import parse_gpx
 from trailstory.models import (
     HikeInput,
-    LocalizedParagraphs,
     LocalizedString,
     Memory,
     NarrativeOutput,
+    Paragraph,
+    Provenance,
+    ProvenanceSource,
+    Sentence,
     Style,
 )
 from trailstory.photos import load_photos
@@ -33,10 +36,79 @@ SAMPLE_GPX = FIXTURES_DIR / "sample.gpx"
 SAMPLE_PHOTOS = FIXTURES_DIR / "sample_photos"
 
 
+def paragraphs_dict_from_strings(
+    *,
+    en: list[str],
+    ru: list[str],
+    de: list[str],
+    provenance: str = "seed",
+    reference: str = "test fixture",
+) -> list[list[dict[str, object]]]:
+    """Build the dict-literal version of ADR-014 paragraphs for JSON fixtures.
+
+    Many tests construct a fake LLM response as a Python dict that
+    serialises to JSON the writer is expected to produce. Those dicts
+    don't go through Pydantic until the orchestrator validates them, so
+    the helper emits the raw nested-dict shape rather than Sentence
+    objects. Use :func:`paragraphs_from_strings` for tests that build
+    fully-validated :class:`NarrativeOutput` instances directly.
+    """
+    if len(en) != len(ru) or len(en) != len(de):
+        raise ValueError(
+            f"paragraphs_dict_from_strings: length mismatch en={len(en)} ru={len(ru)} de={len(de)}"
+        )
+    return [
+        [
+            {
+                "text": {"en": e, "ru": r, "de": d},
+                "provenance": {"source": provenance, "reference": reference},
+            }
+        ]
+        for e, r, d in zip(en, ru, de, strict=True)
+    ]
+
+
+def paragraphs_from_strings(
+    *,
+    en: list[str],
+    ru: list[str],
+    de: list[str],
+    provenance: ProvenanceSource = ProvenanceSource.SEED,
+    reference: str = "test fixture",
+) -> list[Paragraph]:
+    """Build ADR-014 sentence-level paragraphs from flat per-language lists.
+
+    Each input list is one string per paragraph; the helper produces one
+    paragraph per index, each paragraph holding a single Sentence whose
+    text carries the en/ru/de triple and whose provenance is
+    ``(provenance, reference)``. Tests use this to keep their old
+    string-based intent without having to hand-build sentence objects.
+
+    The three input lists must be the same length; the helper does not
+    silently align mismatched lengths because that's a bug, not a
+    feature.
+    """
+    if len(en) != len(ru) or len(en) != len(de):
+        raise ValueError(
+            f"paragraphs_from_strings: length mismatch en={len(en)} ru={len(ru)} de={len(de)}"
+        )
+    out: list[Paragraph] = []
+    for e, r, d in zip(en, ru, de, strict=True):
+        out.append(
+            [
+                Sentence(
+                    text=LocalizedString(en=e, ru=r, de=d),
+                    provenance=Provenance(source=provenance, reference=reference),
+                )
+            ]
+        )
+    return out
+
+
 def sample_narrative() -> NarrativeOutput:
     """Hand-built NarrativeOutput in the same shape an LLM would return."""
     return NarrativeOutput(
-        schema_version=2,
+        schema_version=3,
         title=LocalizedString(
             en="Above the fog line",
             ru="Над линией тумана",
@@ -47,7 +119,7 @@ def sample_narrative() -> NarrativeOutput:
             ru="Утро над морем облаков",
             de="Ein Morgen über dem Wolkenmeer",
         ),
-        paragraphs=LocalizedParagraphs(
+        paragraphs=paragraphs_from_strings(
             en=[
                 "We left the trailhead at first light, the air sharp with damp moss.",
                 "By the saddle the cloud was thinning into a soft white scarf.",

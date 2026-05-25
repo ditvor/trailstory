@@ -5,27 +5,27 @@
   "photo_selection_plausibility": 4.0,
   "claim_verdicts": [
     {
-      "claim": "The hike took place in April",
-      "verdict": "INFERRED",
-      "quote": "Spring in the Bavarian Alps (subtitle); April morning (para 1)"
-    },
-    {
-      "claim": "The location is the Bavarian Alps",
+      "claim": "The hike took place in the Bavarian Alps",
       "verdict": "UNSUPPORTED",
       "quote": ""
     },
     {
-      "claim": "Mia was present on the hike",
-      "verdict": "SUPPORTED",
-      "quote": "Mia cried for the last hour"
+      "claim": "The hike was on an April morning",
+      "verdict": "UNSUPPORTED",
+      "quote": ""
     },
     {
-      "claim": "The fog was thick throughout the hike",
+      "claim": "The fog settled into the trees and stayed grey",
       "verdict": "SUPPORTED",
-      "quote": "The fog never lifted"
+      "quote": "The fog never lifted."
     },
     {
-      "claim": "Mia cried during the final hour of ascent",
+      "claim": "Mia was small and warm against the damp",
+      "verdict": "INFERRED",
+      "quote": "Mia cried for the last hour — implies child carried, small and present"
+    },
+    {
+      "claim": "Mia cried on the climb",
       "verdict": "SUPPORTED",
       "quote": "Mia cried for the last hour"
     },
@@ -35,56 +35,56 @@
       "quote": "my shoulders burned"
     },
     {
-      "claim": "The narrator doubted they had made the right choice",
-      "verdict": "SUPPORTED",
-      "quote": "I was sure we'd made a mistake"
-    },
-    {
       "claim": "Mia fell asleep on the descent",
       "verdict": "SUPPORTED",
       "quote": "she fell asleep on the descent"
     },
     {
-      "claim": "Ferns were visible underfoot on the descent",
+      "claim": "The narrator noticed ferns underfoot",
       "verdict": "SUPPORTED",
       "quote": "I noticed the ferns underfoot"
     },
     {
-      "claim": "The narrator and Mia spoke less as they climbed higher",
+      "claim": "The ferns were brand-new and uncurling",
+      "verdict": "INFERRED",
+      "quote": "spring climb — uncurling ferns consistent with spring season"
+    },
+    {
+      "claim": "The hike covered just over two kilometres",
       "verdict": "UNSUPPORTED",
       "quote": ""
     },
     {
-      "claim": "The path was visible only a few steps ahead",
-      "verdict": "INFERRED",
-      "quote": "The fog never lifted"
-    },
-    {
-      "claim": "The ferns were unfurling pale spring fronds",
+      "claim": "Elevation gain was six hundred metres",
       "verdict": "UNSUPPORTED",
       "quote": ""
     },
     {
-      "claim": "The ferns were along the edge of the path",
-      "verdict": "INFERRED",
-      "quote": "I noticed the ferns underfoot"
+      "claim": "Duration was about a hundred minutes",
+      "verdict": "UNSUPPORTED",
+      "quote": ""
     },
     {
-      "claim": "The weather was foggy (not rainy, sunny, or otherwise)",
+      "claim": "The summit was at around thirteen hundred metres",
+      "verdict": "UNSUPPORTED",
+      "quote": ""
+    },
+    {
+      "claim": "The narrator felt sure they had made a mistake",
       "verdict": "SUPPORTED",
-      "quote": "The fog never lifted"
+      "quote": "I was sure we'd made a mistake"
     },
     {
-      "claim": "Mia was tired in a whole-body way and frustrated with the climb",
+      "claim": "Mia's weight settled into a rhythm the narrator could carry",
       "verdict": "INFERRED",
-      "quote": "Mia cried for the last hour"
+      "quote": "she fell asleep on the descent — implies sleeping child being carried"
     },
     {
-      "claim": "The narrator walked carefully on the descent",
-      "verdict": "UNSUPPORTED",
-      "quote": ""
+      "claim": "Mia was asleep on the narrator's chest during descent",
+      "verdict": "INFERRED",
+      "quote": "she fell asleep on the descent"
     }
   ],
-  "notes": "The English prose is exceptionally warm and specific, with the fog-as-negotiation metaphor and the ferns-as-resolution earning high marks; the pull quote is a genuine distillation. The arc moves cleanly through approach, sustained effort, crisis (Mia crying), and quiet resolution, with every paragraph doing work. The Russian translation is fluent and idiomatic — 'договариваешься' for 'negotiate', 'присутствия друг друга' for 'company' — with no detectable anglicisms; one very minor flatness: 'особая нежность' slightly softens 'particular kind of love' but remains acceptable. Photo indices (7 frames, spanning 0–11 with reasonable spread) plausibly cover opening fog, climb, effort, descent, and fern detail, though the gap between index 2 and 4 and the cluster at 8–9–11 slightly limits the spread score.",
-  "faithfulness": 3.12
+  "notes": "The prose is genuinely warm and specific, recovering the seed's emotional arc — doubt, endurance, quiet redemption — with well-chosen sensory detail (ferns uncurling, damp air, the rhythm of a sleeping child). The narrative arc moves cleanly through all required beats and the pull-quote earns its placement. Russian is fluent and natural; 'лёг в ритм, который я мог нести' is slightly literal but not unidiomatic. GPX-derived figures (2 km, 600 m, 100 min, 1300 m summit, Bavarian Alps, April) are all unsupported by the seed, which is expected for GPX provenance, but worth flagging as fabrication risk if no GPX was actually provided. Photo indices span the range with 7 selections and plausibly trace the arc.",
+  "faithfulness": 2.5
 }

@@ -533,6 +533,31 @@ don't relitigate them.
     new `Settings.vision_model` + `use_photo_grounding`. Three clients
     per render (writer + ledger + vision) plumbed through the CLI, web,
     eval runner, and fake-LLM dev mode. Per-photo failures soft-fail.
+11. [ADR-011 — verifier loop using self-reported provenance](docs/adr/011-verifier-loop-self-reported-provenance.md):
+    Phase 2.5. After the writer pass returns, if the writer-self-reported
+    INFERRED-sentence share exceeds `Settings.max_inferred_ratio`
+    (default `0.5`), regenerate once with feedback. Free signal — no
+    extra LLM call to detect, only the conditional regen. "Improvement
+    only" admission policy keeps the regen only if its ratio actually
+    dropped. Streaming bypassed.
+12. [ADR-012 — per-photo vision description cache](docs/adr/012-per-photo-vision-cache.md):
+    Phase 3.1. On-disk cache for `PhotoDescription` keyed by
+    `(photo bytes SHA-256, vision_model)`. Mirrors the existing
+    narrative cache; lives in `~/.cache/trailstory/vision/`.
+13. [ADR-013 — parallel vision describer calls](docs/adr/013-parallel-vision-via-threadpool.md):
+    Phase 3.2. `describe_photos` uses `ThreadPoolExecutor` with
+    `Settings.vision_concurrency` workers. 6-photo hike drops from
+    ~6s serial to ~1.5s parallel. Order preserved via `.map`;
+    single-photo fast path skips the pool.
+14. [ADR-014 — sentence-level provenance + HTML hover](docs/adr/014-sentence-level-provenance-and-html-hover.md):
+    Phase 4. `NarrativeOutput.paragraphs` becomes
+    `list[Paragraph] = list[list[Sentence]]`; each sentence has
+    tri-lingual text + one `Provenance` (source: SEED / PHOTO / GPX /
+    INFERRED). Editorial template wraps each sentence in
+    `<span class="sent" data-prov="...">` with hover tooltip + tint
+    on INFERRED. Log and Encyclopedia templates use the
+    `paragraphs_as_localized()` flat fallback until Phase 4.1 ports
+    them. `schema_version=3`.
 
 If you're about to do something that touches an area covered by an existing
 ADR, **read the ADR first**. If the change is incompatible with the recorded

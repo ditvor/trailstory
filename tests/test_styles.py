@@ -14,10 +14,10 @@ from pathlib import Path
 
 from PIL import Image
 
+from tests.conftest import paragraphs_from_strings
 from trailstory.models import (
     GpxStats,
     HikeInput,
-    LocalizedParagraphs,
     LocalizedString,
     Memory,
     NarrativeOutput,
@@ -49,7 +49,7 @@ def _gpx_stats() -> GpxStats:
 
 def _narrative() -> NarrativeOutput:
     return NarrativeOutput(
-        schema_version=2,
+        schema_version=3,
         title=LocalizedString(
             en="Above the fog line",
             ru="Над линией тумана",
@@ -60,7 +60,7 @@ def _narrative() -> NarrativeOutput:
             ru="Утро над морем облаков",
             de="Ein Morgen über dem Wolkenmeer",
         ),
-        paragraphs=LocalizedParagraphs(
+        paragraphs=paragraphs_from_strings(
             en=[
                 "We left the trailhead at first light.",
                 "By the saddle the cloud was thinning.",
@@ -228,9 +228,12 @@ def test_narrative_text_is_identical_across_all_styles(tmp_path: Path) -> None:
         narrative.milestone.en,
         narrative.milestone.ru,
         narrative.milestone.de,
-        *narrative.paragraphs.en,
-        *narrative.paragraphs.ru,
-        *narrative.paragraphs.de,
+        # ADR-014: paragraphs is now list[Paragraph]; flatten via the
+        # helper to get back the per-language strings each style template
+        # actually renders.
+        *narrative.paragraphs_as_localized().en,
+        *narrative.paragraphs_as_localized().ru,
+        *narrative.paragraphs_as_localized().de,
     ]
     for style, html in rendered.items():
         for s in user_facing_strings:

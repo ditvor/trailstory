@@ -57,11 +57,19 @@ def schema_validates(narrative: NarrativeOutput) -> RubricResult:
 
 
 def paragraph_count_3_to_5_each_lang(narrative: NarrativeOutput) -> RubricResult:
-    """EN, RU, and DE paragraph lists must each contain 3 to 5 entries."""
+    """EN, RU, and DE paragraph lists must each contain 3 to 5 entries.
+
+    ADR-014: paragraphs are now ``list[Paragraph]`` with sentence-level
+    provenance. We count via ``paragraphs_as_localized()`` so the same
+    rubric check works on the new shape; the count is the same across
+    languages by construction (one paragraph entry per language is one
+    paragraph object).
+    """
     name = "paragraph_count_3_to_5_each_lang"
-    en = len(narrative.paragraphs.en)
-    ru = len(narrative.paragraphs.ru)
-    de = len(narrative.paragraphs.de)
+    flat = narrative.paragraphs_as_localized()
+    en = len(flat.en)
+    ru = len(flat.ru)
+    de = len(flat.de)
     if 3 <= en <= 5 and 3 <= ru <= 5 and 3 <= de <= 5:
         return RubricResult(name, True, f"en={en}, ru={ru}, de={de}")
     return RubricResult(name, False, f"en={en}, ru={ru}, de={de} (expected 3-5 each)")
@@ -76,7 +84,8 @@ def russian_actually_cyrillic(narrative: NarrativeOutput) -> RubricResult:
     sentence or two.
     """
     name = "russian_actually_cyrillic"
-    for i, para in enumerate(narrative.paragraphs.ru):
+    flat = narrative.paragraphs_as_localized()
+    for i, para in enumerate(flat.ru):
         if not _CYRILLIC_RE.search(para):
             return RubricResult(name, False, f"paragraphs.ru[{i}] has no Cyrillic char")
         run = _max_ascii_letter_run(para)
@@ -92,8 +101,9 @@ def russian_actually_cyrillic(narrative: NarrativeOutput) -> RubricResult:
 def word_count_ratio_en_ru_in_0_7_to_1_4(narrative: NarrativeOutput) -> RubricResult:
     """Total RU words divided by total EN words must be in [0.7, 1.4]."""
     name = "word_count_ratio_en_ru_in_0_7_to_1_4"
-    en_words = sum(len(_words(p)) for p in narrative.paragraphs.en)
-    ru_words = sum(len(_words(p)) for p in narrative.paragraphs.ru)
+    flat = narrative.paragraphs_as_localized()
+    en_words = sum(len(_words(p)) for p in flat.en)
+    ru_words = sum(len(_words(p)) for p in flat.ru)
     if en_words == 0:
         return RubricResult(name, False, "EN paragraphs have no words")
     ratio = ru_words / en_words
@@ -110,8 +120,9 @@ def word_count_ratio_en_de_in_0_7_to_1_4(narrative: NarrativeOutput) -> RubricRe
     half-empty or wildly verbose relative to the source.
     """
     name = "word_count_ratio_en_de_in_0_7_to_1_4"
-    en_words = sum(len(_words(p)) for p in narrative.paragraphs.en)
-    de_words = sum(len(_words(p)) for p in narrative.paragraphs.de)
+    flat = narrative.paragraphs_as_localized()
+    en_words = sum(len(_words(p)) for p in flat.en)
+    de_words = sum(len(_words(p)) for p in flat.de)
     if en_words == 0:
         return RubricResult(name, False, "EN paragraphs have no words")
     ratio = de_words / en_words
@@ -185,7 +196,8 @@ def pull_quote_drawn_from_body(narrative: NarrativeOutput) -> RubricResult:
     if not quote_words:
         return RubricResult(name, False, "pull_quote.en has no words")
     best = 0.0
-    for para in narrative.paragraphs.en:
+    flat = narrative.paragraphs_as_localized()
+    for para in flat.en:
         para_words = set(_words(para))
         overlap = len(quote_words & para_words) / len(quote_words)
         if overlap > best:

@@ -50,7 +50,15 @@ def sample_fields() -> dict[str, object]:
         "narrative_json": json.dumps(
             {
                 "title": {"en": "Above the fog line", "ru": "x", "de": "y"},
-                "paragraphs": {"en": ["short stub paragraph"], "ru": ["x"], "de": ["y"]},
+                # ADR-014 sentence-level paragraphs shape, abbreviated.
+                "paragraphs": [
+                    [
+                        {
+                            "text": {"en": "short stub paragraph", "ru": "x", "de": "y"},
+                            "provenance": {"source": "seed", "reference": "fixture"},
+                        }
+                    ]
+                ],
             },
             ensure_ascii=False,
             indent=2,

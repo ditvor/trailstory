@@ -15,6 +15,7 @@ from unittest.mock import MagicMock
 
 import pytest
 
+from tests.conftest import paragraphs_from_strings
 from tests.eval.judge import (
     DEFAULT_JUDGE_MODEL,
     ClaimVerdict,
@@ -31,7 +32,6 @@ from trailstory.llm.client import (
 )
 from trailstory.models import (
     HikeInput,
-    LocalizedParagraphs,
     LocalizedString,
     NarrativeOutput,
 )
@@ -49,7 +49,7 @@ def _hike_input() -> HikeInput:
 
 def _narrative() -> NarrativeOutput:
     return NarrativeOutput(
-        schema_version=2,
+        schema_version=3,
         title=LocalizedString(
             en="Above the fog line",
             ru="Над линией тумана",
@@ -60,7 +60,7 @@ def _narrative() -> NarrativeOutput:
             ru="Утро над морем облаков",
             de="Ein Morgen über dem Wolkenmeer",
         ),
-        paragraphs=LocalizedParagraphs(
+        paragraphs=paragraphs_from_strings(
             en=[
                 "We left the trailhead at first light.",
                 "By the saddle the cloud was thinning.",

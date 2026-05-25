@@ -1,44 +1,144 @@
 {
-  "schema_version": 2,
+  "schema_version": 3,
   "title": {
     "en": "The Morning the Fog Lifted",
-    "ru": "Утро, когда туман рассеялся",
+    "ru": "Утро, когда рассеялся туман",
     "de": "Der Morgen, an dem der Nebel wich"
   },
   "subtitle": {
-    "en": "A spring walk toward a ridge in the Bavarian Alps",
-    "ru": "Весенняя прогулка к хребту в Баварских Альпах",
-    "de": "Ein Frühlingsgang zu einem Grat in den Bayerischen Alpen"
+    "en": "A spring climb in the Bavarian Alps",
+    "ru": "Весеннее восхождение в Баварских Альпах",
+    "de": "Ein Frühlingsaufstieg in den Bayerischen Alpen"
   },
-  "paragraphs": {
-    "en": [
-      "There are mornings in the mountains when the world holds itself very still, as if waiting to see whether you will keep going. This was one of them. The Bavarian Alps were wrapped in fog, soft and unhurried, the kind of April fog that smells faintly of last winter's snow and the first green thoughts of spring.",
-      "I climbed slowly. The path tilted upward in that patient, insistent way mountain paths do, and the fog moved with me, parting just enough to show a few steps ahead and then closing again like a curtain. Somewhere above, I knew, was the ridge. I couldn't see it yet, but I could feel it the way you feel a familiar room in the dark.",
-      "Then, almost without ceremony, the fog began to thin. Pale shapes resolved into stone and slope. The light arrived not in a blaze but in a slow, generous unveiling, the way good news sometimes comes — quietly, and all at once. The ridge stood ahead, exactly where it had always been, waiting.",
-      "I walked toward it through that clearing air, and for a little while there was nothing to do and nothing to prove, only the simple pleasure of being a small figure on a spring hillside, moving in the direction of something beautiful."
+  "paragraphs": [
+    [
+      {
+        "text": {
+          "en": "It was an April morning in the Bavarian Alps, the kind of spring that still carries winter in its pockets.",
+          "ru": "Это было апрельское утро в Баварских Альпах — та весна, что ещё прячет зиму по карманам.",
+          "de": "Es war ein Aprilmorgen in den Bayerischen Alpen, jener Frühling, der den Winter noch in den Taschen trägt."
+        },
+        "provenance": {
+          "source": "gpx",
+          "reference": "where + season"
+        }
+      },
+      {
+        "text": {
+          "en": "The hour was early, just past seven, and the world had not yet decided what kind of day it wanted to be.",
+          "ru": "Час был ранний, чуть за семь, и мир ещё не решил, каким именно днём ему хочется стать.",
+          "de": "Die Stunde war früh, kurz nach sieben, und die Welt hatte sich noch nicht entschieden, was für ein Tag sie werden wollte."
+        },
+        "provenance": {
+          "source": "gpx",
+          "reference": "when"
+        }
+      }
     ],
-    "ru": [
-      "Бывают в горах такие утра, когда мир замирает, словно проверяя, пойдёшь ли ты дальше. Это было одно из них. Баварские Альпы были укутаны туманом — мягким, неторопливым, тем самым апрельским туманом, что слабо пахнет ушедшей зимой и первыми зелёными помыслами весны.",
-      "Я поднимался медленно. Тропа уходила вверх с тем терпеливым упрямством, с каким это умеют только горные тропы, и туман шёл со мной — расступался ровно настолько, чтобы стало видно несколько шагов вперёд, и снова смыкался, как занавес. Где-то наверху был хребет. Я его ещё не видел, но чувствовал — так чувствуешь знакомую комнату в темноте.",
-      "А потом, почти буднично, туман начал редеть. Из бледного проступили камень и склон. Свет пришёл не вспышкой, а медленным, щедрым раскрытием — так иногда приходят хорошие вести: тихо и сразу. Хребет стоял впереди, ровно там, где и всегда, и ждал.",
-      "Я шёл к нему сквозь этот проясняющийся воздух, и какое-то время не нужно было ничего делать и ничего доказывать — только тихая радость быть маленькой фигуркой на весеннем склоне, идущей в сторону чего-то красивого."
+    [
+      {
+        "text": {
+          "en": "We began climbing inside the fog, which is to say we began climbing inside a hush.",
+          "ru": "Мы начали подъём внутри тумана — то есть внутри тишины.",
+          "de": "Wir begannen den Aufstieg im Nebel, was heißt: wir begannen ihn in einer Stille."
+        },
+        "provenance": {
+          "source": "seed",
+          "reference": "foggy, hiking"
+        }
+      },
+      {
+        "text": {
+          "en": "There was nothing to see beyond a few paces of damp stone and pale air, and so the body simply did what bodies do — leaned forward, found the next step, kept on.",
+          "ru": "Дальше нескольких шагов сырого камня и бледного воздуха не было видно ничего, и тело просто делало то, что делают тела, — наклонялось вперёд, нащупывало следующий шаг, шло дальше.",
+          "de": "Mehr als ein paar Schritte feuchten Steins und blasser Luft war nicht zu sehen, und so tat der Körper, was Körper eben tun — er lehnte sich vor, fand den nächsten Tritt, ging weiter."
+        },
+        "provenance": {
+          "source": "inferred",
+          "reference": "atmosphere of foggy climb"
+        }
+      },
+      {
+        "text": {
+          "en": "Just over a hundred minutes of walking, barely more than two kilometres on the map, and yet six hundred metres of patient, vertical effort under the cloud.",
+          "ru": "Чуть больше ста минут ходьбы, едва за два километра по карте, и при этом шестьсот метров терпеливого вертикального труда под облаком.",
+          "de": "Etwas mehr als hundert Minuten Gehen, kaum mehr als zwei Kilometer auf der Karte, und doch sechshundert Meter geduldiger, senkrechter Mühe unter der Wolke."
+        },
+        "provenance": {
+          "source": "gpx",
+          "reference": "duration_min, distance_km, elevation_gain_m"
+        }
+      }
     ],
-    "de": [
-      "Es gibt Morgen in den Bergen, an denen die Welt ganz still hält, als wolle sie sehen, ob du weitergehst. Dieser war so einer. Die Bayerischen Alpen lagen in Nebel gehüllt, weich und ohne Eile, in jenem Aprilnebel, der leise nach dem vergangenen Winterschnee und den ersten grünen Gedanken des Frühlings riecht.",
-      "Ich stieg langsam. Der Weg neigte sich nach oben auf jene geduldige, hartnäckige Art, wie es Bergwege eben tun, und der Nebel ging mit mir — teilte sich gerade so weit, dass ein paar Schritte sichtbar wurden, und schloss sich wieder wie ein Vorhang. Irgendwo da oben, das wusste ich, lag der Grat. Ich konnte ihn noch nicht sehen, aber spüren, so wie man im Dunkeln ein vertrautes Zimmer spürt.",
-      "Dann, fast beiläufig, begann der Nebel sich zu lichten. Aus dem Bleichen traten Stein und Hang hervor. Das Licht kam nicht als Feuerwerk, sondern als langsame, großzügige Enthüllung — so, wie gute Nachrichten manchmal kommen: leise und auf einmal. Der Grat stand vor mir, genau dort, wo er immer gewesen war, und wartete.",
-      "Ich ging ihm entgegen durch diese sich klärende Luft, und für eine Weile gab es nichts zu tun und nichts zu beweisen, nur das schlichte Vergnügen, eine kleine Gestalt an einem Frühlingshang zu sein, die sich in Richtung von etwas Schönem bewegt."
+    [
+      {
+        "text": {
+          "en": "And then, at the ridge, the fog lifted.",
+          "ru": "А потом, на гребне, туман отступил.",
+          "de": "Und dann, am Grat, hob sich der Nebel."
+        },
+        "provenance": {
+          "source": "seed",
+          "reference": "fog cleared at the ridge"
+        }
+      },
+      {
+        "text": {
+          "en": "It did not tear or rush; it simply thinned, the way breath leaves a window, until the Alps were standing there as though they had been waiting all along.",
+          "ru": "Он не рвался и не убегал — он просто истончался, как дыхание сходит со стекла, пока Альпы не оказались здесь, словно ждали нас всё это время.",
+          "de": "Er riss nicht auf und floh nicht; er wurde einfach dünner, so wie Atem von einer Scheibe weicht, bis die Alpen dastanden, als hätten sie die ganze Zeit gewartet."
+        },
+        "provenance": {
+          "source": "inferred",
+          "reference": "literary rendering of clearing weather"
+        }
+      },
+      {
+        "text": {
+          "en": "Thirteen hundred and thirty metres of stone beneath our boots, and a whole spring sky opening above.",
+          "ru": "Тысяча триста тридцать метров камня под ботинками — и целое весеннее небо, раскрывающееся сверху.",
+          "de": "Dreizehnhundertdreißig Meter Stein unter den Stiefeln und ein ganzer Frühlingshimmel, der sich darüber öffnete."
+        },
+        "provenance": {
+          "source": "gpx",
+          "reference": "summit_elev_m"
+        }
+      }
+    ],
+    [
+      {
+        "text": {
+          "en": "Twelve photographs survive from that morning, which feels about right — enough to remember by, not so many that the ridge becomes ordinary.",
+          "ru": "С того утра осталось двенадцать снимков, и это, кажется, как раз столько, сколько нужно: достаточно, чтобы помнить, и не столько, чтобы гребень стал привычным.",
+          "de": "Zwölf Fotos sind von jenem Morgen geblieben, und das fühlt sich richtig an — genug, um sich zu erinnern, nicht so viele, dass der Grat gewöhnlich wird."
+        },
+        "provenance": {
+          "source": "gpx",
+          "reference": "n_photos"
+        }
+      },
+      {
+        "text": {
+          "en": "Some climbs you remember for the company, some for the ache in your legs; this one I will remember for the moment the air decided to let us see.",
+          "ru": "Иные восхождения помнишь по спутникам, иные — по ноющим ногам; это я буду помнить за тот миг, когда воздух решил позволить нам видеть.",
+          "de": "Manche Aufstiege bleiben einem wegen der Gesellschaft, manche wegen der Beine; diesen werde ich für den Augenblick behalten, in dem die Luft beschloss, uns sehen zu lassen."
+        },
+        "provenance": {
+          "source": "inferred",
+          "reference": "closing reflection on cleared fog"
+        }
+      }
     ]
-  },
+  ],
   "pull_quote": {
-    "en": "The light arrived not in a blaze but in a slow, generous unveiling.",
-    "ru": "Свет пришёл не вспышкой, а медленным, щедрым раскрытием.",
-    "de": "Das Licht kam nicht als Feuerwerk, sondern als langsame, großzügige Enthüllung."
+    "en": "And then, at the ridge, the fog lifted.",
+    "ru": "А потом, на гребне, туман отступил.",
+    "de": "Und dann, am Grat, hob sich der Nebel."
   },
   "milestone": {
-    "en": "A spring morning in the Bavarian Alps",
-    "ru": "Весеннее утро в Баварских Альпах",
-    "de": "Ein Frühlingsmorgen in den Bayerischen Alpen"
+    "en": "First spring ridge in the Bavarian Alps",
+    "ru": "Первый весенний гребень в Баварских Альпах",
+    "de": "Erster Frühlingsgrat in den Bayerischen Alpen"
   },
   "selected_photo_indices": [
     0,

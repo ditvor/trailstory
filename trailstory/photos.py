@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import json
 import logging
+from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime
 from json import JSONDecodeError
 from pathlib import Path
@@ -11,6 +12,7 @@ from PIL import Image, ImageOps
 from pillow_heif import register_heif_opener
 from pydantic import ValidationError
 
+from trailstory.llm import vision_cache
 from trailstory.llm.client import (
     AnthropicClient,
     LLMResponseError,
@@ -238,8 +240,19 @@ def describe_photos(
     *,
     client: AnthropicClient,
     enabled: bool = True,
+    concurrency: int = 4,
+    use_cache: bool = True,
 ) -> list[PhotoMeta]:
     """Walk a photo list and attach vision-derived descriptions to each.
+
+    Phase 3.1 / ADR-012 adds an on-disk cache keyed by photo bytes +
+    vision model — a re-run on the same photos skips the vision call
+    entirely. Phase 3.2 / ADR-013 runs the LLM calls in parallel
+    (``concurrency`` workers via ``ThreadPoolExecutor``) so a 6-photo
+    hike completes in roughly the wall time of a single photo plus
+    coordination overhead. The Anthropic SDK is thread-safe; the GIL
+    releases on the HTTP wait, so threads beat a single-threaded loop
+    by a wide margin on the I/O-bound describer workload.
 
     Returns a fresh list of :class:`PhotoMeta` copies (the model is
     frozen, so updates flow via ``model_copy(update={"description": ...})``).
@@ -261,30 +274,77 @@ def describe_photos(
             model (typically ``Settings.vision_model``).
         enabled: When ``False``, skip every vision call and return the
             input list unchanged. Defaults to ``True``.
+        concurrency: Max parallel vision calls. Higher saturates the
+            network and the Anthropic rate limit faster; lower keeps
+            the burst small. Default ``4`` is a reasonable balance for
+            v0 traffic.
+        use_cache: When ``True`` (default), look up each photo in the
+            on-disk vision cache before calling the model. Tests pass
+            ``False`` so they can assert call counts on the mocked
+            client.
 
     Returns:
         A new list of :class:`PhotoMeta` instances, in the same order as
         the input, each with ``description`` set when the vision call
-        succeeded.
+        succeeded (or was served from cache).
     """
     if not enabled:
         return photos
+    if not photos:
+        return photos
 
-    out: list[PhotoMeta] = []
-    for photo in photos:
-        try:
-            description = describe_photo(photo.path, client=client)
-        except PhotoDescriptionError as exc:
-            logger.warning(
-                "photo describer failed for %s (idx=%d); proceeding without description: %s",
-                photo.path.name,
-                photo.index,
-                exc,
+    # Single-photo path: skip the threadpool to keep the call-count
+    # semantics obvious in tests and avoid the (tiny) per-thread overhead.
+    if len(photos) == 1 or concurrency <= 1:
+        return [
+            _describe_one_with_cache(photo, client=client, use_cache=use_cache) for photo in photos
+        ]
+
+    # Parallel path. ThreadPoolExecutor preserves submission order via
+    # `.map`; results land in the same order as `photos`. Per-photo
+    # failures are caught inside `_describe_one_with_cache` and surface
+    # as a `None` description, never as an exception.
+    with ThreadPoolExecutor(max_workers=min(concurrency, len(photos))) as pool:
+        return list(
+            pool.map(
+                lambda photo: _describe_one_with_cache(photo, client=client, use_cache=use_cache),
+                photos,
             )
-            out.append(photo)
-            continue
-        out.append(photo.model_copy(update={"description": description}))
-    return out
+        )
+
+
+def _describe_one_with_cache(
+    photo: PhotoMeta, *, client: AnthropicClient, use_cache: bool
+) -> PhotoMeta:
+    """Vision-describe one photo, honouring the on-disk cache.
+
+    Cache hit returns the cached PhotoDescription attached to a fresh
+    PhotoMeta copy. Cache miss runs ``describe_photo``, writes the
+    result back into the cache, and returns the updated copy. A vision
+    failure surfaces as a logged warning and the original PhotoMeta
+    (with ``description=None``) — same soft-fail contract as the
+    pre-cache version.
+    """
+    if use_cache:
+        key = vision_cache.cache_key(photo.path, client.model)
+        cached = vision_cache.get(key)
+        if cached is not None:
+            logger.info("vision cache hit for %s", photo.path.name)
+            return photo.model_copy(update={"description": cached})
+        logger.info("vision cache miss for %s", photo.path.name)
+    try:
+        description = describe_photo(photo.path, client=client)
+    except PhotoDescriptionError as exc:
+        logger.warning(
+            "photo describer failed for %s (idx=%d); proceeding without description: %s",
+            photo.path.name,
+            photo.index,
+            exc,
+        )
+        return photo
+    if use_cache:
+        vision_cache.put(vision_cache.cache_key(photo.path, client.model), description)
+    return photo.model_copy(update={"description": description})
 
 
 # -- internal helpers ----------------------------------------------------

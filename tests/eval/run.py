@@ -243,14 +243,23 @@ def _run_case(
             console.print(f"[red]✗ photos load failed:[/red] {exc}")
             return False
 
-        # Phase 3 (ADR-010): vision describer per photo before narrative
-        # generation. Failures inside describe_photos are non-fatal
-        # (per-photo skip + warn) — the orchestrator handles a partial
-        # description list, and a single flaky vision call should not
-        # tank a whole eval run.
-        photos = describe_photos(photos, client=vision_client, enabled=use_photo_grounding)
+        # Phase 3 (ADR-010) + ADR-012 + ADR-013: vision describer per
+        # photo, threaded, with on-disk cache. The eval bypasses the
+        # cache (use_cache=False) so each run exercises the live vision
+        # call — the cache is a CLI / production optimisation, not an
+        # eval-time fixture. Failures inside describe_photos are
+        # non-fatal (per-photo skip + warn).
+        photos = describe_photos(
+            photos,
+            client=vision_client,
+            enabled=use_photo_grounding,
+            concurrency=4,
+            use_cache=False,
+        )
 
         try:
+            # Phase 2.5 / ADR-011: verifier loop on. The eval honours the
+            # ceiling so goldens reflect what real users get.
             narrative = generate_narrative(
                 case.hike_input,
                 gpx_stats,
@@ -258,6 +267,7 @@ def _run_case(
                 client=writer_client,
                 ledger_client=ledger_client,
                 use_cache=False,
+                max_inferred_ratio=0.5,
             )
         except NarrativeGenerationError as exc:
             console.print(f"[red]✗ narrative generation failed:[/red] {exc}")
