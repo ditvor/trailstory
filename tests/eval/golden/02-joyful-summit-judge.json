@@ -3,5 +3,98 @@
   "narrative_arc": 5.0,
   "russian_fidelity": 5.0,
   "photo_selection_plausibility": 4.5,
-  "notes": "The English prose achieves genuine intimacy through precise, unexpected images — 'a stream stitching its way through the stones,' 'the strange light feeling that comes from being trusted entirely by a small person' — that feel lived rather than composed. The arc moves flawlessly from slow beginning through effortful climb to summit revelation and a closing emotional beat, each paragraph earning its place. The Russian reads as native-register literary prose: 'ручей, прошивающий камни' and 'большой синеве за то, что та выступила для неё' are not back-translations but genuine Russian idiom at the same register. Seven photo indices span 0–11 with reasonable distribution across the arc, though the slight clustering at the high end (10, 11 consecutive) keeps it just short of perfect."
+  "claim_verdicts": [
+    {
+      "claim": "Mia laughed during the climb",
+      "verdict": "SUPPORTED",
+      "quote": "Mia laughed the whole way up"
+    },
+    {
+      "claim": "a blackbird was in the spruce",
+      "verdict": "UNSUPPORTED",
+      "quote": ""
+    },
+    {
+      "claim": "there was a stream under a small bridge",
+      "verdict": "INFERRED",
+      "quote": "every stream"
+    },
+    {
+      "claim": "a gust of wind lifted Mia's hair and made her laugh",
+      "verdict": "INFERRED",
+      "quote": "every gust of wind"
+    },
+    {
+      "claim": "the climb was steeper than the map promised",
+      "verdict": "UNSUPPORTED",
+      "quote": ""
+    },
+    {
+      "claim": "Mia held the narrator's hand on narrow stretches",
+      "verdict": "UNSUPPORTED",
+      "quote": ""
+    },
+    {
+      "claim": "the Bavarian forest smelled of warm needles and damp stone",
+      "verdict": "UNSUPPORTED",
+      "quote": ""
+    },
+    {
+      "claim": "a cowbell rang far below",
+      "verdict": "UNSUPPORTED",
+      "quote": ""
+    },
+    {
+      "claim": "the summit was thirteen hundred metres",
+      "verdict": "UNSUPPORTED",
+      "quote": ""
+    },
+    {
+      "claim": "Mia is four years old",
+      "verdict": "UNSUPPORTED",
+      "quote": ""
+    },
+    {
+      "claim": "they sat on a flat rock at the summit",
+      "verdict": "INFERRED",
+      "quote": "We sat at the summit"
+    },
+    {
+      "claim": "they ate apples at the summit",
+      "verdict": "SUPPORTED",
+      "quote": "eating apples"
+    },
+    {
+      "claim": "Mia ate her apple in tiny, serious bites",
+      "verdict": "UNSUPPORTED",
+      "quote": ""
+    },
+    {
+      "claim": "Mia clapped her hands at the summit",
+      "verdict": "SUPPORTED",
+      "quote": "she clapped her hands at the wide blue"
+    },
+    {
+      "claim": "Mia announced that the sky was very, very blue",
+      "verdict": "INFERRED",
+      "quote": "she clapped her hands at the wide blue"
+    },
+    {
+      "claim": "they stayed at the summit longer than the walk up took",
+      "verdict": "UNSUPPORTED",
+      "quote": ""
+    },
+    {
+      "claim": "Mia was humming a tune on the way down",
+      "verdict": "UNSUPPORTED",
+      "quote": ""
+    },
+    {
+      "claim": "the tune was invented between the stream and the summit",
+      "verdict": "UNSUPPORTED",
+      "quote": ""
+    }
+  ],
+  "notes": "The English prose is exceptionally warm and specific — phrases like 'checking that I was still part of the morning' and 'the sound of a child agreeing with the whole world' go well beyond boilerplate and feel authentically personal. The arc is textbook: gentle opening, effort beat, landscape immersion, the summit apple-and-clap climax, and a luminous falling action. The Russian is idiomatic throughout — 'сообщила никому конкретно', 'заучивала её наизусть', and 'снова умолк' are native-register choices, not calques. Photo indices span 0–11 with eight frames, distributed credibly across the arc; a very slight front-loading (0,2,3) keeps it from a perfect 5.",
+  "faithfulness": 1.39
 }

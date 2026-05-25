@@ -3,5 +3,113 @@
   "narrative_arc": 5.0,
   "russian_fidelity": 5.0,
   "photo_selection_plausibility": 4.5,
-  "notes": "The English prose is richly sensory ('wet stones, the smell of spruce', 'damp at the collar') and intimate without being sentimental, earning a near-top warmth score. The arc is textbook: forest start, effortful blind climb, instantaneous reveal, quiet summit aftermath — every paragraph pulls its weight and the curtain simile lands perfectly. The Russian reads as genuine literary Russian, not a translation; phrasings like 'лес ещё принадлежит самому себе' and 'погода передумала' are idiomatic and register-matched, with no stiffness or Anglicism detectable. Photo indices span 0–11 with seven frames, well-distributed and plausibly matching the arc's beats (start, ascent, fog, ridge moment, panorama, summit rest), though without knowing actual photo content the match remains an inference."
+  "claim_verdicts": [
+    {
+      "claim": "the path was soft from last night's rain",
+      "verdict": "UNSUPPORTED",
+      "quote": ""
+    },
+    {
+      "claim": "pines held the air close",
+      "verdict": "UNSUPPORTED",
+      "quote": ""
+    },
+    {
+      "claim": "valley was hidden beneath them",
+      "verdict": "INFERRED",
+      "quote": "The fog cleared just as we reached the ridge."
+    },
+    {
+      "claim": "sound of cowbells without visible cows",
+      "verdict": "UNSUPPORTED",
+      "quote": ""
+    },
+    {
+      "claim": "climbed inside fog that felt grey and breathing",
+      "verdict": "INFERRED",
+      "quote": "The fog cleared just as we reached the ridge."
+    },
+    {
+      "claim": "voices came back muffled",
+      "verdict": "UNSUPPORTED",
+      "quote": ""
+    },
+    {
+      "claim": "climb was steeper than the map suggested",
+      "verdict": "UNSUPPORTED",
+      "quote": ""
+    },
+    {
+      "claim": "six hundred metres in under an hour and a half",
+      "verdict": "UNSUPPORTED",
+      "quote": ""
+    },
+    {
+      "claim": "path had switchbacks where roots made small staircases",
+      "verdict": "UNSUPPORTED",
+      "quote": ""
+    },
+    {
+      "claim": "smell of wet stone",
+      "verdict": "UNSUPPORTED",
+      "quote": ""
+    },
+    {
+      "claim": "jacket sleeves went dark at the cuffs",
+      "verdict": "UNSUPPORTED",
+      "quote": ""
+    },
+    {
+      "claim": "they didn't talk much during the climb",
+      "verdict": "UNSUPPORTED",
+      "quote": ""
+    },
+    {
+      "claim": "fog cleared just as they reached the ridge",
+      "verdict": "SUPPORTED",
+      "quote": "The fog cleared just as we reached the ridge."
+    },
+    {
+      "claim": "fog stepped aside rather than drifting off",
+      "verdict": "UNSUPPORTED",
+      "quote": ""
+    },
+    {
+      "claim": "Bavarian valleys visible below the ridge",
+      "verdict": "UNSUPPORTED",
+      "quote": ""
+    },
+    {
+      "claim": "valleys appeared in soft scrubbed green after rain",
+      "verdict": "UNSUPPORTED",
+      "quote": ""
+    },
+    {
+      "claim": "far peaks visible from the ridge",
+      "verdict": "UNSUPPORTED",
+      "quote": ""
+    },
+    {
+      "claim": "elevation of 1330 metres",
+      "verdict": "UNSUPPORTED",
+      "quote": ""
+    },
+    {
+      "claim": "they sat on cold rock for a long time",
+      "verdict": "UNSUPPORTED",
+      "quote": ""
+    },
+    {
+      "claim": "shared a sandwich from a crumpled paper bag",
+      "verdict": "UNSUPPORTED",
+      "quote": ""
+    },
+    {
+      "claim": "light kept changing where it landed",
+      "verdict": "UNSUPPORTED",
+      "quote": ""
+    }
+  ],
+  "notes": "The English prose is exceptionally warm and specific — phrases like 'a rumor of cowbells without any cows to prove it' and 'the light kept changing its mind about where to land' avoid all boilerplate. The arc is textbook: descent-in-fog opening, effortful climb, transformative ridge moment, quiet human coda — every paragraph earns its place. The Russian translation is fluent, idiomatic, and register-matched; 'не Бог весть какая высота' for '1330 metres isn't much, as mountains go' is a native-sounding localisation rather than a literal rendering. Photo indices span a believable range (0–11, seven frames, distributed across the arc), though without knowing the actual photo set the match is plausible rather than confirmed.",
+  "faithfulness": 0.48
 }

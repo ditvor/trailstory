@@ -2,6 +2,99 @@
   "warmth": 5.0,
   "narrative_arc": 5.0,
   "russian_fidelity": 5.0,
-  "photo_selection_plausibility": 4.5,
-  "notes": "The English prose is deeply personal throughout — 'the small ugly maths of a parent who has gone too far from the car' and 'something in me rearranged itself' feel genuinely lived-in, not constructed. The arc is textbook-clean: anticipation → endurance → crisis → surrender → discovery → reframing, with each paragraph earning its place. The Russian is native-grade: 'мелкую, некрасивую арифметику' and 'тихо прекрасен' render the register precisely without calquing English syntax, and 'целые мягкие полки папоротников' is a confident creative choice. Seven photo indices span 0–11 well and match the narrative beats (early ascent, fog, effort, descent, ferns, sleeping child, final mood), with only a slight question about whether indices 8 and 9 are consecutive enough to feel like distinct story moments."
+  "photo_selection_plausibility": 4.0,
+  "claim_verdicts": [
+    {
+      "claim": "The fog never lifted during the hike",
+      "verdict": "SUPPORTED",
+      "quote": "The fog never lifted."
+    },
+    {
+      "claim": "They entered the fog at the trailhead",
+      "verdict": "INFERRED",
+      "quote": "The fog never lifted. Mia cried for the last hour"
+    },
+    {
+      "claim": "The route was approximately two kilometres on paper",
+      "verdict": "UNSUPPORTED",
+      "quote": ""
+    },
+    {
+      "claim": "The mountain gained six hundred metres of elevation",
+      "verdict": "UNSUPPORTED",
+      "quote": ""
+    },
+    {
+      "claim": "Mia was patient for a long time before crying",
+      "verdict": "INFERRED",
+      "quote": "Mia cried for the last hour"
+    },
+    {
+      "claim": "Mia cried for the last hour of ascent",
+      "verdict": "SUPPORTED",
+      "quote": "Mia cried for the last hour"
+    },
+    {
+      "claim": "Mia was carried in a carrier on the narrator's shoulders",
+      "verdict": "INFERRED",
+      "quote": "my shoulders burned"
+    },
+    {
+      "claim": "The narrator's shoulders went hot then numb",
+      "verdict": "INFERRED",
+      "quote": "my shoulders burned"
+    },
+    {
+      "claim": "There was a wooden post at the summit",
+      "verdict": "UNSUPPORTED",
+      "quote": ""
+    },
+    {
+      "claim": "Mia went quiet at the summit before falling asleep",
+      "verdict": "INFERRED",
+      "quote": "Mia cried for the last hour"
+    },
+    {
+      "claim": "Mia fell asleep on the descent",
+      "verdict": "SUPPORTED",
+      "quote": "she fell asleep on the descent"
+    },
+    {
+      "claim": "The narrator noticed ferns underfoot on the descent",
+      "verdict": "SUPPORTED",
+      "quote": "I noticed the ferns underfoot"
+    },
+    {
+      "claim": "The ferns were bright green against the grey",
+      "verdict": "UNSUPPORTED",
+      "quote": ""
+    },
+    {
+      "claim": "The narrator had not seen the ferns on the way up",
+      "verdict": "UNSUPPORTED",
+      "quote": ""
+    },
+    {
+      "claim": "The narrator walked the descent very slowly so as not to wake Mia",
+      "verdict": "UNSUPPORTED",
+      "quote": ""
+    },
+    {
+      "claim": "The narrator imagined a café with a warm bench and cake in the valley",
+      "verdict": "UNSUPPORTED",
+      "quote": ""
+    },
+    {
+      "claim": "The hike was in the Bavarian Alps",
+      "verdict": "UNSUPPORTED",
+      "quote": ""
+    },
+    {
+      "claim": "The narrator felt they had made a mistake during the ascent",
+      "verdict": "SUPPORTED",
+      "quote": "I was sure we'd made a mistake"
+    }
+  ],
+  "notes": "The prose is exceptionally warm and specific — 'her crying tucked against my collarbone,' 'hot and then numb' — earning a full 5 for warmth. The arc is textbook: fog-shrouded opening, effort-and-doubt middle, spare summit, and the fern revelation on descent; every paragraph earns its place. The Russian is idiomatic and register-matched throughout — 'тем маленьким, почти звериным образом' and 'в белом мареве' are native-sounding choices, not translationese. Photo indices (7 frames, spread 0–11) trace the arc plausibly, though the clustering of 8-9-11 at the end is slightly heavy on the descent beat.",
+  "faithfulness": 2.08
 }
