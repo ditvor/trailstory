@@ -149,6 +149,11 @@ def main(argv: list[str] | None = None) -> int:
 
     settings = load_settings()
     writer_client = AnthropicClient(settings.anthropic_api_key, model=settings.model)
+    # Phase 2 (ADR-009): the writer's Opus call is preceded by a cheap
+    # extractor pass that produces a structured FactLedger. The eval
+    # exercises the full two-pass pipeline so faithfulness scores
+    # reflect what real users get, not a simulated single-pass version.
+    ledger_client = AnthropicClient(settings.anthropic_api_key, model=settings.ledger_model)
 
     judge_client: AnthropicClient | None = None
     threshold = DEFAULT_REGRESSION_THRESHOLD
@@ -160,7 +165,7 @@ def main(argv: list[str] | None = None) -> int:
     console = Console()
     header = (
         f"[bold]running narrative eval[/bold] — writer={writer_client.model}, "
-        f"{len(cases)} case(s), cache disabled"
+        f"ledger={ledger_client.model}, {len(cases)} case(s), cache disabled"
     )
     if judge_client is not None:
         header += f", judge={judge_client.model}, regression threshold={threshold:.2f}"
@@ -171,6 +176,7 @@ def main(argv: list[str] | None = None) -> int:
         passed = _run_case(
             case,
             writer_client=writer_client,
+            ledger_client=ledger_client,
             judge_client=judge_client,
             console=console,
             update_golden=args.update_golden,
@@ -200,6 +206,7 @@ def _run_case(
     case: EvalCase,
     *,
     writer_client: AnthropicClient,
+    ledger_client: AnthropicClient,
     judge_client: AnthropicClient | None,
     console: Console,
     update_golden: bool,
@@ -231,6 +238,7 @@ def _run_case(
                 gpx_stats,
                 photos,
                 client=writer_client,
+                ledger_client=ledger_client,
                 use_cache=False,
             )
         except NarrativeGenerationError as exc:

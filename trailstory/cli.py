@@ -142,12 +142,23 @@ def generate(
                 max_tokens=settings.narrative_max_tokens,
                 max_retries=settings.narrative_max_retries,
             )
+            # Phase 2 (ADR-009): the ledger extractor runs on a separate,
+            # cheaper model so the writer's Opus budget is spent only on
+            # the prose pass. Built here rather than reused so the two
+            # passes are independently configurable via env vars.
+            ledger_client = AnthropicClient(
+                settings.anthropic_api_key,
+                model=settings.ledger_model,
+                max_tokens=settings.narrative_max_tokens,
+                max_retries=settings.narrative_max_retries,
+            )
             with console.status("Generating narrative…", spinner="dots"):
                 narrative = generate_narrative(
                     hike_input,
                     stats,
                     photos,
                     client=client,
+                    ledger_client=ledger_client,
                     use_cache=not no_cache,
                 )
             console.print(

@@ -29,19 +29,14 @@ from trailstory.llm.prompts import (
 )
 from trailstory.models import NarrativeOutput
 
-# Every placeholder ``narrative.py`` is required to supply.
+# Every placeholder ``narrative.py`` is required to supply to the WRITER
+# template. Under ADR-009 the writer no longer sees raw seed_text or
+# individual hike-data placeholders — those live in the ledger now.
 EXPECTED_PLACEHOLDERS: frozenset[str] = frozenset(
     {
-        "location",
-        "hike_date",
-        "season",
-        "distance_km",
-        "elevation_gain_m",
-        "duration_min",
-        "summit_elev_m",
+        "ledger_json",
         "n_photos",
         "n_photos_minus_1",
-        "seed_text",
     }
 )
 
@@ -55,16 +50,32 @@ def _placeholders(template: str) -> set[str]:
 def sample_fields() -> dict[str, object]:
     """Plausible values for every documented placeholder."""
     return {
-        "location": "Tegernsee, Bavaria",
-        "hike_date": "2026-04-18",
-        "season": "spring (April; northern hemisphere)",
-        "distance_km": 6.2,
-        "elevation_gain_m": 610,
-        "duration_min": 165,
-        "summit_elev_m": 1330,
+        "ledger_json": json.dumps(
+            {
+                "people": [{"name": "Mia", "role": "baby in carrier"}],
+                "weather": "amazing weather",
+                "chronology": [
+                    {
+                        "time_of_day": "morning",
+                        "activity": "ascent through fog",
+                        "emotion": "anticipation",
+                        "objects_mentioned": ["fog", "ridge"],
+                    }
+                ],
+                "where": "Tegernsee, Bavaria",
+                "when": "2026-04-18T08:00:00",
+                "season": "spring (April; northern hemisphere)",
+                "duration_min": 165,
+                "distance_km": 6.2,
+                "elevation_gain_m": 610,
+                "summit_elev_m": 1330,
+                "n_photos": 12,
+            },
+            ensure_ascii=False,
+            indent=2,
+        ),
         "n_photos": 12,
         "n_photos_minus_1": 11,
-        "seed_text": "The fog cleared just as we reached the ridge.",
     }
 
 
@@ -137,17 +148,21 @@ def test_user_template_formats_with_documented_keys(
 def test_user_template_format_propagates_values(
     sample_fields: dict[str, object],
 ) -> None:
+    """Ledger contents flow into the writer prompt via the {ledger_json}
+    placeholder (ADR-009). The writer no longer sees raw seed_text or
+    individual hike-data fields."""
     rendered = USER_NARRATIVE_TEMPLATE.format(**sample_fields)
-    assert "Tegernsee, Bavaria" in rendered
-    assert "6.2" in rendered
-    assert "fog cleared" in rendered
+    # Spot-check that recognisable ledger contents made it into the prompt.
+    assert "Tegernsee, Bavaria" in rendered  # ledger["where"]
+    assert "Mia" in rendered  # ledger["people"][0]["name"]
+    assert "amazing weather" in rendered  # ledger["weather"]
 
 
 def test_user_template_raises_on_missing_field(
     sample_fields: dict[str, object],
 ) -> None:
     incomplete = dict(sample_fields)
-    incomplete.pop("seed_text")
+    incomplete.pop("ledger_json")
     with pytest.raises(KeyError):
         USER_NARRATIVE_TEMPLATE.format(**incomplete)
 

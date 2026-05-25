@@ -9,8 +9,14 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 
 class Settings(BaseSettings):
     anthropic_api_key: SecretStr
-    # Default narrative model — see docs/adr/002-narrative-model-choice.md.
+    # Default narrative writer model — see docs/adr/002-narrative-model-choice.md.
     model: str = "claude-opus-4-7"
+    # Ledger extractor model (Phase 2 / ADR-009). A cheap, fast model is
+    # plenty for the structured-fact-extraction task; Opus quality is
+    # wasted on a few hundred tokens of JSON. Override via LEDGER_MODEL
+    # env var. Defaulting to the latest Haiku class as of ship time;
+    # bump when a newer fast model lands.
+    ledger_model: str = "claude-haiku-4-5"
     output_dir: Path = Path("./output")
     log_level: str = "INFO"
 

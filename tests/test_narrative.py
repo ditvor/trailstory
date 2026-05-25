@@ -128,13 +128,63 @@ def _valid_response_json(indices: list[int] | None = None) -> str:
 
 
 def _client(*responses: str | Exception) -> MagicMock:
-    """Build a mocked client whose ``.complete`` yields each item in turn."""
+    """Build a mocked WRITER client whose ``.complete`` yields each item in turn."""
     mock = MagicMock(spec=AnthropicClient)
     mock.complete.side_effect = list(responses)
     # ``cache_key`` reads ``client.model``; with spec=AnthropicClient that
     # would be a MagicMock and json.dumps would fail. Pin it to a string
     # so any test that does opt into the cache still works.
     mock.model = "claude-opus-4-7-test"
+    return mock
+
+
+def _valid_extractor_dict(
+    *,
+    people: list[dict[str, object]] | None = None,
+    weather: str = "amazing weather",
+    chronology: list[dict[str, object]] | None = None,
+) -> dict[str, object]:
+    """Build a plausible extractor response for ADR-009 two-pass tests."""
+    return {
+        "people": people if people is not None else [{"name": "Mia", "role": "baby in carrier"}],
+        "weather": weather,
+        "chronology": chronology
+        if chronology is not None
+        else [
+            {
+                "time_of_day": "morning",
+                "activity": "ascent through fog",
+                "emotion": "anticipation",
+                "objects_mentioned": ["fog", "ridge"],
+            },
+            {
+                "time_of_day": "afternoon",
+                "activity": "summit and descent",
+                "emotion": "quiet",
+                "objects_mentioned": ["sunlight"],
+            },
+        ],
+    }
+
+
+def _valid_extractor_json(**overrides: object) -> str:
+    return json.dumps(_valid_extractor_dict(**overrides))
+
+
+def _ledger_client(*responses: str | Exception) -> MagicMock:
+    """Build a mocked LEDGER (extractor) client.
+
+    ADR-009: every call to ``generate_narrative`` / ``generate_narrative_stream``
+    now needs two mocked clients — one for the cheap extractor pass and one
+    for the Opus writer. Default response is the standard valid extractor
+    output; callers can pass exception types or non-JSON strings to exercise
+    failure paths.
+    """
+    mock = MagicMock(spec=AnthropicClient)
+    if not responses:
+        responses = (_valid_extractor_json(),)
+    mock.complete.side_effect = list(responses)
+    mock.model = "claude-haiku-4-5-test"
     return mock
 
 
@@ -152,7 +202,14 @@ _NO_CACHE: dict[str, bool] = {"use_cache": False}
 def test_generate_narrative_happy_path() -> None:
     client = _client(_valid_response_json())
 
-    out = generate_narrative(_hike_input(), _gpx_stats(), _photos(), client=client, **_NO_CACHE)
+    out = generate_narrative(
+        _hike_input(),
+        _gpx_stats(),
+        _photos(),
+        client=client,
+        ledger_client=_ledger_client(),
+        **_NO_CACHE,
+    )
 
     assert isinstance(out, NarrativeOutput)
     assert out.title.en == "Above the fog line"
@@ -167,7 +224,14 @@ def test_generate_narrative_strips_markdown_fences() -> None:
     fenced = "```json\n" + _valid_response_json() + "\n```"
     client = _client(fenced)
 
-    out = generate_narrative(_hike_input(), _gpx_stats(), _photos(), client=client, **_NO_CACHE)
+    out = generate_narrative(
+        _hike_input(),
+        _gpx_stats(),
+        _photos(),
+        client=client,
+        ledger_client=_ledger_client(),
+        **_NO_CACHE,
+    )
 
     assert out.title.en == "Above the fog line"
     # Fenced response parsed on the first attempt — no retry needed.
@@ -178,7 +242,14 @@ def test_generate_narrative_strips_bare_triple_backtick_fence() -> None:
     fenced = "```\n" + _valid_response_json() + "\n```"
     client = _client(fenced)
 
-    out = generate_narrative(_hike_input(), _gpx_stats(), _photos(), client=client, **_NO_CACHE)
+    out = generate_narrative(
+        _hike_input(),
+        _gpx_stats(),
+        _photos(),
+        client=client,
+        ledger_client=_ledger_client(),
+        **_NO_CACHE,
+    )
 
     assert out.milestone.en == "First mountain hike"
     assert client.complete.call_count == 1
@@ -195,29 +266,42 @@ def test_generate_narrative_passes_hike_data_to_prompt() -> None:
         _gpx_stats(),
         _photos(n=8),
         client=client,
+        ledger_client=_ledger_client(),
         location="Tegernsee, Bavaria",
         **_NO_CACHE,
     )
 
     sent = client.complete.call_args.kwargs["prompt"]
-    # Hike data is interpolated into the prompt.
-    assert "Tegernsee, Bavaria" in sent
-    assert "6.2" in sent  # distance_km
-    assert "610" in sent  # elevation_gain_m
-    assert "1330" in sent  # summit_elev_m
-    assert "165" in sent  # duration_min
-    assert "fog cleared" in sent
-    # Photo count and zero-indexed upper bound.
-    assert "Photos available: 8 (indexed 0-7)" in sent
-    # ADR-008 — date + season grounding.
-    assert "2026-04-18" in sent
-    assert "spring (April; northern hemisphere)" in sent
+    # Under ADR-009 the writer receives a serialized FactLedger plus only
+    # n_photos / n_photos_minus_1. The ledger JSON embedded in the prompt
+    # carries the previously-individual hike-data fields, so they still
+    # appear as substrings — but now via JSON, not raw placeholders.
+    assert "Tegernsee, Bavaria" in sent  # ledger["where"]
+    assert "6.2" in sent  # ledger["distance_km"]
+    assert "610" in sent  # ledger["elevation_gain_m"]
+    assert "1330" in sent  # ledger["summit_elev_m"]
+    assert "165" in sent  # ledger["duration_min"]
+    # Photo count and zero-indexed upper bound — still direct placeholders.
+    assert "8 available (indexed 0-7)" in sent
+    # ADR-008 date + season grounding now lives inside the ledger.
+    assert "2026-04-18" in sent  # ledger["when"]
+    assert "spring (April; northern hemisphere)" in sent  # ledger["season"]
+    # The raw seed text no longer reaches the writer — that's the whole
+    # point of the two-pass architecture (ADR-009).
+    assert "fog cleared" not in sent
 
 
 def test_generate_narrative_uses_default_location_when_not_supplied() -> None:
     client = _client(_valid_response_json())
 
-    generate_narrative(_hike_input(), _gpx_stats(), _photos(), client=client, **_NO_CACHE)
+    generate_narrative(
+        _hike_input(),
+        _gpx_stats(),
+        _photos(),
+        client=client,
+        ledger_client=_ledger_client(),
+        **_NO_CACHE,
+    )
 
     sent = client.complete.call_args.kwargs["prompt"]
     assert "the trail" in sent
@@ -229,7 +313,13 @@ def test_generate_narrative_prefers_hike_input_location_name() -> None:
     hike = _hike_input().model_copy(update={"location_name": "Watzmann"})
 
     generate_narrative(
-        hike, _gpx_stats(), _photos(), client=client, location="ignored", **_NO_CACHE
+        hike,
+        _gpx_stats(),
+        _photos(),
+        client=client,
+        ledger_client=_ledger_client(),
+        location="ignored",
+        **_NO_CACHE,
     )
 
     sent = client.complete.call_args.kwargs["prompt"]
@@ -240,7 +330,14 @@ def test_generate_narrative_prefers_hike_input_location_name() -> None:
 def test_generate_narrative_passes_system_prompt() -> None:
     client = _client(_valid_response_json())
 
-    generate_narrative(_hike_input(), _gpx_stats(), _photos(), client=client, **_NO_CACHE)
+    generate_narrative(
+        _hike_input(),
+        _gpx_stats(),
+        _photos(),
+        client=client,
+        ledger_client=_ledger_client(),
+        **_NO_CACHE,
+    )
 
     system = client.complete.call_args.kwargs["system"]
     assert "warm" in system.lower() or "memories" in system.lower()
@@ -253,7 +350,14 @@ def test_generate_narrative_retries_on_invalid_json_then_succeeds() -> None:
     prose = "Sure! Here's the memory you asked for: it was a beautiful day..."
     client = _client(prose, _valid_response_json())
 
-    out = generate_narrative(_hike_input(), _gpx_stats(), _photos(), client=client, **_NO_CACHE)
+    out = generate_narrative(
+        _hike_input(),
+        _gpx_stats(),
+        _photos(),
+        client=client,
+        ledger_client=_ledger_client(),
+        **_NO_CACHE,
+    )
 
     assert out.title.en == "Above the fog line"
     assert client.complete.call_count == 2
@@ -262,7 +366,14 @@ def test_generate_narrative_retries_on_invalid_json_then_succeeds() -> None:
 def test_generate_narrative_retry_appends_json_only_directive() -> None:
     client = _client("not json at all", _valid_response_json())
 
-    generate_narrative(_hike_input(), _gpx_stats(), _photos(), client=client, **_NO_CACHE)
+    generate_narrative(
+        _hike_input(),
+        _gpx_stats(),
+        _photos(),
+        client=client,
+        ledger_client=_ledger_client(),
+        **_NO_CACHE,
+    )
 
     first_prompt = client.complete.call_args_list[0].kwargs["prompt"]
     second_prompt = client.complete.call_args_list[1].kwargs["prompt"]
@@ -273,7 +384,14 @@ def test_generate_narrative_raises_after_two_invalid_json_attempts() -> None:
     client = _client("first prose", "second prose")
 
     with pytest.raises(NarrativeGenerationError, match="non-JSON output on both"):
-        generate_narrative(_hike_input(), _gpx_stats(), _photos(), client=client, **_NO_CACHE)
+        generate_narrative(
+            _hike_input(),
+            _gpx_stats(),
+            _photos(),
+            client=client,
+            ledger_client=_ledger_client(),
+            **_NO_CACHE,
+        )
     assert client.complete.call_count == 2
 
 
@@ -282,7 +400,14 @@ def test_generate_narrative_treats_json_array_as_parse_failure() -> None:
     object — should trigger the retry path, not a validation error."""
     client = _client("[1, 2, 3]", _valid_response_json())
 
-    out = generate_narrative(_hike_input(), _gpx_stats(), _photos(), client=client, **_NO_CACHE)
+    out = generate_narrative(
+        _hike_input(),
+        _gpx_stats(),
+        _photos(),
+        client=client,
+        ledger_client=_ledger_client(),
+        **_NO_CACHE,
+    )
 
     assert out.title.en == "Above the fog line"
     assert client.complete.call_count == 2
@@ -298,7 +423,14 @@ def test_generate_narrative_raises_on_validation_error() -> None:
     client = _client(incomplete)
 
     with pytest.raises(NarrativeGenerationError, match="schema"):
-        generate_narrative(_hike_input(), _gpx_stats(), _photos(), client=client, **_NO_CACHE)
+        generate_narrative(
+            _hike_input(),
+            _gpx_stats(),
+            _photos(),
+            client=client,
+            ledger_client=_ledger_client(),
+            **_NO_CACHE,
+        )
     assert client.complete.call_count == 1
 
 
@@ -310,7 +442,14 @@ def test_generate_narrative_does_not_retry_on_validation_error() -> None:
     client = _client(incomplete, second)
 
     with pytest.raises(NarrativeGenerationError):
-        generate_narrative(_hike_input(), _gpx_stats(), _photos(), client=client, **_NO_CACHE)
+        generate_narrative(
+            _hike_input(),
+            _gpx_stats(),
+            _photos(),
+            client=client,
+            ledger_client=_ledger_client(),
+            **_NO_CACHE,
+        )
     assert client.complete.call_count == 1
 
 
@@ -321,14 +460,28 @@ def test_generate_narrative_translates_llm_response_error() -> None:
     client = _client(LLMResponseError("empty response"))
 
     with pytest.raises(NarrativeGenerationError, match="LLM call failed"):
-        generate_narrative(_hike_input(), _gpx_stats(), _photos(), client=client, **_NO_CACHE)
+        generate_narrative(
+            _hike_input(),
+            _gpx_stats(),
+            _photos(),
+            client=client,
+            ledger_client=_ledger_client(),
+            **_NO_CACHE,
+        )
 
 
 def test_generate_narrative_translates_llm_retry_exhausted() -> None:
     client = _client(LLMRetryExhaustedError("rate-limited 3x"))
 
     with pytest.raises(NarrativeGenerationError, match="LLM call failed"):
-        generate_narrative(_hike_input(), _gpx_stats(), _photos(), client=client, **_NO_CACHE)
+        generate_narrative(
+            _hike_input(),
+            _gpx_stats(),
+            _photos(),
+            client=client,
+            ledger_client=_ledger_client(),
+            **_NO_CACHE,
+        )
 
 
 def test_generate_narrative_does_not_retry_on_llm_error() -> None:
@@ -337,7 +490,14 @@ def test_generate_narrative_does_not_retry_on_llm_error() -> None:
     client = _client(LLMResponseError("boom"), _valid_response_json())
 
     with pytest.raises(NarrativeGenerationError):
-        generate_narrative(_hike_input(), _gpx_stats(), _photos(), client=client, **_NO_CACHE)
+        generate_narrative(
+            _hike_input(),
+            _gpx_stats(),
+            _photos(),
+            client=client,
+            ledger_client=_ledger_client(),
+            **_NO_CACHE,
+        )
     assert client.complete.call_count == 1
 
 
@@ -348,7 +508,14 @@ def test_generate_narrative_rejects_empty_photo_list() -> None:
     client = _client()  # should never be called
 
     with pytest.raises(NarrativeGenerationError, match="at least one photo"):
-        generate_narrative(_hike_input(), _gpx_stats(), [], client=client, **_NO_CACHE)
+        generate_narrative(
+            _hike_input(),
+            _gpx_stats(),
+            [],
+            client=client,
+            ledger_client=_ledger_client(),
+            **_NO_CACHE,
+        )
     client.complete.assert_not_called()
 
 
@@ -356,10 +523,18 @@ def test_generate_narrative_photo_count_matches_photos() -> None:
     """``n_photos`` placeholder reflects the actual list length."""
     client = _client(_valid_response_json())
 
-    generate_narrative(_hike_input(), _gpx_stats(), _photos(n=4), client=client, **_NO_CACHE)
+    generate_narrative(
+        _hike_input(),
+        _gpx_stats(),
+        _photos(n=4),
+        client=client,
+        ledger_client=_ledger_client(),
+        **_NO_CACHE,
+    )
 
     sent = client.complete.call_args.kwargs["prompt"]
-    assert "Photos available: 4 (indexed 0-3)" in sent
+    # ADR-009 writer prompt phrasing: "{n_photos} available (indexed 0-{n_photos_minus_1})".
+    assert "4 available (indexed 0-3)" in sent
 
 
 def test_generate_narrative_supplies_every_template_placeholder() -> None:
@@ -376,7 +551,14 @@ def test_generate_narrative_supplies_every_template_placeholder() -> None:
 
     # If any placeholder is unsupplied, .format() inside generate_narrative
     # raises KeyError, which propagates (not wrapped in NarrativeGenerationError).
-    generate_narrative(_hike_input(), _gpx_stats(), _photos(), client=client, **_NO_CACHE)
+    generate_narrative(
+        _hike_input(),
+        _gpx_stats(),
+        _photos(),
+        client=client,
+        ledger_client=_ledger_client(),
+        **_NO_CACHE,
+    )
     sent = client.complete.call_args.kwargs["prompt"]
 
     # Sanity check: no remaining {placeholder} tokens.
@@ -386,59 +568,103 @@ def test_generate_narrative_supplies_every_template_placeholder() -> None:
     assert leftover == [], f"unfilled placeholders {leftover}; expected none of {expected}"
 
 
-# ── date + season inference (ADR-008) ────────────────────────────────────────
+# ── date + season inference (ADR-008, surfaced via ADR-009 ledger) ───────────
 #
-# The writer prompt grounds against an inferred season so April hikes don't
-# get described in "summer-milky river" terms (an observed failure mode in
-# Phase 0 baseline output). The orchestrator computes the season from the
-# first timed waypoint and passes it into the prompt — these tests exercise
-# the inference's branches via the prompt content.
+# Phase 1 (ADR-008) introduced the inferred date/season; Phase 2 (ADR-009)
+# threads them through the FactLedger now rather than as raw writer-prompt
+# placeholders. These tests assert the inference still flows correctly —
+# they look at the LEDGER prompt (where the season string is interpolated
+# directly into the extractor's grounding context) and at the WRITER
+# prompt's embedded ledger JSON.
 
 
 def test_generate_narrative_grounds_northern_spring_in_prompt() -> None:
     client = _client(_valid_response_json())
+    ledger_client = _ledger_client()
     stats = _gpx_stats(waypoint_time=datetime(2026, 4, 18, 10, 25, 0), lat=47.55)
 
-    generate_narrative(_hike_input(), stats, _photos(), client=client, **_NO_CACHE)
+    generate_narrative(
+        _hike_input(),
+        stats,
+        _photos(),
+        client=client,
+        ledger_client=ledger_client,
+        **_NO_CACHE,
+    )
 
-    sent = client.complete.call_args.kwargs["prompt"]
-    assert "2026-04-18" in sent
-    assert "spring (April; northern hemisphere)" in sent
+    # Extractor sees the date+season as grounding context.
+    ledger_sent = ledger_client.complete.call_args.kwargs["prompt"]
+    assert "2026-04-18" in ledger_sent
+    assert "spring (April; northern hemisphere)" in ledger_sent
+    # Writer sees them inside the serialized FactLedger JSON.
+    writer_sent = client.complete.call_args.kwargs["prompt"]
+    assert "2026-04-18" in writer_sent
+    assert "spring (April; northern hemisphere)" in writer_sent
 
 
 def test_generate_narrative_grounds_southern_hemisphere_in_prompt() -> None:
     """A negative latitude inverts the season — April in Patagonia is autumn."""
     client = _client(_valid_response_json())
+    ledger_client = _ledger_client()
     stats = _gpx_stats(waypoint_time=datetime(2026, 4, 18, 10, 25, 0), lat=-41.5)
 
-    generate_narrative(_hike_input(), stats, _photos(), client=client, **_NO_CACHE)
+    generate_narrative(
+        _hike_input(),
+        stats,
+        _photos(),
+        client=client,
+        ledger_client=ledger_client,
+        **_NO_CACHE,
+    )
 
-    sent = client.complete.call_args.kwargs["prompt"]
-    assert "autumn (April; southern hemisphere)" in sent
+    # Both passes see the southern-hemisphere season.
+    assert (
+        "autumn (April; southern hemisphere)" in ledger_client.complete.call_args.kwargs["prompt"]
+    )
+    assert "autumn (April; southern hemisphere)" in client.complete.call_args.kwargs["prompt"]
 
 
 def test_generate_narrative_grounds_no_timestamps_as_unknown() -> None:
     """Manually-edited GPX files sometimes strip timing — fall back to 'unknown'."""
     client = _client(_valid_response_json())
+    ledger_client = _ledger_client()
     stats = _gpx_stats(waypoint_time=None)
 
-    generate_narrative(_hike_input(), stats, _photos(), client=client, **_NO_CACHE)
+    generate_narrative(
+        _hike_input(),
+        stats,
+        _photos(),
+        client=client,
+        ledger_client=ledger_client,
+        **_NO_CACHE,
+    )
 
-    sent = client.complete.call_args.kwargs["prompt"]
-    assert "Date: unknown (unknown)" in sent
+    ledger_sent = ledger_client.complete.call_args.kwargs["prompt"]
+    assert "Date: unknown (unknown)" in ledger_sent
 
 
-def test_generate_narrative_prompt_contains_anti_fabrication_clause() -> None:
-    """Smoke test: the writer prompt now carries the ADR-008 fabrication guard."""
+def test_generate_narrative_writer_prompt_constrains_to_ledger_only() -> None:
+    """ADR-009: the writer's prompt instructs ledger-only grounding, and the
+    raw seed text never reaches it (that's the structural fabrication guard)."""
     client = _client(_valid_response_json())
 
-    generate_narrative(_hike_input(), _gpx_stats(), _photos(), client=client, **_NO_CACHE)
+    generate_narrative(
+        _hike_input(),
+        _gpx_stats(),
+        _photos(),
+        client=client,
+        ledger_client=_ledger_client(),
+        **_NO_CACHE,
+    )
 
-    sent = client.complete.call_args.kwargs["prompt"]
-    # Specific example nouns the clause forbids without source grounding.
-    assert "duck" in sent.lower()
-    # The grounding rule itself.
-    assert "sources of fact" in sent.lower() or "trace to the seed" in sent.lower()
+    writer_sent = client.complete.call_args.kwargs["prompt"]
+    # Ledger-only constraint phrasing.
+    assert "ledger" in writer_sent.lower()
+    # The original Phase 1 anti-fabrication example noun set survives.
+    assert "duck" in writer_sent.lower() or "animal" in writer_sent.lower()
+    # The seed text does NOT reach the writer (would let it ground in raw
+    # prose, defeating the point).
+    assert "fog cleared" not in writer_sent
 
 
 # ── streaming variant ────────────────────────────────────────────────────────
@@ -469,7 +695,11 @@ def test_generate_narrative_stream_yields_chunks_and_terminal_event() -> None:
     chunks = _split(_valid_response_json())
     client = _stream_client(chunks)
 
-    events = list(generate_narrative_stream(_hike_input(), _gpx_stats(), _photos(), client=client))
+    events = list(
+        generate_narrative_stream(
+            _hike_input(), _gpx_stats(), _photos(), client=client, ledger_client=_ledger_client()
+        )
+    )
 
     chunk_events = [e for e in events if isinstance(e, NarrativeStreamChunk)]
     complete_events = [e for e in events if isinstance(e, NarrativeStreamComplete)]
@@ -486,7 +716,11 @@ def test_generate_narrative_stream_retries_on_unparseable_first_attempt() -> Non
     chunks_good = _split(_valid_response_json())
     client = _stream_client(chunks_bad, chunks_good)
 
-    events = list(generate_narrative_stream(_hike_input(), _gpx_stats(), _photos(), client=client))
+    events = list(
+        generate_narrative_stream(
+            _hike_input(), _gpx_stats(), _photos(), client=client, ledger_client=_ledger_client()
+        )
+    )
 
     retries = [e for e in events if isinstance(e, NarrativeStreamRetry)]
     completes = [e for e in events if isinstance(e, NarrativeStreamComplete)]
@@ -503,14 +737,26 @@ def test_generate_narrative_stream_raises_on_double_failure() -> None:
     client = _stream_client(bad, bad)
 
     with pytest.raises(NarrativeGenerationError, match="non-JSON"):
-        list(generate_narrative_stream(_hike_input(), _gpx_stats(), _photos(), client=client))
+        list(
+            generate_narrative_stream(
+                _hike_input(),
+                _gpx_stats(),
+                _photos(),
+                client=client,
+                ledger_client=_ledger_client(),
+            )
+        )
 
 
 def test_generate_narrative_stream_strips_markdown_fences() -> None:
     fenced = "```json\n" + _valid_response_json() + "\n```"
     client = _stream_client(_split(fenced))
 
-    events = list(generate_narrative_stream(_hike_input(), _gpx_stats(), _photos(), client=client))
+    events = list(
+        generate_narrative_stream(
+            _hike_input(), _gpx_stats(), _photos(), client=client, ledger_client=_ledger_client()
+        )
+    )
     # Single attempt — no retry — and the narrative parses cleanly.
     completes = [e for e in events if isinstance(e, NarrativeStreamComplete)]
     assert len(completes) == 1
@@ -520,20 +766,40 @@ def test_generate_narrative_stream_strips_markdown_fences() -> None:
 def test_generate_narrative_stream_rejects_empty_photo_list() -> None:
     client = _stream_client()
     with pytest.raises(NarrativeGenerationError, match="at least one photo"):
-        list(generate_narrative_stream(_hike_input(), _gpx_stats(), [], client=client))
+        list(
+            generate_narrative_stream(
+                _hike_input(), _gpx_stats(), [], client=client, ledger_client=_ledger_client()
+            )
+        )
     client.complete_stream.assert_not_called()
 
 
 def test_generate_narrative_stream_translates_llm_error() -> None:
     client = _stream_client(LLMResponseError("boom"))
     with pytest.raises(NarrativeGenerationError, match="LLM call failed"):
-        list(generate_narrative_stream(_hike_input(), _gpx_stats(), _photos(), client=client))
+        list(
+            generate_narrative_stream(
+                _hike_input(),
+                _gpx_stats(),
+                _photos(),
+                client=client,
+                ledger_client=_ledger_client(),
+            )
+        )
 
 
 def test_generate_narrative_stream_translates_retry_exhausted_error() -> None:
     client = _stream_client(LLMRetryExhaustedError("rate limit"))
     with pytest.raises(NarrativeGenerationError, match="LLM call failed"):
-        list(generate_narrative_stream(_hike_input(), _gpx_stats(), _photos(), client=client))
+        list(
+            generate_narrative_stream(
+                _hike_input(),
+                _gpx_stats(),
+                _photos(),
+                client=client,
+                ledger_client=_ledger_client(),
+            )
+        )
 
 
 def test_generate_narrative_stream_validates_schema() -> None:
@@ -541,4 +807,12 @@ def test_generate_narrative_stream_validates_schema() -> None:
     bogus = json.dumps({"title": {"en": "x"}})
     client = _stream_client(_split(bogus, parts=2))
     with pytest.raises(NarrativeGenerationError, match="schema"):
-        list(generate_narrative_stream(_hike_input(), _gpx_stats(), _photos(), client=client))
+        list(
+            generate_narrative_stream(
+                _hike_input(),
+                _gpx_stats(),
+                _photos(),
+                client=client,
+                ledger_client=_ledger_client(),
+            )
+        )

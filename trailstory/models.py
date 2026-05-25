@@ -97,6 +97,78 @@ class NarrativeOutput(BaseModel):
     selected_photo_indices: list[int]
 
 
+# ── FactLedger (ADR-009, Phase 2 of the faithfulness initiative) ─────────────
+#
+# Structured intermediate representation between raw hike inputs and the
+# writer prompt. Built in a two-pass flow: a cheap extractor LLM reads
+# seed_text + GPX + photo timestamps and emits the LLM-derived subset
+# (people, weather, chronology); Python merges in the deterministic fields
+# (GPX stats, derived season, photo count) and validates the whole.
+#
+# The writer LLM consumes ONLY this ledger — no raw seed text — so it is
+# structurally unable to introduce a duck if the ledger does not mention
+# one. Ledger contents are English; the writer translates to RU+DE per
+# ADR-005.
+
+
+class Person(BaseModel):
+    """One person involved in the hike, as extracted by the ledger pass."""
+
+    model_config = ConfigDict(frozen=True)
+
+    name: str
+    # Optional short role descriptor — "wife", "baby in carrier", "hiking
+    # partner", "father-in-law". Helps the writer place the person in the
+    # narrative without inventing a relationship the seed did not state.
+    role: str | None = None
+
+
+class Beat(BaseModel):
+    """One moment in the hike's chronology.
+
+    The ``objects_mentioned`` field is the load-bearing fabrication guard:
+    the writer is told it may name specific objects only if they appear in
+    some beat's ``objects_mentioned``. Empty list = generic prose only
+    (sky, water, path), no named animals/foods/places/objects for that
+    beat.
+    """
+
+    model_config = ConfigDict(frozen=True)
+
+    time_of_day: str  # "morning", "midday", "afternoon", "evening", or specific.
+    activity: str
+    emotion: str | None = None
+    objects_mentioned: list[str] = Field(default_factory=list)
+
+
+class FactLedger(BaseModel):
+    """Source of truth for the writer pass under ADR-009.
+
+    Built by :func:`trailstory.llm.narrative.extract_ledger` from a hike
+    input + GPX + photos. Some fields are LLM-derived (people, weather,
+    chronology) and some are deterministic (GPX stats, season, photo
+    count); both halves end up here for the writer's single-input
+    contract.
+    """
+
+    model_config = ConfigDict(frozen=True)
+
+    # LLM-derived ----------------------------------------------------------
+    people: list[Person]
+    weather: str  # short phrase from seed, e.g. "amazing weather" or "unknown".
+    chronology: list[Beat]
+
+    # Deterministic from inputs --------------------------------------------
+    where: str  # location name (HikeInput.location_name or fallback).
+    when: datetime  # hike start (first timed GPX waypoint, or epoch fallback).
+    season: str  # verbose phrase, see _infer_date_and_season (ADR-008).
+    duration_min: int = Field(ge=0)
+    distance_km: float = Field(ge=0)
+    elevation_gain_m: float = Field(ge=0)
+    summit_elev_m: float
+    n_photos: int = Field(ge=1)
+
+
 class Memory(BaseModel):
     hike_input: HikeInput
     gpx_stats: GpxStats

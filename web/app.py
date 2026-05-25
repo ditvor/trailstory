@@ -49,6 +49,7 @@ def create_app(
     settings: Settings | None = None,
     storage: Storage | None = None,
     client_factory: Callable[[], AnthropicClient] | None = None,
+    ledger_client_factory: Callable[[], AnthropicClient] | None = None,
     rate_limiter: RateLimiter | None = None,
     enable_sweeper: bool = True,
 ) -> FastAPI:
@@ -60,9 +61,13 @@ def create_app(
             pre-built Settings (with a fake API key) here.
         storage: Pre-built ``Storage``. Tests pass one rooted at a
             ``tmp_path`` so workspaces are scoped to the test run.
-        client_factory: Callable returning a configured
-            ``AnthropicClient``. Tests inject a factory that returns a
-            ``MagicMock`` so the real SDK is never reached.
+        client_factory: Callable returning a configured WRITER
+            ``AnthropicClient`` (Opus-class). Tests inject a factory that
+            returns a ``MagicMock`` so the real SDK is never reached.
+        ledger_client_factory: Callable returning a configured EXTRACTOR
+            ``AnthropicClient`` (Haiku-class, per ADR-009). Defaults to
+            a factory built from ``Settings.ledger_model``. Tests inject
+            a mock factory the same way as ``client_factory``.
         rate_limiter: Per-IP limiter for ``/generate``. Defaults to a
             sliding-window ``RateLimiter`` sized at
             :data:`web.ratelimit.GENERATE_LIMIT_PER_HOUR`. Tests pass
@@ -76,6 +81,11 @@ def create_app(
     resolved_storage = storage if storage is not None else Storage()
     resolved_factory = (
         client_factory if client_factory is not None else _default_client_factory(resolved_settings)
+    )
+    resolved_ledger_factory = (
+        ledger_client_factory
+        if ledger_client_factory is not None
+        else _default_ledger_client_factory(resolved_settings)
     )
     resolved_limiter = (
         rate_limiter
@@ -117,6 +127,7 @@ def create_app(
     app.state.settings = resolved_settings
     app.state.storage = resolved_storage
     app.state.client_factory = resolved_factory
+    app.state.ledger_client_factory = resolved_ledger_factory
     app.state.generate_limiter = resolved_limiter
     app.state.templates = Jinja2Templates(directory=str(TEMPLATE_DIR))
 
@@ -131,7 +142,7 @@ def create_app(
 
 
 def _default_client_factory(settings: Settings) -> Callable[[], AnthropicClient]:
-    """Build a real ``AnthropicClient`` from settings on each call.
+    """Build a real WRITER ``AnthropicClient`` from settings on each call.
 
     Returning a fresh instance per request keeps the SDK's internal
     HTTP connection pool scoped tightly; for v0 traffic that overhead
@@ -142,6 +153,25 @@ def _default_client_factory(settings: Settings) -> Callable[[], AnthropicClient]
         return AnthropicClient(
             settings.anthropic_api_key,
             model=settings.model,
+            max_tokens=settings.narrative_max_tokens,
+            max_retries=settings.narrative_max_retries,
+        )
+
+    return factory
+
+
+def _default_ledger_client_factory(settings: Settings) -> Callable[[], AnthropicClient]:
+    """Build a real EXTRACTOR ``AnthropicClient`` from settings.
+
+    Phase 2 (ADR-009): the ledger pass uses a cheaper, faster model
+    (``Settings.ledger_model``) than the writer's Opus. Same per-request
+    fresh-instance pattern as :func:`_default_client_factory`.
+    """
+
+    def factory() -> AnthropicClient:
+        return AnthropicClient(
+            settings.anthropic_api_key,
+            model=settings.ledger_model,
             max_tokens=settings.narrative_max_tokens,
             max_retries=settings.narrative_max_retries,
         )

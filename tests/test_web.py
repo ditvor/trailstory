@@ -115,7 +115,7 @@ def _stream_chunks(payload: str, *, parts: int = 8) -> list[str]:
 
 
 def _make_client(*, response: str | None = None) -> MagicMock:
-    """Mocked Anthropic client supporting both complete and complete_stream."""
+    """Mocked WRITER Anthropic client supporting both complete and complete_stream."""
     body = response if response is not None else _valid_response_json()
     fake = MagicMock(spec=AnthropicClient)
     fake.model = "claude-opus-4-7-test"
@@ -127,17 +127,47 @@ def _make_client(*, response: str | None = None) -> MagicMock:
     return fake
 
 
+def _make_ledger_client() -> MagicMock:
+    """Mocked EXTRACTOR Anthropic client (ADR-009).
+
+    Returns a deterministic FactLedger JSON every call. The web pipeline
+    runs the extractor synchronously up front before opening the SSE
+    response, so the same fixed response works for every test that
+    exercises the stream.
+    """
+    fake = MagicMock(spec=AnthropicClient)
+    fake.model = "claude-haiku-4-5-test"
+    fake.complete.return_value = json.dumps(
+        {
+            "people": [{"name": "Mia", "role": "baby in carrier"}],
+            "weather": "amazing weather",
+            "chronology": [
+                {
+                    "time_of_day": "morning",
+                    "activity": "ascent through fog",
+                    "emotion": "anticipation",
+                    "objects_mentioned": ["fog", "ridge"],
+                },
+            ],
+        }
+    )
+    return fake
+
+
 def _app_with_storage(
     storage: Storage,
     *,
     client: MagicMock | None = None,
+    ledger_client: MagicMock | None = None,
     rate_limiter: RateLimiter | None = None,
 ) -> tuple[FastAPI, MagicMock]:
     fake = client if client is not None else _make_client()
+    fake_ledger = ledger_client if ledger_client is not None else _make_ledger_client()
     app = create_app(
         settings=_settings(),
         storage=storage,
         client_factory=lambda: fake,
+        ledger_client_factory=lambda: fake_ledger,
         rate_limiter=rate_limiter,
         enable_sweeper=False,
     )
@@ -786,6 +816,7 @@ def test_carousel_returns_n_slides_for_n_photos(
         settings=_settings(),
         storage=Storage(retention_seconds=RETENTION_SECONDS),
         client_factory=lambda: fake,
+        ledger_client_factory=lambda: _make_ledger_client(),
         enable_sweeper=False,
     )
     with TestClient(app) as c:
@@ -1056,13 +1087,15 @@ def test_fake_client_factory_drives_full_pipeline(storage: Storage) -> None:
     ``NarrativeOutput`` (a new required field would break the fake JSON
     silently otherwise).
     """
-    from web.dev import make_fake_client_factory
+    from web.dev import make_fake_client_factory, make_fake_ledger_client_factory
 
     factory = make_fake_client_factory()
+    ledger_factory = make_fake_ledger_client_factory()
     app = create_app(
         settings=_settings(),
         storage=storage,
         client_factory=factory,
+        ledger_client_factory=ledger_factory,
         enable_sweeper=False,
     )
     with TestClient(app) as c:

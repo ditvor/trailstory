@@ -1,44 +1,44 @@
 {
   "schema_version": 2,
   "title": {
-    "en": "Mia and the Wide Blue",
-    "ru": "Мия и широкая синева",
-    "de": "Mia und das weite Blau"
+    "en": "A Morning with Mia in the Bavarian Alps",
+    "ru": "Утро с Мией в Баварских Альпах",
+    "de": "Ein Morgen mit Mia in den Bayerischen Alpen"
   },
   "subtitle": {
-    "en": "An April morning in the Bavarian Alps, measured in laughter",
-    "ru": "Апрельское утро в Баварских Альпах, отмеренное смехом",
-    "de": "Ein Aprilmorgen in den Bayerischen Alpen, gemessen in Lachen"
+    "en": "A spring climb under a blue sky, and apples at the top",
+    "ru": "Весенний подъём под синим небом и яблоки на вершине",
+    "de": "Ein Frühlingsaufstieg unter blauem Himmel und Äpfel am Gipfel"
   },
   "paragraphs": {
     "en": [
-      "We set out into one of those soft April mornings the Bavarian Alps keep for people willing to climb a little. The air still had that thin spring sharpness, the kind that wakes you without scolding you, and the slopes above us were just beginning to remember their green. From the very first steps Mia was laughing — at the way her own boots sounded on the path, at a bird she couldn't see, at me, at nothing at all.",
-      "The climb was short on the map and long on the legs: a steep little ribbon of trail that lifted us six hundred metres in not much more than an hour and a half. Every stream we crossed got a laugh. Every gust that pushed her hair sideways got a laugh. I kept stopping to catch my breath and pretending I was stopping to look at the view, and she saw straight through me, the way she always does, and laughed at that too.",
-      "At the top — a modest summit by these mountains' standards, but the whole world from where we stood — we sat down on the warm stones and took out the apples. She ate hers in the serious, two-handed way small children eat fruit they're proud of. Then she looked up, saw how far the sky went, and clapped. Just clapped, for the blue, as if it had finally arrived after a long journey.",
-      "I don't think I'll remember the distance or the time or the name of the trail. I'll remember her small hands meeting in the bright air, and the apples, and the feeling that the mountain had been built, quietly and patiently, for exactly this afternoon."
+      "April had finally loosened its grip on the mountains, and Mia and I went up into the Bavarian Alps with that particular blue sky above us — the kind of blue that only shows itself in spring, scrubbed clean and almost impolite in its brightness. We hadn't planned anything grand. Just the two of us, a path, and the day ahead.",
+      "The climb was steep almost from the first step, and somewhere along the way the seriousness of it all fell away. A bird would dart out of the brush and Mia would laugh; a stream would cut across the trail, cold and full of itself after the thaw, and she'd laugh at that too. Even the wind got in on it, shoving at us in gusts that seemed to come from nowhere, and we laughed back at it, breathless, the way you do when the mountain decides to be playful instead of stern.",
+      "By the time we reached the top — somewhere just above thirteen hundred metres, though the number meant nothing up there — the world had opened out the way it does only from a summit. We sat down without speaking much, took out the apples we'd carried up with us, and ate them slowly. Cold, ordinary apples, and yet on that bright spring ridge they tasted like the whole reason we had come.",
+      "It wasn't a long morning, not really. A couple of hours, a small mountain, a handful of photographs. But I think I'll remember the laughing more than the climbing — Mia, the birds, the stream, the wind, all of us conspiring under that ridiculous blue sky."
     ],
     "ru": [
-      "Мы вышли в одно из тех мягких апрельских утр, какие Баварские Альпы берегут для тех, кто готов немного подняться. В воздухе ещё держалась тонкая весенняя резкость — та, что будит, но не ругает, — а склоны над нами только начинали вспоминать свой зелёный цвет. С первых же шагов Мия смеялась: над тем, как её ботинки стучат по тропе, над птицей, которую не было видно, надо мной, просто так.",
-      "Подъём был коротким на карте и долгим для ног: крутая узкая лента тропы, поднявшая нас на шестьсот метров чуть больше чем за полтора часа. Каждый ручей, который мы переходили, получал свой смех. Каждый порыв ветра, отбрасывавший её волосы вбок, получал свой смех. Я то и дело останавливался отдышаться и делал вид, что остановился полюбоваться видом, а она видела меня насквозь, как всегда, и смеялась и над этим тоже.",
-      "Наверху — скромная вершина по здешним меркам, но с неё открывался весь мир — мы сели на тёплые камни и достали яблоки. Она ела своё серьёзно, двумя руками, как маленькие дети едят фрукт, которым гордятся. Потом подняла глаза, увидела, как далеко уходит небо, и захлопала в ладоши. Просто захлопала — этой синеве, будто она наконец добралась после долгого пути.",
-      "Я, наверное, не запомню ни расстояния, ни времени, ни названия тропы. Я запомню её маленькие ладони, встретившиеся в светлом воздухе, и яблоки, и ощущение, что гора была сложена — тихо и терпеливо — именно ради этого дня."
+      "Апрель наконец отпустил горы, и мы с Мией поднялись в Баварские Альпы под тем самым синим небом — таким, какое бывает только весной, до неприличия чистым и ярким. Мы ничего грандиозного не задумывали. Просто мы вдвоём, тропа и целый день впереди.",
+      "Подъём был крутым едва ли не с первого шага, и где-то по дороге вся серьёзность куда-то улетучилась. Из кустов вспархивала птица — Мия смеялась; ручей пересекал тропу, холодный и важный после оттепели, — она смеялась и над ним. Даже ветер включился в игру, толкая нас порывами будто бы из ниоткуда, и мы смеялись в ответ, задыхаясь, как смеются, когда гора решает побыть не суровой, а озорной.",
+      "Когда мы добрались до вершины — где-то чуть выше тысячи трёхсот метров, хотя там, наверху, эта цифра уже ничего не значила, — мир раскрылся так, как он раскрывается только с гребня. Мы сели почти молча, достали яблоки, которые принесли с собой, и медленно их ели. Холодные, обыкновенные яблоки — и всё же на том светлом весеннем хребте они казались тем самым, ради чего мы и пришли.",
+      "Утро вышло недолгим. Пара часов, небольшая гора, горсть фотографий. Но мне кажется, я буду помнить не подъём, а смех — Мию, птиц, ручей, ветер и нас самих под этим до смешного синим небом."
     ],
     "de": [
-      "Wir brachen in einen dieser sanften Aprilmorgen auf, die die Bayerischen Alpen für Leute aufheben, die bereit sind, ein Stück zu steigen. In der Luft lag noch jene feine Frühlingsschärfe, die einen weckt, ohne zu schimpfen, und die Hänge über uns begannen gerade erst, sich an ihr Grün zu erinnern. Vom ersten Schritt an lachte Mia — über den Klang ihrer eigenen Schuhe auf dem Pfad, über einen Vogel, den sie nicht sehen konnte, über mich, über gar nichts.",
-      "Der Anstieg war auf der Karte kurz und in den Beinen lang: ein steiles, schmales Band von Weg, das uns in kaum mehr als anderthalb Stunden sechshundert Meter hinaufhob. Jeder Bach, den wir querten, bekam ein Lachen. Jeder Windstoß, der ihr die Haare zur Seite schob, bekam ein Lachen. Ich blieb immer wieder stehen, um Luft zu holen, und tat so, als bliebe ich wegen der Aussicht stehen, und sie durchschaute mich, wie sie es immer tut, und lachte auch darüber.",
-      "Oben — ein bescheidener Gipfel an diesen Bergen gemessen, und doch die ganze Welt von dort aus — setzten wir uns auf die warmen Steine und holten die Äpfel hervor. Sie aß ihren auf diese ernste, zweihändige Art, mit der kleine Kinder Obst essen, auf das sie stolz sind. Dann schaute sie auf, sah, wie weit der Himmel ging, und klatschte in die Hände. Einfach so, für das Blau, als wäre es endlich nach langer Reise angekommen.",
-      "Ich werde wohl weder die Entfernung noch die Zeit noch den Namen des Weges behalten. Ich werde ihre kleinen Hände behalten, wie sie sich in der hellen Luft trafen, und die Äpfel, und das Gefühl, dass dieser Berg leise und geduldig genau für diesen Nachmittag aufgetürmt worden war."
+      "Der April hatte die Berge endlich losgelassen, und Mia und ich stiegen in die Bayerischen Alpen hinauf, mit diesem besonderen blauen Himmel über uns — jenem Blau, das sich nur im Frühling zeigt, blankgeputzt und beinahe schon unverschämt hell. Wir hatten nichts Großes geplant. Nur wir beide, ein Pfad und der Tag vor uns.",
+      "Der Aufstieg war steil, fast vom ersten Schritt an, und irgendwo unterwegs fiel die ganze Ernsthaftigkeit von uns ab. Ein Vogel schoss aus dem Gebüsch, und Mia lachte; ein Bach kreuzte den Weg, kalt und übermütig nach der Schneeschmelze, und sie lachte auch darüber. Sogar der Wind machte mit, schob uns in Böen aus dem Nichts an, und wir lachten zurück, außer Atem, so wie man eben lacht, wenn der Berg beschließt, verspielt zu sein statt streng.",
+      "Als wir oben ankamen — etwas über dreizehnhundert Meter, auch wenn die Zahl da oben nichts mehr bedeutete —, öffnete sich die Welt so, wie sie es nur von einem Gipfel aus tut. Wir setzten uns, sprachen kaum, holten die Äpfel hervor, die wir hinaufgetragen hatten, und aßen sie langsam. Kalte, ganz gewöhnliche Äpfel, und doch schmeckten sie auf diesem hellen Frühlingsgrat nach dem einen Grund, aus dem wir gekommen waren.",
+      "Es war kein langer Morgen, eigentlich nicht. Ein paar Stunden, ein kleiner Berg, eine Handvoll Fotos. Aber ich glaube, ich werde mich mehr an das Lachen erinnern als an den Aufstieg — an Mia, die Vögel, den Bach, den Wind und an uns alle unter diesem albern blauen Himmel."
     ]
   },
   "pull_quote": {
-    "en": "She looked up, saw how far the sky went, and clapped — just clapped, for the blue.",
-    "ru": "Она подняла глаза, увидела, как далеко уходит небо, и захлопала в ладоши — просто захлопала, этой синеве.",
-    "de": "Sie schaute auf, sah, wie weit der Himmel ging, und klatschte in die Hände — einfach so, für das Blau."
+    "en": "Cold, ordinary apples, and yet on that bright spring ridge they tasted like the whole reason we had come.",
+    "ru": "Холодные, обыкновенные яблоки — и всё же на том светлом весеннем хребте они казались тем самым, ради чего мы и пришли.",
+    "de": "Kalte, ganz gewöhnliche Äpfel, und doch schmeckten sie auf diesem hellen Frühlingsgrat nach dem einen Grund, aus dem wir gekommen waren."
   },
   "milestone": {
-    "en": "Mia's first spring summit",
-    "ru": "Первая весенняя вершина Мии",
-    "de": "Mias erster Frühlingsgipfel"
+    "en": "A spring summit with Mia",
+    "ru": "Весенняя вершина с Мией",
+    "de": "Ein Frühlingsgipfel mit Mia"
   },
   "selected_photo_indices": [
     0,
