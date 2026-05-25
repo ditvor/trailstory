@@ -17,6 +17,8 @@ import pytest
 
 from tests.eval.judge import (
     DEFAULT_JUDGE_MODEL,
+    ClaimVerdict,
+    FaithfulnessVerdict,
     JudgeError,
     JudgeScore,
     judge_narrative,
@@ -287,3 +289,142 @@ def test_judge_narrative_does_not_retry_on_llm_error() -> None:
     with pytest.raises(JudgeError):
         judge_narrative(_narrative(), _hike_input(), client=client)
     assert client.complete.call_count == 1
+
+
+# ── faithfulness axis (ADR-007) ──────────────────────────────────────────────
+#
+# The faithfulness axis is a derived ``@computed_field`` on JudgeScore.
+# The judge produces ``claim_verdicts``; Python does the arithmetic.
+# Tests cover both halves: the wiring (judge response → ClaimVerdict
+# list) and the math (verdicts → derived float).
+
+
+def _verdicts(
+    n_supported: int = 0, n_inferred: int = 0, n_unsupported: int = 0
+) -> list[dict[str, str]]:
+    """Build a claim_verdicts list for ``_valid_judge_dict`` overrides."""
+    out: list[dict[str, str]] = []
+    for i in range(n_supported):
+        out.append({"claim": f"supported {i}", "verdict": "SUPPORTED", "quote": "source"})
+    for i in range(n_inferred):
+        out.append({"claim": f"inferred {i}", "verdict": "INFERRED", "quote": "from photo"})
+    for i in range(n_unsupported):
+        out.append({"claim": f"unsupported {i}", "verdict": "UNSUPPORTED", "quote": ""})
+    return out
+
+
+def test_claim_verdict_validates_verdict_enum() -> None:
+    """The verdict field must be one of the three documented values."""
+    valid = ClaimVerdict(claim="Danny was there", verdict=FaithfulnessVerdict.SUPPORTED)
+    assert valid.verdict == FaithfulnessVerdict.SUPPORTED
+    assert valid.quote == ""  # default
+
+    with pytest.raises(Exception):  # noqa: B017 — Pydantic ValidationError
+        ClaimVerdict.model_validate({"claim": "x", "verdict": "MAYBE", "quote": ""})
+
+
+def test_faithfulness_empty_verdicts_returns_zero() -> None:
+    """Missing verdicts and entirely-unsupported are indistinguishable —
+    intentional, so pre-faithfulness goldens regress as expected."""
+    score = JudgeScore.model_validate(_valid_judge_dict())
+    assert score.claim_verdicts == []
+    assert score.faithfulness == 0.0
+
+
+def test_faithfulness_all_supported_scores_full() -> None:
+    score = JudgeScore.model_validate(_valid_judge_dict(claim_verdicts=_verdicts(n_supported=10)))
+    assert score.faithfulness == 5.0
+
+
+def test_faithfulness_all_unsupported_scores_zero() -> None:
+    score = JudgeScore.model_validate(_valid_judge_dict(claim_verdicts=_verdicts(n_unsupported=10)))
+    assert score.faithfulness == 0.0
+
+
+def test_faithfulness_inferred_weighted_half() -> None:
+    """4 verdicts: 2 supported, 1 inferred, 1 unsupported.
+    score = (2·1.0 + 1·0.5 + 1·0.0) / 4 · 5 = 2.5 / 4 · 5 = 3.125.
+
+    Rounded to 2 decimals via Python's banker's rounding → 3.12. The
+    rounding noise sits well below the 1.0 regression threshold; the
+    score is for human display, not arithmetic, so 2dp is fine.
+    """
+    score = JudgeScore.model_validate(
+        _valid_judge_dict(claim_verdicts=_verdicts(n_supported=2, n_inferred=1, n_unsupported=1))
+    )
+    assert score.faithfulness == pytest.approx(3.125, abs=0.01)
+
+
+def test_faithfulness_appears_in_model_dump() -> None:
+    """Goldens are persisted via ``model_dump(mode='json')`` — the
+    computed field must show up there so a human reading the golden file
+    can see the derived score without recomputing."""
+    score = JudgeScore.model_validate(
+        _valid_judge_dict(claim_verdicts=_verdicts(n_supported=3, n_unsupported=1))
+    )
+    dumped = score.model_dump(mode="json")
+    assert "faithfulness" in dumped
+    assert dumped["faithfulness"] == pytest.approx(3.75)
+    # And claim_verdicts is preserved verbatim for human auditing.
+    assert len(dumped["claim_verdicts"]) == 4
+
+
+def test_faithfulness_ignored_on_explicit_input() -> None:
+    """An explicit ``faithfulness`` key in the input dict is silently
+    dropped — the computed_field always wins. This protects against a
+    judge hallucinating a contradictory score."""
+    data = _valid_judge_dict(
+        claim_verdicts=_verdicts(n_supported=10),  # → 5.0
+        faithfulness=0.0,  # noise from a confused judge
+    )
+    score = JudgeScore.model_validate(data)
+    assert score.faithfulness == 5.0
+
+
+def test_judge_narrative_accepts_claim_verdicts_in_response() -> None:
+    """End-to-end: the judge returns claim_verdicts and the score round-trips."""
+    response = _valid_judge_json(
+        claim_verdicts=_verdicts(n_supported=3, n_inferred=2, n_unsupported=1)
+    )
+    client = _client(response)
+
+    score = judge_narrative(_narrative(), _hike_input(), client=client)
+
+    assert len(score.claim_verdicts) == 6
+    assert sum(1 for v in score.claim_verdicts if v.verdict == FaithfulnessVerdict.SUPPORTED) == 3
+    # score = (3·1.0 + 2·0.5 + 1·0.0) / 6 · 5 = 4.0 / 6 · 5 ≈ 3.33
+    assert score.faithfulness == pytest.approx(3.33, abs=0.01)
+
+
+def test_judge_narrative_legacy_golden_format_validates_with_default_verdicts() -> None:
+    """Pre-ADR-007 goldens have no ``claim_verdicts`` key; they must
+    still validate (default empty list) so the regression gate doesn't
+    fail-hard before goldens get refreshed."""
+    legacy = json.dumps(
+        {
+            "warmth": 4.5,
+            "narrative_arc": 4.0,
+            "russian_fidelity": 4.5,
+            "photo_selection_plausibility": 3.5,
+            "notes": "old golden written before claim_verdicts existed.",
+        }
+    )
+    client = _client(legacy)
+
+    score = judge_narrative(_narrative(), _hike_input(), client=client)
+
+    assert score.claim_verdicts == []
+    assert score.faithfulness == 0.0
+    assert score.warmth == pytest.approx(4.5)
+
+
+def test_judge_prompt_describes_faithfulness_extraction() -> None:
+    """The prompt must explain what a claim is and how to label it,
+    otherwise the judge invents its own taxonomy and verdicts are noise."""
+    from tests.eval.judge_prompts import USER_JUDGE_TEMPLATE
+
+    text = USER_JUDGE_TEMPLATE
+    assert "claim_verdicts" in text
+    assert "SUPPORTED" in text
+    assert "INFERRED" in text
+    assert "UNSUPPORTED" in text

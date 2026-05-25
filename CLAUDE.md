@@ -492,6 +492,18 @@ don't relitigate them.
    of two flat `_en` / `_ru` strings. EN, RU, and DE are produced in a
    single LLM call. Adding a fourth language is one Pydantic field +
    prompt-skeleton edit + template arm + golden refresh.
+6. [ADR-006 — three visual styles share one narrative](docs/adr/006-three-visual-styles-share-one-narrative.md):
+   `editorial`, `log`, and `encyclopedia` are three rendering treatments
+   of one prompt's output, not three prompt families. The eval suite
+   stays calibrated against the editorial register.
+7. [ADR-007 — faithfulness eval axis](docs/adr/007-faithfulness-eval-axis.md):
+   the paid LLM judge now extracts every concrete claim from the
+   narrative and labels it `SUPPORTED` / `INFERRED` / `UNSUPPORTED`. A
+   derived `faithfulness` score (`@computed_field` on `JudgeScore`,
+   0-5) is gated like every other judge axis. Phase 0 of the
+   narrative-faithfulness initiative; downstream phases (prompt
+   anti-fabrication, two-pass fact ledger, multimodal grounding,
+   sentence-level provenance) will record their own ADRs.
 
 If you're about to do something that touches an area covered by an existing
 ADR, **read the ADR first**. If the change is incompatible with the recorded

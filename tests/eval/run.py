@@ -71,14 +71,17 @@ ENV_REGRESSION_THRESHOLD: str = "EVAL_REGRESSION_THRESHOLD"
 DEFAULT_REGRESSION_THRESHOLD: float = 1.0
 
 # Axes inspected for delta-vs-golden, in display order. Single source of
-# truth so the table and the regression check stay in sync. Pulled from
-# JudgeScore.model_fields so that adding an axis later only requires
-# updating the model + prompt.
+# truth so the table and the regression check stay in sync. ``faithfulness``
+# is a ``@computed_field`` on JudgeScore (derived from claim_verdicts), not
+# a model field — it shows in the table like any other axis but is computed
+# in Python, so adding/removing it here is the only change needed when its
+# weighting or formula evolves. See ADR-007.
 JUDGE_AXES: tuple[str, ...] = (
     "warmth",
     "narrative_arc",
     "russian_fidelity",
     "photo_selection_plausibility",
+    "faithfulness",
 )
 
 

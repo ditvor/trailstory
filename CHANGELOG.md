@@ -39,6 +39,21 @@ Versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   visual treatment doesn't match what `The Zine` / `Sunday` promise.
 
 ### Added
+- **Faithfulness eval axis (Phase 0 of the narrative-faithfulness
+  initiative; [ADR-007](docs/adr/007-faithfulness-eval-axis.md)).** The
+  paid LLM judge now extracts every concrete factual claim from the
+  English narrative and labels each `SUPPORTED` / `INFERRED` /
+  `UNSUPPORTED` with a source quote. A derived `faithfulness` score
+  (`@computed_field` on `JudgeScore`, same 0-5 scale as the other axes)
+  is added to `JUDGE_AXES` and the regression gate. New types
+  `FaithfulnessVerdict` and `ClaimVerdict` live in `tests/eval/judge.py`;
+  the rubric paragraph and JSON skeleton in
+  `tests/eval/judge_prompts.py` get one new section. Existing
+  pre-faithfulness goldens validate cleanly (default empty
+  `claim_verdicts` → `faithfulness == 0.0`) until refreshed by
+  `make eval-update-golden`. No production code paths touched — this is
+  measurement infrastructure for the upcoming Phase 1 prompt-only fixes
+  and Phase 2 fact-ledger architecture.
 - **`web/static/builder.css`** — full design-system bundle for the
   builder: paper/ink/rule oklch tokens, drop zones, populated
   track-loaded card, photo grid, AUTO-EXTRACTED chips (inline-edit
