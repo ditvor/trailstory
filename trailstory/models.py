@@ -114,11 +114,74 @@ class LocalizedParagraphs(BaseModel):
 
     A ``LocalizedString`` can't carry list values, so paragraph blocks use
     this small parallel shape. Same language set, same evolution rules.
+
+    Under ADR-014 (Phase 4) this shape is no longer the canonical paragraph
+    representation — ``NarrativeOutput.paragraphs`` is now
+    ``list[Paragraph]`` with sentence-level provenance. ``LocalizedParagraphs``
+    survives as a small adapter (``paragraphs_as_localized``) on
+    ``NarrativeOutput`` so existing flat-text consumers keep working without
+    duplicating the join logic everywhere.
     """
 
     en: list[str]
     ru: list[str]
     de: list[str]
+
+
+class ProvenanceSource(StrEnum):
+    """Why a sentence is in the narrative (ADR-014, Phase 4).
+
+    The writer tags every sentence with one of these values; the HTML
+    template renders the tag as a subtle hover/tint so the user can see at
+    a glance which sentences are seed-grounded vs inferred. Phase 4.1 will
+    let the user click an INFERRED sentence and edit/remove it before
+    publishing.
+    """
+
+    # Source quotes / explicitly states this sentence.
+    SEED = "seed"
+    # A photo's PhotoDescription supports this sentence.
+    PHOTO = "photo"
+    # A GPX-derived fact (date, distance, season) supports this sentence.
+    GPX = "gpx"
+    # Reasonable interpretation from ledger context — not stated outright
+    # in any source. Tinted in the rendered HTML.
+    INFERRED = "inferred"
+
+
+class Provenance(BaseModel):
+    """Per-sentence grounding tag (ADR-014, Phase 4)."""
+
+    model_config = ConfigDict(frozen=True)
+
+    source: ProvenanceSource
+    # Short pointer back to the source: a seed quote span, a photo index,
+    # a GPX field name, or a free-form note for INFERRED. Always non-empty
+    # so the hover UI has something to show.
+    reference: str = ""
+
+
+class Sentence(BaseModel):
+    """One sentence of the narrative, tri-lingual, with provenance.
+
+    Sentences are language-aligned by construction: the writer produces
+    EN/RU/DE for each sentence as a single unit, so ``text.en``,
+    ``text.ru``, ``text.de`` are translations of each other, not
+    independent prose. Each sentence carries one ``Provenance`` because
+    the question "why is this sentence here?" has one answer regardless
+    of which language the reader sees.
+    """
+
+    model_config = ConfigDict(frozen=True)
+
+    text: LocalizedString
+    provenance: Provenance
+
+
+# A paragraph is just an ordered list of Sentences. No wrapper class on
+# purpose — the structure carries no metadata of its own; paragraph
+# boundaries are a layout concern surfaced to the renderer.
+Paragraph = list[Sentence]
 
 
 class NarrativeOutput(BaseModel):
@@ -127,13 +190,38 @@ class NarrativeOutput(BaseModel):
     # change to an existing one). The narrative cache (see
     # ``trailstory.llm.cache``) refuses to return entries whose
     # ``schema_version`` differs from the current value.
-    schema_version: int = 2
+    # v3 (ADR-014, Phase 4): paragraphs are now list[Paragraph] with
+    # sentence-level provenance. v2 entries (the old LocalizedParagraphs
+    # shape) cannot be loaded; cache misses on read.
+    schema_version: int = 3
     title: LocalizedString
     subtitle: LocalizedString
-    paragraphs: LocalizedParagraphs
+    # Paragraphs are an ordered list of paragraphs; each paragraph is an
+    # ordered list of sentences; each sentence carries tri-lingual text +
+    # a single provenance tag. Joined per language for rendering via
+    # :meth:`paragraphs_as_localized` so existing flat-text consumers
+    # (rubric, instagram carousel) don't have to walk the structure.
+    paragraphs: list[Paragraph]
     pull_quote: LocalizedString
     milestone: LocalizedString
     selected_photo_indices: list[int]
+
+    def paragraphs_as_localized(self) -> LocalizedParagraphs:
+        """Flatten the sentence-leveled paragraphs into per-language text.
+
+        Joins sentences with a single space within each paragraph and
+        returns one ``LocalizedParagraphs`` whose ``en`` / ``ru`` / ``de``
+        lists have one string per paragraph. Used by code that does not
+        care about provenance (the carousel renderer, the rubric's
+        paragraph-count check, legacy templates) — code that DOES care
+        (the HTML renderer, the Phase 4.1 builder edit mode) walks
+        ``paragraphs`` directly.
+        """
+        return LocalizedParagraphs(
+            en=[" ".join(s.text.en for s in p) for p in self.paragraphs],
+            ru=[" ".join(s.text.ru for s in p) for p in self.paragraphs],
+            de=[" ".join(s.text.de for s in p) for p in self.paragraphs],
+        )
 
 
 # ── FactLedger (ADR-009, Phase 2 of the faithfulness initiative) ─────────────

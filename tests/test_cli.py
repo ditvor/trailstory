@@ -15,6 +15,7 @@ from unittest.mock import MagicMock
 import pytest
 from click.testing import CliRunner
 
+from tests.conftest import paragraphs_dict_from_strings
 from trailstory.cli import _derive_hike_date, _derive_slug, _slugify, cli
 from trailstory.llm.client import AnthropicClient
 from trailstory.models import GpxStats, PhotoMeta, Waypoint
@@ -99,7 +100,7 @@ def _make_fake_client() -> MagicMock:
 def _valid_response_json(n_photos: int = 5) -> str:
     return json.dumps(
         {
-            "schema_version": 2,
+            "schema_version": 3,
             "title": {
                 "en": "Above the fog line",
                 "ru": "Над линией тумана",
@@ -110,20 +111,20 @@ def _valid_response_json(n_photos: int = 5) -> str:
                 "ru": "Утро над морем облаков",
                 "de": "Ein Morgen über dem Wolkenmeer",
             },
-            "paragraphs": {
-                "en": [
+            "paragraphs": paragraphs_dict_from_strings(
+                en=[
                     "We left the trailhead at first light.",
                     "By the saddle the cloud was thinning.",
                 ],
-                "ru": [
+                ru=[
                     "Вышли на тропу с первыми лучами.",  # noqa: RUF001
                     "К седловине облака начали редеть.",  # noqa: RUF001
                 ],
-                "de": [
+                de=[
                     "Bei erstem Licht brachen wir auf.",
                     "Am Sattel begann die Wolke sich zu lichten.",
                 ],
-            },
+            ),
             "pull_quote": {
                 "en": "The fog cleared just as we reached the ridge.",
                 "ru": "Туман рассеялся как раз когда мы вышли на хребет.",

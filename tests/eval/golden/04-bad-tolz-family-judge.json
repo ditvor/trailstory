@@ -1,105 +1,120 @@
 {
   "warmth": 4.5,
   "narrative_arc": 4.5,
-  "russian_fidelity": 5.0,
+  "russian_fidelity": 4.5,
   "photo_selection_plausibility": 3.0,
   "claim_verdicts": [
     {
-      "claim": "They arrived around midday",
+      "claim": "arrived in Bad Tölz a little after noon",
       "verdict": "SUPPORTED",
       "quote": "We arrived to the parking spot around 12"
     },
     {
-      "claim": "The four hikers were Katya, Olga, Igor and little Danny",
+      "claim": "left the car at the edge of town",
+      "verdict": "INFERRED",
+      "quote": "arrived to the parking spot"
+    },
+    {
+      "claim": "four people: Katya, Olga, Igor and Danny",
       "verdict": "SUPPORTED",
       "quote": "It was four of us: Katya, Olga, Igor and little Danny"
     },
     {
-      "claim": "They parked the car",
-      "verdict": "SUPPORTED",
-      "quote": "We arrived to the parking spot around 12"
-    },
-    {
-      "claim": "They went to the town centre for brunch",
+      "claim": "wandered into the centre for brunch",
       "verdict": "SUPPORTED",
       "quote": "Went to the city centre and enjoyed some brunch"
     },
     {
-      "claim": "The weather was spring sun / clean blue sky",
+      "claim": "spring in Bavaria, good weather",
+      "verdict": "SUPPORTED",
+      "quote": "The weather was amazing"
+    },
+    {
+      "claim": "light fell on the streets pleasantly",
       "verdict": "INFERRED",
       "quote": "The weather was amazing"
     },
     {
-      "claim": "They walked along the Isar river",
+      "claim": "walked along the river Isar",
       "verdict": "SUPPORTED",
       "quote": "we started our trip along the river Isar"
     },
     {
-      "claim": "Danny took in everything at his own height",
+      "claim": "cold, clean April colour of the water",
       "verdict": "INFERRED",
-      "quote": "Everyone loved little Danny"
+      "quote": "The weather was amazing; season inferred as spring/April from context"
     },
     {
-      "claim": "The river had a particular voice — bright, a little cold",
-      "verdict": "UNSUPPORTED",
-      "quote": ""
+      "claim": "six kilometres of path",
+      "verdict": "INFERRED",
+      "quote": "distance_km from GPX provenance"
     },
     {
-      "claim": "They visited an old church",
+      "claim": "path rising gently then settling back down",
+      "verdict": "INFERRED",
+      "quote": "elevation_gain_m from GPX provenance"
+    },
+    {
+      "claim": "visited an old church",
       "verdict": "SUPPORTED",
       "quote": "we visited an old church"
     },
     {
-      "claim": "The church contained wax figures",
+      "claim": "cool, dim interior of the church",
+      "verdict": "INFERRED",
+      "quote": "old church"
+    },
+    {
+      "claim": "wax figures of Jesus and his friends inside the church",
       "verdict": "SUPPORTED",
       "quote": "those wax figures were waiting for us in unexpected places"
     },
     {
-      "claim": "Jesus was among the wax figures",
-      "verdict": "SUPPORTED",
-      "quote": "very strange figures of Jesus and his friends"
-    },
-    {
-      "claim": "The wax faces were pale and still",
+      "claim": "figures were behind glass",
       "verdict": "UNSUPPORTED",
       "quote": ""
     },
     {
-      "claim": "The figures appeared in unexpected places",
-      "verdict": "SUPPORTED",
-      "quote": "those wax figures were waiting for us in unexpected places"
+      "claim": "figures frozen mid-gesture",
+      "verdict": "INFERRED",
+      "quote": "wax figures — nature of wax figures"
     },
     {
-      "claim": "The church felt creepy",
+      "claim": "the church was creepy",
       "verdict": "SUPPORTED",
       "quote": "It was creepy"
     },
     {
-      "claim": "They picked up Asian food to go",
+      "claim": "they whispered inside the church",
+      "verdict": "UNSUPPORTED",
+      "quote": ""
+    },
+    {
+      "claim": "grabbed Asian food to go",
       "verdict": "SUPPORTED",
       "quote": "we grabbed some Asian food to go"
     },
     {
-      "claim": "They ate dinner near the water",
-      "verdict": "SUPPORTED",
-      "quote": "enjoyed our dinner near the water"
-    },
-    {
-      "claim": "The river was still running past while they ate",
+      "claim": "carried warm boxes of food to the water",
       "verdict": "INFERRED",
       "quote": "enjoyed our dinner near the water"
     },
     {
-      "claim": "They used takeaway containers",
-      "verdict": "INFERRED",
-      "quote": "we grabbed some Asian food to go"
+      "claim": "ate dinner near the water",
+      "verdict": "SUPPORTED",
+      "quote": "enjoyed our dinner near the water"
     },
     {
-      "claim": "Danny and the others enjoyed the hike",
+      "claim": "Danny was somewhere between their knees while eating",
+      "verdict": "UNSUPPORTED",
+      "quote": ""
+    },
+    {
+      "claim": "everyone loved little Danny",
       "verdict": "SUPPORTED",
-      "quote": "Danny and us enjoyed the hike a lot"
+      "quote": "Everyone loved little Danny"
     }
   ],
-  "notes": "The English prose is genuinely warm and specific — phrases like 'the kind that ends with everyone leaning back' and 'the sunlight felt twice as good' avoid boilerplate and feel personal. The arc is well-shaped: arrival/brunch → river walk → church interlude → evening meal, each paragraph earning its place, though the 'effort' beat is thin since this is a leisurely town walk rather than a climb. Russian is excellent — idiomatic, natural register, no calques; 'по коже пробежал неожиданный холодок' is a fine equivalent for 'a creep we hadn't expected'. Photo indices [0-5] are simply the first six in sequence with no narrative reasoning shown, so plausibility is assumed rather than demonstrated.",
-  "faithfulness": 3.95
+  "notes": "The prose is warm and specific without being cloying; 'the light fell on the streets the way you hope it will' and 'that cold, clean April colour' feel genuinely personal. The arc moves cleanly from arrival → brunch → river walk → church → dinner, with each paragraph earning its place, though the church beat is slightly rushed. Russian translation reads naturally with good register matching ('сами собой заговорили шёпотом' is idiomatic); one mildly stiff phrase ('голодностью' in para 4) prevents a 5. Photo selection uses indices 0-5 which is exactly 6 frames — plausible in count — but since all indices cluster at the low end of the range with no visibility into total photo count, distribution cannot be confirmed, warranting a conservative 3.",
+  "faithfulness": 3.41
 }

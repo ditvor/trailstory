@@ -31,12 +31,24 @@ from trailstory.llm.client import AnthropicClient
 
 logger = logging.getLogger(__name__)
 
+
 # 8 indices so any reasonable upload (the narrative prompt asks for
 # 6-8) finds room. The pipeline filters out indices past the actual
 # photo count, so a hike with 3 photos still gets a usable selection.
+# ADR-014 / Phase 4 paragraphs shape: list of paragraphs, each a list of
+# sentences with tri-lingual text + per-sentence provenance.
+def _fake_paragraph(en: str, ru: str, de: str, source: str = "seed") -> list[dict[str, object]]:
+    return [
+        {
+            "text": {"en": en, "ru": ru, "de": de},
+            "provenance": {"source": source, "reference": "fake-llm dev fixture"},
+        }
+    ]
+
+
 _FAKE_NARRATIVE: Final[str] = json.dumps(
     {
-        "schema_version": 2,
+        "schema_version": 3,
         "title": {
             "en": "Above the fog line",
             "ru": "Над линией тумана",
@@ -47,23 +59,23 @@ _FAKE_NARRATIVE: Final[str] = json.dumps(
             "ru": "Утро над морем облаков",
             "de": "Ein Morgen über dem Wolkenmeer",
         },
-        "paragraphs": {
-            "en": [
+        "paragraphs": [
+            _fake_paragraph(
                 "We left the trailhead at first light, the air sharp with damp moss.",
-                "By the saddle the cloud was thinning into a soft white scarf.",
-                "At the ridge the sun broke through and the valley vanished beneath us.",
-            ],
-            "ru": [
                 "Вышли на тропу с первыми лучами; воздух пах мхом и хвоей.",  # noqa: RUF001
-                "К седловине облака уже редели, превращаясь в белый шарф.",  # noqa: RUF001
-                "На хребте солнце пробилось сквозь туман — долина исчезла под нами.",  # noqa: RUF001
-            ],
-            "de": [
                 "Bei erstem Licht brachen wir auf, die Luft scharf von feuchtem Moos.",
+            ),
+            _fake_paragraph(
+                "By the saddle the cloud was thinning into a soft white scarf.",
+                "К седловине облака уже редели, превращаясь в белый шарф.",  # noqa: RUF001
                 "Am Sattel zog die Wolke sich zu einem weichen weißen Schal zusammen.",
+            ),
+            _fake_paragraph(
+                "At the ridge the sun broke through and the valley vanished beneath us.",
+                "На хребте солнце пробилось сквозь туман — долина исчезла под нами.",  # noqa: RUF001
                 "Am Grat brach die Sonne durch — das Tal verschwand unter uns.",
-            ],
-        },
+            ),
+        ],
         "pull_quote": {
             "en": "The fog cleared just as we reached the ridge.",
             "ru": "Туман рассеялся как раз когда мы вышли на хребет.",

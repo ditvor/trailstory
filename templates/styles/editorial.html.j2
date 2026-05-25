@@ -423,6 +423,25 @@
     .figure img { opacity: 1 !important; }
     -webkit-print-color-adjust: exact; print-color-adjust: exact;
   }
+
+  /* ADR-014 / Phase 4: sentence-level provenance.
+     INFERRED sentences get a subtle background tint so the reader sees at
+     a glance which prose is the writer's literary reconstruction vs which
+     is grounded in seed / photos / GPX. Hover surfaces the full provenance
+     via the native title attribute (no JS needed for v0). */
+  .sent { transition: background-color 120ms ease; }
+  .sent[data-prov="inferred"] {
+    background: oklch(0.92 0.04 80);
+    border-radius: 2px;
+    padding: 0 2px;
+  }
+  .sent:hover {
+    background: oklch(0.86 0.06 80);
+    cursor: help;
+  }
+  @media print {
+    .sent[data-prov="inferred"] { background: transparent; }
+  }
 </style>
 </head>
 <body class="lang-en style-editorial">
@@ -493,16 +512,32 @@
           <figure class="figure v-a"><img src="{{ photos[0].data_uri }}" alt="" loading="eager"></figure>
         {% endif %}
 
-        {# Mid-body photo: between paragraph blocks. Each language has the
-           same paragraph count; the per-language wrappers around <p>'s use
-           .en/.ru/.de classes so .lang-* on body shows the right one. #}
-        {% set n = narrative.paragraphs.en | length %}
+        {# Mid-body photo: between paragraph blocks. ADR-014 (Phase 4):
+           paragraphs is a list of Paragraph, each a list of Sentence with
+           tri-lingual text + a provenance tag. Each sentence becomes a
+           <span data-prov> so the rendered HTML carries the grounding
+           info into the reader's hover/click. Sentences are joined with a
+           space within each <p>. INFERRED sentences get a subtle tint
+           via a CSS rule keyed off the data-prov attribute. #}
+        {% set n = narrative.paragraphs | length %}
         {% set mid = (n // 2) if n >= 3 else n %}
         <div class="body swap">
-          {% for i in range(n) %}
-            <p class="en">{{ narrative.paragraphs.en[i] }}</p>
-            <p class="ru">{{ narrative.paragraphs.ru[i] }}</p>
-            <p class="de">{{ narrative.paragraphs.de[i] }}</p>
+          {% for paragraph in narrative.paragraphs %}
+            <p class="en">
+              {% for sentence in paragraph -%}
+                <span class="sent" data-prov="{{ sentence.provenance.source }}" title="{{ sentence.provenance.source }}: {{ sentence.provenance.reference }}">{{ sentence.text.en }}</span>{% if not loop.last %} {% endif -%}
+              {% endfor %}
+            </p>
+            <p class="ru">
+              {% for sentence in paragraph -%}
+                <span class="sent" data-prov="{{ sentence.provenance.source }}" title="{{ sentence.provenance.source }}: {{ sentence.provenance.reference }}">{{ sentence.text.ru }}</span>{% if not loop.last %} {% endif -%}
+              {% endfor %}
+            </p>
+            <p class="de">
+              {% for sentence in paragraph -%}
+                <span class="sent" data-prov="{{ sentence.provenance.source }}" title="{{ sentence.provenance.source }}: {{ sentence.provenance.reference }}">{{ sentence.text.de }}</span>{% if not loop.last %} {% endif -%}
+              {% endfor %}
+            </p>
             {%- if loop.index0 == mid - 1 and photos|length > 1 %}
               <figure class="figure v-c"><img src="{{ photos[1].data_uri }}" alt="" loading="lazy"></figure>
             {% endif %}

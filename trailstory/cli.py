@@ -165,7 +165,13 @@ def generate(
 
             if settings.use_photo_grounding:
                 with console.status("Describing photos…", spinner="dots"):
-                    photos = describe_photos(photos, client=vision_client, enabled=True)
+                    photos = describe_photos(
+                        photos,
+                        client=vision_client,
+                        enabled=True,
+                        concurrency=settings.vision_concurrency,
+                        use_cache=not no_cache,
+                    )
             with console.status("Generating narrative…", spinner="dots"):
                 narrative = generate_narrative(
                     hike_input,
@@ -174,6 +180,7 @@ def generate(
                     client=client,
                     ledger_client=ledger_client,
                     use_cache=not no_cache,
+                    max_inferred_ratio=settings.max_inferred_ratio,
                 )
             console.print(
                 f"[green]✓[/] Narrative generated "

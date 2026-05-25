@@ -237,14 +237,19 @@
     </svg>
 
     <article>
+      {# ADR-014 / Phase 4: paragraphs now carry per-sentence provenance.
+         The log style uses the flat-text fallback (no sentence spans /
+         hover UI yet — that's the editorial template's job; Phase 4.1
+         will port log + encyclopedia to render sentence-level provenance
+         in this style's idiom). #}
       <div class="en">
-        {% for p in narrative.paragraphs.en %}<p>{{ p }}</p>{% endfor %}
+        {% for p in flat_paragraphs.en %}<p>{{ p }}</p>{% endfor %}
       </div>
       <div class="ru">
-        {% for p in narrative.paragraphs.ru %}<p>{{ p }}</p>{% endfor %}
+        {% for p in flat_paragraphs.ru %}<p>{{ p }}</p>{% endfor %}
       </div>
       <div class="de">
-        {% for p in narrative.paragraphs.de %}<p>{{ p }}</p>{% endfor %}
+        {% for p in flat_paragraphs.de %}<p>{{ p }}</p>{% endfor %}
       </div>
 
       <blockquote>

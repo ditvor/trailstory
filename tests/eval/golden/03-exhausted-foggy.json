@@ -1,44 +1,166 @@
 {
-  "schema_version": 2,
+  "schema_version": 3,
   "title": {
-    "en": "A Morning Lost in Fog",
-    "ru": "Утро, растворённое в тумане",
-    "de": "Ein Morgen, im Nebel verloren"
+    "en": "A Morning in the Fog with Mia",
+    "ru": "Утро в тумане с Мией",
+    "de": "Ein Morgen im Nebel mit Mia"
   },
   "subtitle": {
-    "en": "Spring in the Bavarian Alps, walking with Mia",
-    "ru": "Весна в Баварских Альпах, в пути с Мией",
-    "de": "Frühling in den Bayerischen Alpen, unterwegs mit Mia"
+    "en": "A spring climb in the Bavarian Alps, carried slowly home",
+    "ru": "Весеннее восхождение в Баварских Альпах, медленный путь домой",
+    "de": "Ein Frühlingsanstieg in den Bayerischen Alpen, langsam nach Hause getragen"
   },
-  "paragraphs": {
-    "en": [
-      "We climbed into the Bavarian Alps that April morning the way you walk into a room you can't quite see across. The fog was thick enough to hold in your hand, and Mia and I moved through it slowly, both of us secretly wondering if we'd taken the right turning somewhere below. The mountain refused to confirm anything. There was only the next few steps of path, and the soft, swallowed sound of our breathing.",
-      "For most of the way up it stayed like that — uncertain, hushed, a long argument with myself about whether to trust the route. You don't really hike in weather like this; you negotiate with it. Mia kept beside me, and we said less and less the higher we went, the way people do when the world narrows to a circle of grey around their boots.",
-      "The final hour was the hardest. Mia cried somewhere on that last stretch — tired in that whole-body way, frustrated with the climb, with the fog, with me probably, and fairly so. I remember thinking I had asked too much of the morning. There is a particular kind of love in keeping going beside someone who is at the end of themselves, neither of you with much left to give except company.",
-      "And then the descent, and with it that quiet softening that comes after something hard. Mia fell asleep on the way down, the small miracle of a body finally letting go. I walked carefully, listening, watching the ferns unfurl their pale spring fronds along the edge of the path — the only clear, certain things in a day that had refused to show itself. The mountain stayed hidden. The ferns were enough."
+  "paragraphs": [
+    [
+      {
+        "text": {
+          "en": "We set out into the Bavarian Alps on a April morning that refused to clear.",
+          "ru": "Мы отправились в Баварские Альпы апрельским утром, которое так и не прояснилось.",
+          "de": "Wir brachen an einem Aprilmorgen in die Bayerischen Alpen auf, der sich einfach nicht aufklären wollte."
+        },
+        "provenance": {
+          "source": "gpx",
+          "reference": "where + season + when"
+        }
+      },
+      {
+        "text": {
+          "en": "The fog settled into the trees and stayed there, patient and grey, the kind of weather that makes you wonder, quietly, whether you should have stayed in bed.",
+          "ru": "Туман осел между деревьями и остался, серый и терпеливый — такая погода, при которой тихо думаешь: а может, стоило остаться в постели.",
+          "de": "Der Nebel legte sich zwischen die Bäume und blieb dort, geduldig und grau, jenes Wetter, bei dem man sich leise fragt, ob man nicht besser im Bett geblieben wäre."
+        },
+        "provenance": {
+          "source": "seed",
+          "reference": "persistent fog, doubtful"
+        }
+      },
+      {
+        "text": {
+          "en": "Mia rode along with me, small and warm against the damp.",
+          "ru": "Мия ехала со мной, маленькая и тёплая на фоне сырости.",
+          "de": "Mia ritt mit, klein und warm gegen die Feuchtigkeit."
+        },
+        "provenance": {
+          "source": "seed",
+          "reference": "Mia, child"
+        }
+      }
     ],
-    "ru": [
-      "В то апрельское утро мы поднимались в Баварские Альпы так, как входят в комнату, которую толком не видно. Туман был такой плотный, что его, казалось, можно было удержать в ладони, и мы с Мией двигались сквозь него медленно, оба втайне гадая, не свернули ли где-то внизу не туда. Гора ничего не подтверждала. Были только ближайшие несколько шагов тропы и тихий, приглушённый звук нашего дыхания.",
-      "Почти всю дорогу вверх было именно так — неуверенно, приглушённо, долгий внутренний спор о том, стоит ли доверять маршруту. В такую погоду на самом деле не идёшь — ты с ней договариваешься. Мия шла рядом, и чем выше мы поднимались, тем меньше говорили, как всегда бывает, когда мир сужается до серого круга вокруг твоих ботинок.",
-      "Последний час был самым тяжёлым. Где-то на этом последнем отрезке Мия заплакала — устала всем телом, измучилась подъёмом, туманом, мной, наверное, и справедливо. Я помню, как подумал, что слишком многого попросил у этого утра. Есть особая нежность в том, чтобы идти рядом с тем, кто уже на пределе, когда у обоих почти ничего не осталось, кроме присутствия друг друга.",
-      "А потом был спуск, и вместе с ним та тихая мягкость, что приходит после чего-то трудного. Мия уснула на обратном пути — маленькое чудо тела, которое наконец отпустило себя. Я шёл осторожно, прислушиваясь, и смотрел, как папоротники разворачивают свои бледные весенние побеги вдоль края тропы — единственное ясное и определённое в этом дне, который так и не пожелал показаться. Гора осталась скрытой. Папоротников было достаточно."
+    [
+      {
+        "text": {
+          "en": "Somewhere on the climb, the day turned hard.",
+          "ru": "Где-то на подъёме день стал тяжёлым.",
+          "de": "Irgendwo am Anstieg wurde der Tag schwer."
+        },
+        "provenance": {
+          "source": "inferred",
+          "reference": "transition into the strained beat"
+        }
+      },
+      {
+        "text": {
+          "en": "Mia began to cry, and at the same time my shoulder set in with a dull, insistent ache.",
+          "ru": "Мия заплакала, и в тот же момент в плече поселилась тупая, настойчивая боль.",
+          "de": "Mia fing an zu weinen, und im selben Moment setzte in meiner Schulter ein dumpfer, beharrlicher Schmerz ein."
+        },
+        "provenance": {
+          "source": "seed",
+          "reference": "Mia cried, shoulder pain"
+        }
+      },
+      {
+        "text": {
+          "en": "For a long stretch it was just the two of us inside the grey, both of us a little undone.",
+          "ru": "Долгое время мы были только вдвоём внутри этой серости, оба немного сломленные.",
+          "de": "Eine lange Strecke waren nur wir beide im Grau, beide ein wenig durcheinander."
+        },
+        "provenance": {
+          "source": "seed",
+          "reference": "strained emotion"
+        }
+      }
     ],
-    "de": [
-      "An jenem Aprilmorgen stiegen wir in die Bayerischen Alpen hinauf wie in einen Raum, den man nicht ganz überblicken kann. Der Nebel war so dicht, dass man meinte, ihn in der Hand halten zu können, und Mia und ich bewegten uns langsam durch ihn hindurch, beide insgeheim mit der Frage beschäftigt, ob wir irgendwo weiter unten falsch abgebogen waren. Der Berg bestätigte nichts. Es gab nur die nächsten paar Schritte Weg und das leise, geschluckte Geräusch unseres Atems.",
-      "Den größten Teil des Aufstiegs blieb es so — ungewiss, gedämpft, ein langer innerer Streit darüber, ob ich der Route trauen sollte. Bei solchem Wetter wandert man eigentlich nicht; man verhandelt mit ihm. Mia blieb neben mir, und je höher wir kamen, desto weniger sprachen wir, so wie es immer ist, wenn sich die Welt auf einen grauen Kreis um die eigenen Schuhe verengt.",
-      "Die letzte Stunde war die schwerste. Irgendwo auf diesem letzten Stück hat Mia geweint — müde mit dem ganzen Körper, entnervt vom Anstieg, vom Nebel, von mir wahrscheinlich, und mit gutem Recht. Ich erinnere mich, dass ich dachte, ich hätte diesem Morgen zu viel zugemutet. Es liegt eine eigene Art von Zuneigung darin, neben jemandem weiterzugehen, der am Ende seiner Kräfte ist, wenn keinem von beiden mehr viel bleibt als die bloße Gegenwart des anderen.",
-      "Und dann der Abstieg, und mit ihm jene stille Milde, die nach etwas Schwerem kommt. Mia schlief auf dem Rückweg ein — das kleine Wunder eines Körpers, der endlich loslässt. Ich ging vorsichtig, lauschte, sah den Farnen zu, wie sie ihre blassen Frühlingstriebe am Wegrand entrollten — das Einzige, was an diesem Tag klar und gewiss war, einem Tag, der sich selbst nicht zeigen wollte. Der Berg blieb verborgen. Die Farne waren genug."
+    [
+      {
+        "text": {
+          "en": "By afternoon we had turned downhill, and something in the day softened with us.",
+          "ru": "К полудню мы повернули вниз, и что-то в этом дне смягчилось вместе с нами.",
+          "de": "Am Nachmittag waren wir auf dem Abstieg, und etwas am Tag wurde mit uns weicher."
+        },
+        "provenance": {
+          "source": "seed",
+          "reference": "afternoon descent, reassured"
+        }
+      },
+      {
+        "text": {
+          "en": "Mia fell asleep against me, finally quiet, her weight settling into a rhythm I could carry.",
+          "ru": "Мия уснула, прижавшись ко мне, наконец затихнув, её вес лёг в ритм, который я мог нести.",
+          "de": "Mia schlief an mir ein, endlich still, ihr Gewicht fand einen Rhythmus, den ich tragen konnte."
+        },
+        "provenance": {
+          "source": "seed",
+          "reference": "Mia fell asleep"
+        }
+      },
+      {
+        "text": {
+          "en": "I started noticing the ferns underfoot, brand-new and uncurling, the soft green proof that spring was already here even if we couldn't see far.",
+          "ru": "Я начал замечать папоротники под ногами — совсем молодые, ещё разворачивающиеся, мягкое зелёное доказательство, что весна уже здесь, даже если вдаль ничего не видно.",
+          "de": "Ich begann, die Farne unter unseren Füßen zu bemerken, ganz neu, gerade erst entrollt, der weiche grüne Beweis, dass der Frühling schon da war, auch wenn wir nicht weit sehen konnten."
+        },
+        "provenance": {
+          "source": "photo",
+          "reference": "ferns"
+        }
+      }
+    ],
+    [
+      {
+        "text": {
+          "en": "We had only climbed a little over two kilometres, but the mountain had asked for six hundred metres of effort and a good hundred minutes of our quiet patience.",
+          "ru": "Мы прошли чуть больше двух километров, но гора попросила шестьсот метров подъёма и добрых сто минут нашего тихого терпения.",
+          "de": "Wir waren nur gut zwei Kilometer gestiegen, aber der Berg hatte sechshundert Höhenmeter und gute hundert Minuten unserer stillen Geduld verlangt."
+        },
+        "provenance": {
+          "source": "gpx",
+          "reference": "distance_km, elevation_gain_m, duration_min"
+        }
+      },
+      {
+        "text": {
+          "en": "Somewhere above us, hidden in the cloud, the summit sat at around thirteen hundred metres, and I decided that was enough mountain for the two of us today.",
+          "ru": "Где-то над нами, спрятанная в облаке, вершина стояла на тысяче трёхстах метрах, и я решил, что на сегодня нам обоим этой горы достаточно.",
+          "de": "Irgendwo über uns, im Wolken verborgen, lag der Gipfel auf etwa dreizehnhundert Metern, und ich entschied, dass das für uns beide heute Berg genug war."
+        },
+        "provenance": {
+          "source": "gpx",
+          "reference": "summit_elev_m"
+        }
+      },
+      {
+        "text": {
+          "en": "Coming down through the soft green with her asleep on my chest, I felt, for the first time that morning, that we had done exactly the right thing.",
+          "ru": "Спускаясь сквозь мягкую зелень, пока она спала у меня на груди, я впервые за это утро почувствовал, что мы поступили именно так, как нужно.",
+          "de": "Während ich durch das weiche Grün hinunterging, sie schlafend an meiner Brust, spürte ich zum ersten Mal an diesem Morgen, dass wir genau das Richtige getan hatten."
+        },
+        "provenance": {
+          "source": "seed",
+          "reference": "reassured"
+        }
+      }
     ]
-  },
+  ],
   "pull_quote": {
-    "en": "The mountain stayed hidden. The ferns were enough.",
-    "ru": "Гора осталась скрытой. Папоротников было достаточно.",
-    "de": "Der Berg blieb verborgen. Die Farne waren genug."
+    "en": "Coming down through the soft green with her asleep on my chest, I felt, for the first time that morning, that we had done exactly the right thing.",
+    "ru": "Спускаясь сквозь мягкую зелень, пока она спала у меня на груди, я впервые за это утро почувствовал, что мы поступили именно так, как нужно.",
+    "de": "Während ich durch das weiche Grün hinunterging, sie schlafend an meiner Brust, spürte ich zum ersten Mal an diesem Morgen, dass wir genau das Richtige getan hatten."
   },
   "milestone": {
-    "en": "A foggy day in the Bavarian Alps",
-    "ru": "Туманный день в Баварских Альпах",
-    "de": "Ein Nebeltag in den Bayerischen Alpen"
+    "en": "First foggy climb with Mia",
+    "ru": "Первый туманный подъём с Мией",
+    "de": "Erste Nebelwanderung mit Mia"
   },
   "selected_photo_indices": [
     0,
@@ -46,7 +168,7 @@
     4,
     6,
     8,
-    9,
+    10,
     11
   ]
 }

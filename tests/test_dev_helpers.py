@@ -19,7 +19,10 @@ GOLDEN_DIR = Path(__file__).parent / "golden"
 def test_sample_narrative_has_required_trilingual_fields() -> None:
     n = sample_narrative()
     assert n.title.en and n.title.ru and n.title.de
-    assert n.paragraphs.en and n.paragraphs.ru and n.paragraphs.de
+    # ADR-014: paragraphs is now list[Paragraph]; flatten via the helper
+    # so this smoke check still expresses "all three languages are present".
+    flat = n.paragraphs_as_localized()
+    assert flat.en and flat.ru and flat.de
     assert n.pull_quote.en and n.pull_quote.ru and n.pull_quote.de
     assert n.milestone.en and n.milestone.ru and n.milestone.de
     assert n.selected_photo_indices

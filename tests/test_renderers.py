@@ -17,13 +17,14 @@ import pytest
 from PIL import Image
 from PIL.TiffImagePlugin import IFDRational
 
+from tests.conftest import paragraphs_from_strings
 from trailstory.models import (
     GpxStats,
     HikeInput,
-    LocalizedParagraphs,
     LocalizedString,
     Memory,
     NarrativeOutput,
+    Paragraph,
     PhotoMeta,
     Waypoint,
 )
@@ -54,7 +55,7 @@ def _gpx_stats() -> GpxStats:
 
 def _narrative() -> NarrativeOutput:
     return NarrativeOutput(
-        schema_version=2,
+        schema_version=3,
         title=LocalizedString(
             en="Above the fog line",
             ru="Над линией тумана",
@@ -65,7 +66,7 @@ def _narrative() -> NarrativeOutput:
             ru="Утро над морем облаков",
             de="Ein Morgen über dem Wolkenmeer",
         ),
-        paragraphs=LocalizedParagraphs(
+        paragraphs=paragraphs_from_strings(
             en=[
                 "We left the trailhead at first light.",
                 "By the saddle the cloud was thinning.",
@@ -129,8 +130,8 @@ def _flat_string(en: str = "x", ru: str = "x", de: str = "x") -> LocalizedString
 
 def _flat_paragraphs(
     *, en: list[str] | None = None, ru: list[str] | None = None, de: list[str] | None = None
-) -> LocalizedParagraphs:
-    return LocalizedParagraphs(
+) -> list[Paragraph]:
+    return paragraphs_from_strings(
         en=en if en is not None else ["x"],
         ru=ru if ru is not None else ["x"],
         de=de if de is not None else ["x"],
@@ -263,7 +264,7 @@ def test_render_escapes_html_in_narrative_fields(tmp_path: Path) -> None:
     """LLM output is untrusted — autoescape must neutralise HTML."""
     photos = [_make_photo(tmp_path, 0, (50, 80, 120))]
     nasty = NarrativeOutput(
-        schema_version=2,
+        schema_version=3,
         title=_flat_string(en="<script>alert(1)</script>"),
         subtitle=_flat_string(),
         paragraphs=_flat_paragraphs(en=["</p><img src=x onerror=alert(1)>"]),
@@ -292,7 +293,7 @@ def test_render_escapes_narrative_when_emitted_into_script_block(
     """The share-button JS uses ``| tojson``; ``</script>`` must not survive raw."""
     photos = [_make_photo(tmp_path, 0, (50, 80, 120))]
     nasty = NarrativeOutput(
-        schema_version=2,
+        schema_version=3,
         title=_flat_string(en="legit"),
         subtitle=_flat_string(),
         paragraphs=_flat_paragraphs(),

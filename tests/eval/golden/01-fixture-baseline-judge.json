@@ -5,86 +5,76 @@
   "photo_selection_plausibility": 4.0,
   "claim_verdicts": [
     {
-      "claim": "the setting is the Bavarian Alps",
+      "claim": "The hike took place in April",
       "verdict": "UNSUPPORTED",
       "quote": ""
     },
     {
-      "claim": "the season is April / spring",
+      "claim": "The hike was in the Bavarian Alps",
       "verdict": "UNSUPPORTED",
       "quote": ""
     },
     {
-      "claim": "the hike takes place in the morning",
-      "verdict": "INFERRED",
-      "quote": "The fog cleared just as we reached the ridge."
+      "claim": "The hour was just past seven in the morning",
+      "verdict": "UNSUPPORTED",
+      "quote": ""
     },
     {
-      "claim": "fog was present during the climb",
+      "claim": "The climb began inside fog",
       "verdict": "SUPPORTED",
       "quote": "The fog cleared just as we reached the ridge."
     },
     {
-      "claim": "the fog smells faintly of last winter's snow",
-      "verdict": "UNSUPPORTED",
-      "quote": ""
-    },
-    {
-      "claim": "the fog smells of the first green thoughts of spring",
-      "verdict": "UNSUPPORTED",
-      "quote": ""
-    },
-    {
-      "claim": "the path tilted upward",
+      "claim": "The terrain was damp stone",
       "verdict": "INFERRED",
-      "quote": "The fog cleared just as we reached the ridge."
+      "quote": "fog cleared; spring mountain implied wet rock conditions"
     },
     {
-      "claim": "the fog parted just enough to show a few steps ahead",
+      "claim": "The walk lasted just over a hundred minutes",
       "verdict": "UNSUPPORTED",
       "quote": ""
     },
     {
-      "claim": "the fog closed again like a curtain",
+      "claim": "The distance was barely more than two kilometres",
       "verdict": "UNSUPPORTED",
       "quote": ""
     },
     {
-      "claim": "the ridge was the destination above",
-      "verdict": "SUPPORTED",
-      "quote": "we reached the ridge"
+      "claim": "The elevation gain was six hundred metres",
+      "verdict": "UNSUPPORTED",
+      "quote": ""
     },
     {
-      "claim": "the fog began to thin before reaching the ridge",
+      "claim": "The fog lifted at the ridge",
       "verdict": "SUPPORTED",
       "quote": "The fog cleared just as we reached the ridge."
     },
     {
-      "claim": "light arrived slowly rather than in a blaze",
+      "claim": "The fog thinned gradually rather than tearing away",
+      "verdict": "INFERRED",
+      "quote": "fog cleared just as we reached the ridge — implies a moment of clearing, not a dramatic rip"
+    },
+    {
+      "claim": "The summit elevation was 1330 metres",
       "verdict": "UNSUPPORTED",
       "quote": ""
     },
     {
-      "claim": "pale shapes resolved into stone and slope",
-      "verdict": "UNSUPPORTED",
-      "quote": ""
-    },
-    {
-      "claim": "the ridge stood ahead waiting",
+      "claim": "A spring sky opened above at the summit",
       "verdict": "INFERRED",
       "quote": "The fog cleared just as we reached the ridge."
     },
     {
-      "claim": "the narrator walked toward the ridge through clearing air",
-      "verdict": "INFERRED",
-      "quote": "The fog cleared just as we reached the ridge."
-    },
-    {
-      "claim": "the narrator describes being a small figure on a spring hillside",
+      "claim": "Twelve photographs were taken that morning",
       "verdict": "UNSUPPORTED",
       "quote": ""
+    },
+    {
+      "claim": "The hike is remembered for the moment the fog cleared and visibility returned",
+      "verdict": "SUPPORTED",
+      "quote": "The fog cleared just as we reached the ridge."
     }
   ],
-  "notes": "The prose achieves genuine warmth through specific sensory layering ('smells faintly of last winter's snow', 'the way you feel a familiar room in the dark') and avoids achievement-focused language entirely. The arc is crisp: anticipation → effort in fog → revelation → quiet arrival, with each paragraph earning its place, though the final paragraph is slightly more abstract than the vivid third. The Russian translation is excellent — 'почти буднично' for 'almost without ceremony' and 'зелёными помыслами весны' for 'first green thoughts of spring' are idiomatic and register-equivalent; a native speaker would not detect translation. Photo indices (0,2,4,6,8,10,11) are seven in count, well-distributed across a range, plausibly mapping to arc beats, though without knowing the total photo pool we cannot confirm the upper bound is sensible. Nearly all concrete claims are unsupported by the sparse seed text, which is expected given how little context was provided.",
-  "faithfulness": 1.56
+  "notes": "The prose is genuinely warm and literary — 'a spring that still carries winter in its pockets' and 'the way breath leaves a window' elevate it well above generic. The arc is clean: setting → fog-shrouded effort → clearing moment → reflection, with every paragraph contributing. The Russian translation is excellent — idioms are naturalized ('прячет зиму по карманам', 'истончался, как дыхание сходит со стекла') and the register matches perfectly; no calques or awkward literalisms detected. Photo indices (7 frames, spread 0–11) plausibly trace the arc, though the even-numbered pattern is slightly mechanical and the last two consecutive indices (10, 11) cluster at the end. Many factual specifics (April, Bavarian Alps, 7 a.m., 100 min, 2 km, 600 m gain, 1330 m, 12 photos) are entirely unsupported by the seed text and appear fabricated from GPX metadata not provided in the prompt.",
+  "faithfulness": 1.61
 }

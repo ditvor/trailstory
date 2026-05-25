@@ -13,11 +13,11 @@ from pathlib import Path
 
 import pytest
 
+from tests.conftest import paragraphs_from_strings
 from trailstory.llm import cache
 from trailstory.models import (
     GpxStats,
     HikeInput,
-    LocalizedParagraphs,
     LocalizedString,
     NarrativeOutput,
     PhotoMeta,
@@ -67,7 +67,7 @@ def _hike_input(gpx_path: Path) -> HikeInput:
 
 def _narrative() -> NarrativeOutput:
     return NarrativeOutput(
-        schema_version=2,
+        schema_version=3,
         title=LocalizedString(
             en="Above the fog line",
             ru="Над линией тумана",
@@ -78,7 +78,7 @@ def _narrative() -> NarrativeOutput:
             ru="Утро над морем облаков",
             de="Ein Morgen über dem Wolkenmeer",
         ),
-        paragraphs=LocalizedParagraphs(
+        paragraphs=paragraphs_from_strings(
             en=["First paragraph.", "Second paragraph."],
             ru=["Первый абзац.", "Второй абзац."],
             de=["Erster Absatz.", "Zweiter Absatz."],

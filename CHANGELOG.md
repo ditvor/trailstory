@@ -77,6 +77,40 @@ Versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   visual treatment doesn't match what `The Zine` / `Sunday` promise.
 
 ### Added
+- **Phases 2.5 + 3.1 + 3.2 + 4 of the narrative-faithfulness
+  initiative, bundled.** Four ADRs land together because each builds
+  on Phase 4's sentence-level provenance schema:
+  - **[ADR-011](docs/adr/011-verifier-loop-self-reported-provenance.md) (Phase 2.5)** —
+    Verifier loop using self-reported provenance. After the writer
+    pass returns, count the INFERRED-sentence share; if it exceeds
+    `Settings.max_inferred_ratio` (default `0.5`), regenerate once
+    with feedback. Free signal (no extra LLM call to detect);
+    "improvement only" admission policy keeps the regen only if its
+    ratio improved on the original. Streaming bypassed.
+  - **[ADR-012](docs/adr/012-per-photo-vision-cache.md) (Phase 3.1)** —
+    On-disk per-photo cache for vision descriptions, keyed by
+    `(photo bytes SHA-256, vision_model)`. Mirrors the existing
+    narrative cache pattern; lives in
+    `~/.cache/trailstory/vision/`. CLI honours the existing
+    `--no-cache` flag; eval pins `use_cache=False`.
+  - **[ADR-013](docs/adr/013-parallel-vision-via-threadpool.md) (Phase 3.2)** —
+    `describe_photos` parallelises vision calls via
+    `ThreadPoolExecutor`. `Settings.vision_concurrency` (default
+    `4`) caps concurrency. 6-photo hike drops from ~6s to ~1.5s
+    wall time. Order preserved via `.map`; single-photo fast path
+    skips the pool.
+  - **[ADR-014](docs/adr/014-sentence-level-provenance-and-html-hover.md) (Phase 4)** —
+    Sentence-level provenance. New `ProvenanceSource` enum, new
+    `Provenance` + `Sentence` models, `NarrativeOutput.paragraphs`
+    becomes `list[Paragraph]` where `Paragraph = list[Sentence]`.
+    Each sentence carries tri-lingual text + one provenance tag.
+    Writer prompt rewritten to produce + tag sentences. Editorial
+    HTML template wraps each sentence in `<span class="sent"
+    data-prov="...">` with title hover + subtle tint on INFERRED.
+    Log and Encyclopedia templates use the new
+    `paragraphs_as_localized()` helper to render unchanged until
+    Phase 4.1 ports them. `schema_version` bumps to `3`; all
+    goldens refreshed.
 - **Multimodal photo grounding via Claude vision (Phase 3 of the
   narrative-faithfulness initiative;
   [ADR-010](docs/adr/010-photo-grounding-via-vision.md)).** Per-photo

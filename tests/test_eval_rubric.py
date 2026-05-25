@@ -14,12 +14,13 @@ from __future__ import annotations
 
 import pytest
 
+from tests.conftest import paragraphs_from_strings
 from tests.eval import rubric
 from tests.eval.rubric import RubricResult
 from trailstory.models import (
-    LocalizedParagraphs,
     LocalizedString,
     NarrativeOutput,
+    Sentence,
 )
 
 
@@ -31,7 +32,7 @@ def _good_narrative() -> NarrativeOutput:
     thing the assertion is responding to.
     """
     return NarrativeOutput(
-        schema_version=2,
+        schema_version=3,
         title=LocalizedString(
             en="Above the fog line",
             ru="Над линией тумана",
@@ -42,7 +43,7 @@ def _good_narrative() -> NarrativeOutput:
             ru="Тихое утро над морем облаков",
             de="Ein stiller Morgen über dem Wolkenmeer",
         ),
-        paragraphs=LocalizedParagraphs(
+        paragraphs=paragraphs_from_strings(
             en=[
                 "We left the trailhead at first light, the air sharp with damp moss.",
                 "By the saddle the cloud was thinning into a soft white scarf.",
@@ -109,7 +110,7 @@ def test_schema_validates_fails_when_field_type_is_corrupted() -> None:
     # ``model_copy(update=...)`` does not re-validate — we use it here to
     # simulate the corrupted-state failure mode the check exists to detect.
     corrupted = _good_narrative().model_copy(
-        update={"paragraphs": "not a LocalizedParagraphs at all"},
+        update={"paragraphs": "not a at all"},
     )
     result = rubric.schema_validates(corrupted)
     assert result.passed is False
@@ -124,32 +125,27 @@ def test_paragraph_count_passes_when_each_lang_in_range() -> None:
     assert result.passed is True
 
 
-def test_paragraph_count_fails_when_en_too_few() -> None:
+def test_paragraph_count_fails_when_too_few() -> None:
+    """ADR-014: paragraphs is one list shared across languages, so the
+    EN-too-few / RU-too-many / DE-too-few failure modes collapse to one:
+    the paragraph list length is outside the 3-5 range. Tri-lingual
+    mismatch is now impossible by construction."""
     base = _good_narrative()
-    paragraphs = base.paragraphs.model_copy(update={"en": base.paragraphs.en[:2]})
-    narrative = base.model_copy(update={"paragraphs": paragraphs})
+    narrative = base.model_copy(update={"paragraphs": base.paragraphs[:2]})
     result = rubric.paragraph_count_3_to_5_each_lang(narrative)
     assert result.passed is False
-    assert "en=2" in result.detail
+    assert "en=2" in result.detail and "ru=2" in result.detail and "de=2" in result.detail
 
 
-def test_paragraph_count_fails_when_ru_too_many() -> None:
-    extra = ["Лишний абзац."] * 3
+def test_paragraph_count_fails_when_too_many() -> None:
     base = _good_narrative()
-    paragraphs = base.paragraphs.model_copy(update={"ru": base.paragraphs.ru + extra})
-    narrative = base.model_copy(update={"paragraphs": paragraphs})
+    # _good_narrative has 4 paragraphs; tripling gives 12.
+    narrative = base.model_copy(
+        update={"paragraphs": base.paragraphs + base.paragraphs + base.paragraphs}
+    )
     result = rubric.paragraph_count_3_to_5_each_lang(narrative)
     assert result.passed is False
-    assert "ru=7" in result.detail
-
-
-def test_paragraph_count_fails_when_de_too_few() -> None:
-    base = _good_narrative()
-    paragraphs = base.paragraphs.model_copy(update={"de": base.paragraphs.de[:2]})
-    narrative = base.model_copy(update={"paragraphs": paragraphs})
-    result = rubric.paragraph_count_3_to_5_each_lang(narrative)
-    assert result.passed is False
-    assert "de=2" in result.detail
+    assert "en=12" in result.detail
 
 
 # ── russian_actually_cyrillic ────────────────────────────────────────────────
@@ -160,12 +156,26 @@ def test_russian_actually_cyrillic_passes_on_pure_cyrillic() -> None:
     assert result.passed is True
 
 
+def _replace_ru_paragraph(narrative: NarrativeOutput, index: int, new_ru: str) -> NarrativeOutput:
+    """Helper for ADR-014 sentence-level structure: rewrite the RU text of
+    paragraph ``index`` to ``new_ru`` while keeping EN/DE intact. The
+    paragraph becomes a single sentence carrying the replacement text."""
+    paragraphs = list(narrative.paragraphs)
+    # Reuse the first sentence's EN + DE; replace RU with the test fixture.
+    first_sent = paragraphs[index][0]
+    paragraphs[index] = [
+        Sentence(
+            text=LocalizedString(en=first_sent.text.en, ru=new_ru, de=first_sent.text.de),
+            provenance=first_sent.provenance,
+        )
+    ]
+    return narrative.model_copy(update={"paragraphs": paragraphs})
+
+
 def test_russian_actually_cyrillic_fails_when_paragraph_has_no_cyrillic() -> None:
-    base = _good_narrative()
-    paragraphs_ru = list(base.paragraphs.ru)
-    paragraphs_ru[1] = "This whole paragraph stayed in English by mistake."
-    new_paragraphs = base.paragraphs.model_copy(update={"ru": paragraphs_ru})
-    narrative = base.model_copy(update={"paragraphs": new_paragraphs})
+    narrative = _replace_ru_paragraph(
+        _good_narrative(), 1, "This whole paragraph stayed in English by mistake."
+    )
     result = rubric.russian_actually_cyrillic(narrative)
     assert result.passed is False
     assert "no Cyrillic" in result.detail
@@ -173,11 +183,9 @@ def test_russian_actually_cyrillic_fails_when_paragraph_has_no_cyrillic() -> Non
 
 def test_russian_actually_cyrillic_fails_on_long_ascii_run_inside_cyrillic_paragraph() -> None:
     """Cyrillic prefix, then a 6+ word English clause — the failure mode this catches."""
-    base = _good_narrative()
-    paragraphs_ru = list(base.paragraphs.ru)
-    paragraphs_ru[2] = "Тропа. We then walked back down the long stony path."
-    new_paragraphs = base.paragraphs.model_copy(update={"ru": paragraphs_ru})
-    narrative = base.model_copy(update={"paragraphs": new_paragraphs})
+    narrative = _replace_ru_paragraph(
+        _good_narrative(), 2, "Тропа. We then walked back down the long stony path."
+    )
     result = rubric.russian_actually_cyrillic(narrative)
     assert result.passed is False
     assert "ASCII" in result.detail
@@ -185,11 +193,7 @@ def test_russian_actually_cyrillic_fails_on_long_ascii_run_inside_cyrillic_parag
 
 def test_russian_actually_cyrillic_tolerates_short_ascii_inserts() -> None:
     """A few ASCII words ('5 km', a name) inside a Cyrillic paragraph is fine."""
-    base = _good_narrative()
-    paragraphs_ru = list(base.paragraphs.ru)
-    paragraphs_ru[0] = "Прошли 5 km вдоль ручья — Mia спала."
-    new_paragraphs = base.paragraphs.model_copy(update={"ru": paragraphs_ru})
-    narrative = base.model_copy(update={"paragraphs": new_paragraphs})
+    narrative = _replace_ru_paragraph(_good_narrative(), 0, "Прошли 5 km вдоль ручья — Mia спала.")
     result = rubric.russian_actually_cyrillic(narrative)
     assert result.passed is True
 
@@ -202,19 +206,46 @@ def test_word_count_ratio_passes_when_balanced() -> None:
     assert result.passed is True
 
 
+def _replace_paragraph_text(
+    narrative: NarrativeOutput,
+    *,
+    en: list[str] | None = None,
+    ru: list[str] | None = None,
+    de: list[str] | None = None,
+) -> NarrativeOutput:
+    """Replace per-language paragraph text while keeping the structure.
+
+    For each provided language, paragraph ``i`` becomes a single sentence
+    whose text in that language is ``[i]``. Languages not supplied keep
+    their original sentence joined-text.
+    """
+    new_paragraphs: list[list[Sentence]] = []
+    for i, paragraph in enumerate(narrative.paragraphs):
+        orig = paragraph[0]
+        new_paragraphs.append(
+            [
+                Sentence(
+                    text=LocalizedString(
+                        en=en[i] if en is not None and i < len(en) else orig.text.en,
+                        ru=ru[i] if ru is not None and i < len(ru) else orig.text.ru,
+                        de=de[i] if de is not None and i < len(de) else orig.text.de,
+                    ),
+                    provenance=orig.provenance,
+                )
+            ]
+        )
+    return narrative.model_copy(update={"paragraphs": new_paragraphs})
+
+
 def test_word_count_ratio_fails_when_ru_far_shorter_than_en() -> None:
-    base = _good_narrative()
-    new_paragraphs = base.paragraphs.model_copy(update={"ru": ["Коротко.", "Очень.", "Тихо."]})
-    narrative = base.model_copy(update={"paragraphs": new_paragraphs})
+    narrative = _replace_paragraph_text(_good_narrative(), ru=["Коротко.", "Очень.", "Тихо."])
     result = rubric.word_count_ratio_en_ru_in_0_7_to_1_4(narrative)
     assert result.passed is False
     assert "ratio=" in result.detail
 
 
 def test_word_count_ratio_fails_when_en_paragraphs_have_no_words() -> None:
-    base = _good_narrative()
-    new_paragraphs = base.paragraphs.model_copy(update={"en": ["", "", ""]})
-    narrative = base.model_copy(update={"paragraphs": new_paragraphs})
+    narrative = _replace_paragraph_text(_good_narrative(), en=["", "", ""])
     result = rubric.word_count_ratio_en_ru_in_0_7_to_1_4(narrative)
     assert result.passed is False
 
@@ -228,9 +259,7 @@ def test_word_count_ratio_en_de_passes_when_balanced() -> None:
 
 
 def test_word_count_ratio_en_de_fails_when_de_far_shorter_than_en() -> None:
-    base = _good_narrative()
-    new_paragraphs = base.paragraphs.model_copy(update={"de": ["Kurz.", "Sehr.", "Still."]})
-    narrative = base.model_copy(update={"paragraphs": new_paragraphs})
+    narrative = _replace_paragraph_text(_good_narrative(), de=["Kurz.", "Sehr.", "Still."])
     result = rubric.word_count_ratio_en_de_in_0_7_to_1_4(narrative)
     assert result.passed is False
     assert "ratio=" in result.detail

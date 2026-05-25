@@ -14,6 +14,7 @@ from unittest.mock import MagicMock
 
 import pytest
 
+from tests.conftest import paragraphs_dict_from_strings
 from trailstory.llm.client import (
     AnthropicClient,
     LLMResponseError,
@@ -78,7 +79,7 @@ def _photos(n: int = 12) -> list[PhotoMeta]:
 
 def _valid_response_dict(indices: list[int] | None = None) -> dict[str, object]:
     return {
-        "schema_version": 2,
+        "schema_version": 3,
         "title": {
             "en": "Above the fog line",
             "ru": "Над линией тумана",
@@ -89,13 +90,13 @@ def _valid_response_dict(indices: list[int] | None = None) -> dict[str, object]:
             "ru": "Утро над морем облаков",
             "de": "Ein Morgen über dem Wolkenmeer",
         },
-        "paragraphs": {
-            "en": [
+        "paragraphs": paragraphs_dict_from_strings(
+            en=[
                 "We left the trailhead at first light.",
                 "By the saddle the cloud was thinning.",
                 "Mia slept the whole climb, her cheek warm against the carrier.",
             ],
-            "ru": [
+            ru=[
                 # noqa lines: "с" and "К" are genuine single-letter Russian
                 # prepositions; ruff flags them as Cyrillic-Latin lookalikes
                 # (RUF001), but they are correct Russian here.
@@ -103,12 +104,12 @@ def _valid_response_dict(indices: list[int] | None = None) -> dict[str, object]:
                 "К седловине облака начали редеть.",  # noqa: RUF001
                 "Мия проспала весь подъём, прижавшись щекой к переноске.",
             ],
-            "de": [
+            de=[
                 "Bei erstem Licht brachen wir auf.",
                 "Am Sattel begann die Wolke sich zu lichten.",
                 "Mia schlief den ganzen Aufstieg, die Wange warm an der Trage.",
             ],
-        },
+        ),
         "pull_quote": {
             "en": "The fog cleared just as we reached the ridge.",
             "ru": "Туман рассеялся как раз когда мы вышли на хребет.",
