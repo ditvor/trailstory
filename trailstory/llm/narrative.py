@@ -95,6 +95,62 @@ class NarrativeGenerationError(Exception):
     """
 
 
+# Northern-hemisphere meteorological season per calendar month. December
+# rolls forward into winter so the lookup is by month number 1-12 without
+# a special case at year boundary. Southern hemisphere inverts this by
+# shifting six months — done explicitly in :func:`_infer_date_and_season`.
+_NORTHERN_SEASON_BY_MONTH: dict[int, str] = {
+    12: "winter",
+    1: "winter",
+    2: "winter",
+    3: "spring",
+    4: "spring",
+    5: "spring",
+    6: "summer",
+    7: "summer",
+    8: "summer",
+    9: "autumn",
+    10: "autumn",
+    11: "autumn",
+}
+
+
+def _infer_date_and_season(gpx_stats: GpxStats) -> tuple[str, str]:
+    """Derive (date_iso, season_phrase) from the first timed waypoint.
+
+    Used to ground the writer prompt under ADR-008 — without temporal
+    context the writer would describe an April hike in "summer-milky"
+    river terms (an observed failure mode in pilot output).
+
+    Returns ``("unknown", "unknown")`` when no waypoint carries a
+    timestamp (some manually-edited GPX files strip timing). Hemisphere
+    is inferred from the waypoint's latitude; southern-hemisphere months
+    map through the 6-month shift so e.g. April → autumn there.
+
+    The season phrase is intentionally verbose ("spring (April; northern
+    hemisphere)") so the model has both the high-level label and the
+    specific month + hemisphere in one string. The redundancy is cheap
+    and avoids the "early spring" vs "late spring" ambiguity the
+    one-word version produced in pilot.
+    """
+    for wp in gpx_stats.waypoints:
+        if wp.time is None:
+            continue
+        month_name = wp.time.strftime("%B")  # locale-independent for en_US C locale; tests pin it.
+        month = wp.time.month
+        hemisphere = "northern" if wp.lat >= 0 else "southern"
+        if hemisphere == "northern":
+            season = _NORTHERN_SEASON_BY_MONTH[month]
+        else:
+            # Shift by 6 months: southern Apr (4) → northern Oct (10) → autumn.
+            shifted = ((month - 1 + 6) % 12) + 1
+            season = _NORTHERN_SEASON_BY_MONTH[shifted]
+        date_iso = wp.time.strftime("%Y-%m-%d")
+        season_phrase = f"{season} ({month_name}; {hemisphere} hemisphere)"
+        return date_iso, season_phrase
+    return "unknown", "unknown"
+
+
 def generate_narrative(
     hike_input: HikeInput,
     gpx_stats: GpxStats,
@@ -140,8 +196,11 @@ def generate_narrative(
         logger.info("narrative cache miss for key %s", key)
 
     place = hike_input.location_name or location
+    hike_date, season = _infer_date_and_season(gpx_stats)
     base_prompt = USER_NARRATIVE_TEMPLATE.format(
         location=place,
+        hike_date=hike_date,
+        season=season,
         distance_km=gpx_stats.distance_km,
         elevation_gain_m=gpx_stats.elevation_gain_m,
         duration_min=gpx_stats.duration_min,
@@ -220,8 +279,11 @@ def generate_narrative_stream(
         raise NarrativeGenerationError("at least one photo is required to build a narrative")
 
     place = hike_input.location_name or location
+    hike_date, season = _infer_date_and_season(gpx_stats)
     base_prompt = USER_NARRATIVE_TEMPLATE.format(
         location=place,
+        hike_date=hike_date,
+        season=season,
         distance_km=gpx_stats.distance_km,
         elevation_gain_m=gpx_stats.elevation_gain_m,
         duration_min=gpx_stats.duration_min,

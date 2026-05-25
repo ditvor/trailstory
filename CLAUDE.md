@@ -504,6 +504,14 @@ don't relitigate them.
    narrative-faithfulness initiative; downstream phases (prompt
    anti-fabrication, two-pass fact ledger, multimodal grounding,
    sentence-level provenance) will record their own ADRs.
+8. [ADR-008 — writer prompt temporal grounding + anti-fabrication](docs/adr/008-writer-prompt-temporal-grounding-and-anti-fabrication.md):
+   Phase 1 of the narrative-faithfulness initiative. The writer prompt
+   now receives the GPX-derived hike date and an inferred season
+   ("spring (April; northern hemisphere)"); a new clause forbids
+   ungrounded concrete specifics (animals, foods, named objects) while
+   permitting generic nature words. Closes the prompt-engineering
+   ceiling; Phase 2 (two-pass writer with `FactLedger`) is the
+   structural fix.
 
 If you're about to do something that touches an area covered by an existing
 ADR, **read the ADR first**. If the change is incompatible with the recorded
