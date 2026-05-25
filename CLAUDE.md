@@ -522,6 +522,17 @@ don't relitigate them.
    `generate_narrative_stream` gain a required `ledger_client` kwarg;
    the CLI, web pipeline, and eval runner all build two
    `AnthropicClient` instances per render. Renderers unchanged.
+10. [ADR-010 — photo grounding via Claude vision](docs/adr/010-photo-grounding-via-vision.md):
+    Phase 3. Per-photo vision describer produces a typed
+    `PhotoDescription` (people, objects, location/season clues, body
+    language); descriptions flow into the ledger extractor as a new
+    `{photo_descriptions_json}` placeholder. Writer prompt unchanged —
+    photos enrich the ledger, they do not bypass the ADR-009
+    fabrication contract. New `complete_vision()` on `AnthropicClient`,
+    new `describe_photo` / `describe_photos` in `trailstory/photos.py`,
+    new `Settings.vision_model` + `use_photo_grounding`. Three clients
+    per render (writer + ledger + vision) plumbed through the CLI, web,
+    eval runner, and fake-LLM dev mode. Per-photo failures soft-fail.
 
 If you're about to do something that touches an area covered by an existing
 ADR, **read the ADR first**. If the change is incompatible with the recorded

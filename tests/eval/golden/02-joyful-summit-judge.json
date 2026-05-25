@@ -5,49 +5,39 @@
   "photo_selection_plausibility": 4.0,
   "claim_verdicts": [
     {
-      "claim": "The hike took place in April",
+      "claim": "Setting is the Bavarian Alps",
       "verdict": "UNSUPPORTED",
       "quote": ""
     },
     {
-      "claim": "The location is the Bavarian Alps",
-      "verdict": "UNSUPPORTED",
-      "quote": ""
-    },
-    {
-      "claim": "Mia laughed during the climb",
+      "claim": "The sky was a clean, very blue color",
       "verdict": "SUPPORTED",
-      "quote": "Mia laughed the whole way up"
+      "quote": "the wide blue"
     },
     {
-      "claim": "A bird darted out of brush and Mia laughed",
+      "claim": "It was an April morning",
+      "verdict": "UNSUPPORTED",
+      "quote": ""
+    },
+    {
+      "claim": "Birds were calling in the trees",
       "verdict": "SUPPORTED",
       "quote": "every bird"
     },
     {
-      "claim": "A stream crossed the trail and Mia laughed",
+      "claim": "A stream ran alongside the trail",
       "verdict": "SUPPORTED",
       "quote": "every stream"
     },
     {
-      "claim": "The stream was cold and full after the thaw",
-      "verdict": "UNSUPPORTED",
-      "quote": ""
-    },
-    {
-      "claim": "Wind came in gusts and they laughed back at it",
+      "claim": "There were gusts of wind",
       "verdict": "SUPPORTED",
       "quote": "every gust of wind"
     },
     {
-      "claim": "They reached the top at just above 1300 metres",
-      "verdict": "UNSUPPORTED",
-      "quote": ""
-    },
-    {
-      "claim": "They sat at the summit",
+      "claim": "Mia laughed during the ascent",
       "verdict": "SUPPORTED",
-      "quote": "We sat at the summit"
+      "quote": "Mia laughed the whole way up"
     },
     {
       "claim": "They ate apples at the summit",
@@ -55,51 +45,51 @@
       "quote": "eating apples"
     },
     {
-      "claim": "The apples were cold and ordinary",
-      "verdict": "UNSUPPORTED",
-      "quote": ""
-    },
-    {
-      "claim": "The sky was blue",
-      "verdict": "SUPPORTED",
-      "quote": "she clapped her hands at the wide blue"
-    },
-    {
       "claim": "Mia clapped her hands at the view",
       "verdict": "SUPPORTED",
       "quote": "she clapped her hands at the wide blue"
     },
     {
-      "claim": "The morning lasted a couple of hours",
-      "verdict": "UNSUPPORTED",
-      "quote": ""
-    },
-    {
-      "claim": "They took photographs",
-      "verdict": "UNSUPPORTED",
-      "quote": ""
-    },
-    {
-      "claim": "The climb was steep from the first step",
-      "verdict": "UNSUPPORTED",
-      "quote": ""
-    },
-    {
-      "claim": "They carried the apples up with them",
-      "verdict": "UNSUPPORTED",
-      "quote": ""
-    },
-    {
-      "claim": "There were two hikers (Mia and narrator)",
+      "claim": "They sat at the summit",
       "verdict": "SUPPORTED",
-      "quote": "Mia laughed the whole way up — every bird, every stream, every gust of wind. We sat at the summit"
+      "quote": "We sat at the summit"
     },
     {
-      "claim": "It was spring",
+      "claim": "They carried the apples up from the start of the hike",
       "verdict": "INFERRED",
-      "quote": "April had finally loosened its grip on the mountains (inferred from Bavarian Alps context and seasonal language; seed does not specify season)"
+      "quote": "eating apples"
+    },
+    {
+      "claim": "The apples tasted sharper and more honest after the ascent",
+      "verdict": "UNSUPPORTED",
+      "quote": ""
+    },
+    {
+      "claim": "They did not hurry to leave the summit",
+      "verdict": "UNSUPPORTED",
+      "quote": ""
+    },
+    {
+      "claim": "The air smelled of thawed earth",
+      "verdict": "UNSUPPORTED",
+      "quote": ""
+    },
+    {
+      "claim": "The world below arranged itself into ridges and pale distances",
+      "verdict": "UNSUPPORTED",
+      "quote": ""
+    },
+    {
+      "claim": "The stream was cold and quick beside the path",
+      "verdict": "INFERRED",
+      "quote": "every stream"
+    },
+    {
+      "claim": "Mia was quietly delighted at the summit",
+      "verdict": "INFERRED",
+      "quote": "she clapped her hands at the wide blue"
     }
   ],
-  "notes": "The English prose is warm and specific, with memorable phrases like 'the stream, cold and full of itself' and 'that ridiculous blue sky' that feel authentically personal rather than generic. The arc moves cleanly from setting → ascent effort → summit pause → reflective close, each paragraph earning its place. The Russian is excellent — 'до неприличия чистым', 'важный после оттепели', 'побыть не суровой, а озорной' read as idiomatic native Russian with no awkward calques. Photo indices (7 frames spread 0–11) are plausible; the cluster at the high end (10, 11) may slightly over-represent the summit, but the count and distribution are reasonable. Several specific details — April date, Bavarian Alps location, 1300 m elevation, 'couple of hours', photographs — are introduced without any grounding in the seed text.",
-  "faithfulness": 2.5
+  "notes": "The English prose is exceptionally warm and specific, elevating the seed's simple images into a coherent emotional arc without becoming overwrought; 'the sky that day was the real summit' is a standout line. The arc moves cleanly through departure, ascent, summit, and reflection, with every paragraph earning its place. The Russian translation reads as native literary Russian — phrases like 'без причины и по всем причинам сразу' and 'земля показалась доброй' are idiomatic and register-matched, not back-translated. The photo indices (7 frames, spread across 0–11) plausibly trace the arc but the clustering of 9/11 at the end is slightly rear-heavy. Several specific details — Bavarian Alps location, April date, the cold-stream description, the apple-taste reflection — are invented beyond the seed.",
+  "faithfulness": 2.79
 }

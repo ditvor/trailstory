@@ -242,6 +242,16 @@ def extract_ledger(
     first_photo_time = photos[0].timestamp.isoformat(timespec="minutes")
     last_photo_time = photos[-1].timestamp.isoformat(timespec="minutes")
 
+    # Phase 3 / ADR-010: photo descriptions from the vision pass flow
+    # into the extractor as a JSON array, in time order. Empty array when
+    # the vision pass is disabled or returned no useful detail; the
+    # extractor's prompt explains the fallback so the model knows it's
+    # then doing pure seed-only grounding (the Phase 2 contract).
+    photo_descriptions: list[dict[str, Any]] = [
+        p.description.model_dump(mode="json") for p in photos if p.description is not None
+    ]
+    photo_descriptions_json = json.dumps(photo_descriptions, ensure_ascii=False, indent=2)
+
     base_prompt = USER_LEDGER_EXTRACTOR_TEMPLATE.format(
         location=place,
         hike_date=hike_date,
@@ -252,6 +262,7 @@ def extract_ledger(
         first_photo_time=first_photo_time,
         last_photo_time=last_photo_time,
         seed_text=hike_input.seed_text,
+        photo_descriptions_json=photo_descriptions_json,
     )
 
     parsed = _call_and_parse_with_system(client, base_prompt, SYSTEM_LEDGER_EXTRACTOR)

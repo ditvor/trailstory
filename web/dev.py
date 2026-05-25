@@ -161,6 +161,38 @@ def make_fake_ledger_client_factory() -> Callable[[], AnthropicClient]:
     return _factory
 
 
+# Deterministic PhotoDescription fixture for the ADR-010 vision pass in
+# fake-LLM dev mode. Same constant for every photo — the dev UI doesn't
+# exercise per-photo variation, only the round-trip shape.
+_FAKE_PHOTO_DESCRIPTION: Final[str] = json.dumps(
+    {
+        "people_visible": ["a person in a blue jacket"],
+        "objects_visible": ["a wooden path"],
+        "location_clues": ["forest with tall pines"],
+        "season_clues": ["bright midday light"],
+        "body_language_notes": ["walking forward, relaxed posture"],
+    }
+)
+
+
+def make_fake_vision_client_factory() -> Callable[[], AnthropicClient]:
+    """Return a factory for the ADR-010 per-photo vision pass in fake-LLM dev mode.
+
+    The vision client uses ``complete_vision()`` (not ``complete()``);
+    this mock serves the same deterministic ``PhotoDescription`` JSON for
+    every photo so the dev pipeline exercises the round-trip without
+    Anthropic API calls or actual image processing.
+    """
+
+    def _factory() -> AnthropicClient:
+        fake = MagicMock(spec=AnthropicClient)
+        fake.model = "trailstory-dev-fake-vision"
+        fake.complete_vision.return_value = _FAKE_PHOTO_DESCRIPTION
+        return fake
+
+    return _factory
+
+
 def banner() -> str:
     """Short banner printed when the dev mode is active."""
     return (

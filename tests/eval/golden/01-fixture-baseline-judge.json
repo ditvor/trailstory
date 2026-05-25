@@ -1,95 +1,90 @@
 {
   "warmth": 4.5,
   "narrative_arc": 4.5,
-  "russian_fidelity": 4.5,
+  "russian_fidelity": 5.0,
   "photo_selection_plausibility": 4.0,
   "claim_verdicts": [
     {
-      "claim": "The hike took place in April",
+      "claim": "the setting is the Bavarian Alps",
       "verdict": "UNSUPPORTED",
       "quote": ""
     },
     {
-      "claim": "The setting is the Bavarian Alps",
+      "claim": "the season is April / spring",
       "verdict": "UNSUPPORTED",
       "quote": ""
     },
     {
-      "claim": "The fog was pale grey in colour",
+      "claim": "the hike takes place in the morning",
       "verdict": "INFERRED",
       "quote": "The fog cleared just as we reached the ridge."
     },
     {
-      "claim": "The path lifted gently at first, then more steeply",
-      "verdict": "INFERRED",
-      "quote": "The fog cleared just as we reached the ridge."
-    },
-    {
-      "claim": "Stones underfoot were damp",
-      "verdict": "UNSUPPORTED",
-      "quote": ""
-    },
-    {
-      "claim": "Branches were still bare from winter",
-      "verdict": "UNSUPPORTED",
-      "quote": ""
-    },
-    {
-      "claim": "The hiker could hear their own breathing",
-      "verdict": "UNSUPPORTED",
-      "quote": ""
-    },
-    {
-      "claim": "There were no meadows or blue distances visible",
-      "verdict": "UNSUPPORTED",
-      "quote": ""
-    },
-    {
-      "claim": "The altitude gain was six hundred metres",
-      "verdict": "UNSUPPORTED",
-      "quote": ""
-    },
-    {
-      "claim": "The fog began to thin upon reaching the ridge",
+      "claim": "fog was present during the climb",
       "verdict": "SUPPORTED",
       "quote": "The fog cleared just as we reached the ridge."
     },
     {
-      "claim": "The fog lifted in long drifting sheets rather than all at once",
+      "claim": "the fog smells faintly of last winter's snow",
       "verdict": "UNSUPPORTED",
       "quote": ""
     },
     {
-      "claim": "Light returned to the air as the fog cleared",
-      "verdict": "INFERRED",
-      "quote": "The fog cleared just as we reached the ridge."
-    },
-    {
-      "claim": "Mountain shoulders became visible",
-      "verdict": "INFERRED",
-      "quote": "The fog cleared just as we reached the ridge."
-    },
-    {
-      "claim": "A pale spring sky became visible",
+      "claim": "the fog smells of the first green thoughts of spring",
       "verdict": "UNSUPPORTED",
       "quote": ""
     },
     {
-      "claim": "The hiker looked back down at the valley they had climbed from",
+      "claim": "the path tilted upward",
       "verdict": "INFERRED",
       "quote": "The fog cleared just as we reached the ridge."
     },
     {
-      "claim": "The hiker stood on the ridge listening to the wind",
+      "claim": "the fog parted just enough to show a few steps ahead",
       "verdict": "UNSUPPORTED",
       "quote": ""
     },
     {
-      "claim": "The last of the fog slipped away below the hiker",
+      "claim": "the fog closed again like a curtain",
+      "verdict": "UNSUPPORTED",
+      "quote": ""
+    },
+    {
+      "claim": "the ridge was the destination above",
+      "verdict": "SUPPORTED",
+      "quote": "we reached the ridge"
+    },
+    {
+      "claim": "the fog began to thin before reaching the ridge",
+      "verdict": "SUPPORTED",
+      "quote": "The fog cleared just as we reached the ridge."
+    },
+    {
+      "claim": "light arrived slowly rather than in a blaze",
+      "verdict": "UNSUPPORTED",
+      "quote": ""
+    },
+    {
+      "claim": "pale shapes resolved into stone and slope",
+      "verdict": "UNSUPPORTED",
+      "quote": ""
+    },
+    {
+      "claim": "the ridge stood ahead waiting",
       "verdict": "INFERRED",
       "quote": "The fog cleared just as we reached the ridge."
+    },
+    {
+      "claim": "the narrator walked toward the ridge through clearing air",
+      "verdict": "INFERRED",
+      "quote": "The fog cleared just as we reached the ridge."
+    },
+    {
+      "claim": "the narrator describes being a small figure on a spring hillside",
+      "verdict": "UNSUPPORTED",
+      "quote": ""
     }
   ],
-  "notes": "The English prose is genuinely warm and literary, with precise sensory texture ('damp stones underfoot', 'long drifting sheets') and a reflective closing beat that avoids cliché; warmth is high but just short of 5 because the intimacy is slightly impersonal ('I' rather than invoking a companion or specific memory). The arc is clean: fog-shrouded approach, effort, revelation, stillness — each paragraph earns its place, though the 'human detail' beat is thin (no companion, no small physical gesture). The Russian is idiomatic and reads naturally; 'маленьким частным паломничеством' and 'давала утру улечься' are confident native-register choices, with only 'близкая прохладная серость' slightly stiff. Photo indices (7 frames, spread 0–11) plausibly trace dawn-approach through clearing-fog to open ridge, though the even-numbered spacing feels slightly mechanical rather than editorially curated.",
-  "faithfulness": 1.18
+  "notes": "The prose achieves genuine warmth through specific sensory layering ('smells faintly of last winter's snow', 'the way you feel a familiar room in the dark') and avoids achievement-focused language entirely. The arc is crisp: anticipation → effort in fog → revelation → quiet arrival, with each paragraph earning its place, though the final paragraph is slightly more abstract than the vivid third. The Russian translation is excellent — 'почти буднично' for 'almost without ceremony' and 'зелёными помыслами весны' for 'first green thoughts of spring' are idiomatic and register-equivalent; a native speaker would not detect translation. Photo indices (0,2,4,6,8,10,11) are seven in count, well-distributed across a range, plausibly mapping to arc beats, though without knowing the total photo pool we cannot confirm the upper bound is sensible. Nearly all concrete claims are unsupported by the sparse seed text, which is expected given how little context was provided.",
+  "faithfulness": 1.56
 }

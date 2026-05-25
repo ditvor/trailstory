@@ -371,6 +371,8 @@ async def generate_stream(request: Request, slug: str) -> Response:
 
     client = _client_factory(request)()
     ledger_client = _ledger_client_factory(request)()
+    vision_client = _vision_client_factory(request)()
+    settings: Settings = request.app.state.settings
 
     def event_stream() -> Iterator[bytes]:
         yield _sse_event("status", {"phase": "writing"})
@@ -379,6 +381,8 @@ async def generate_stream(request: Request, slug: str) -> Response:
                 workspace,
                 client=client,
                 ledger_client=ledger_client,
+                vision_client=vision_client,
+                use_photo_grounding=settings.use_photo_grounding,
             ):
                 if isinstance(event, PipelineStreamChunk):
                     yield _sse_event("chunk", {"text": event.text})
@@ -567,6 +571,17 @@ def _ledger_client_factory(request: Request) -> Callable[[], AnthropicClient]:
     independently.
     """
     factory: Callable[[], AnthropicClient] = request.app.state.ledger_client_factory
+    return factory
+
+
+def _vision_client_factory(request: Request) -> Callable[[], AnthropicClient]:
+    """Resolve the vision-describer factory injected by :func:`create_app`.
+
+    Mirrors :func:`_client_factory` for the Phase 3 (ADR-010) per-photo
+    vision pass — separate factory so the vision model can be swapped
+    or disabled independently of writer / ledger.
+    """
+    factory: Callable[[], AnthropicClient] = request.app.state.vision_client_factory
     return factory
 
 

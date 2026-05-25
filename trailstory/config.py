@@ -17,6 +17,18 @@ class Settings(BaseSettings):
     # env var. Defaulting to the latest Haiku class as of ship time;
     # bump when a newer fast model lands.
     ledger_model: str = "claude-haiku-4-5"
+    # Vision describer model (Phase 3 / ADR-010). Same model family as
+    # the ledger extractor by default — Haiku 4.5 has vision and the
+    # per-photo describer task is small enough that Opus quality is
+    # overkill. Override via VISION_MODEL env var.
+    vision_model: str = "claude-haiku-4-5"
+    # Master switch for the Phase 3 vision pass. Default on per ADR-010
+    # — vision grounding is the whole point. Set USE_PHOTO_GROUNDING=0
+    # to skip vision calls entirely (cheaper, faster, but the writer
+    # loses photo-grounded specifics — equivalent to the Phase 2
+    # contract). Useful for cost-sensitive batch runs or when an
+    # operator wants to bisect a quality regression to the vision pass.
+    use_photo_grounding: bool = True
     output_dir: Path = Path("./output")
     log_level: str = "INFO"
 

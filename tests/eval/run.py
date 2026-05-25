@@ -52,7 +52,7 @@ from trailstory.gpx import parse_gpx
 from trailstory.llm.client import AnthropicClient
 from trailstory.llm.narrative import NarrativeGenerationError, generate_narrative
 from trailstory.models import HikeInput, NarrativeOutput
-from trailstory.photos import load_photos
+from trailstory.photos import describe_photos, load_photos
 
 CASES_DIR = Path(__file__).parent / "cases"
 GOLDEN_DIR = Path(__file__).parent / "golden"
@@ -154,6 +154,11 @@ def main(argv: list[str] | None = None) -> int:
     # exercises the full two-pass pipeline so faithfulness scores
     # reflect what real users get, not a simulated single-pass version.
     ledger_client = AnthropicClient(settings.anthropic_api_key, model=settings.ledger_model)
+    # Phase 3 (ADR-010): per-photo vision describer. Eval honours
+    # ``Settings.use_photo_grounding`` so an operator can bisect a
+    # quality regression by toggling it (set USE_PHOTO_GROUNDING=0
+    # to re-run cases under the Phase 2 contract).
+    vision_client = AnthropicClient(settings.anthropic_api_key, model=settings.vision_model)
 
     judge_client: AnthropicClient | None = None
     threshold = DEFAULT_REGRESSION_THRESHOLD
@@ -163,9 +168,11 @@ def main(argv: list[str] | None = None) -> int:
         threshold = _read_regression_threshold()
 
     console = Console()
+    vision_state = "on" if settings.use_photo_grounding else "off"
     header = (
         f"[bold]running narrative eval[/bold] — writer={writer_client.model}, "
-        f"ledger={ledger_client.model}, {len(cases)} case(s), cache disabled"
+        f"ledger={ledger_client.model}, vision={vision_client.model} ({vision_state}), "
+        f"{len(cases)} case(s), cache disabled"
     )
     if judge_client is not None:
         header += f", judge={judge_client.model}, regression threshold={threshold:.2f}"
@@ -177,6 +184,8 @@ def main(argv: list[str] | None = None) -> int:
             case,
             writer_client=writer_client,
             ledger_client=ledger_client,
+            vision_client=vision_client,
+            use_photo_grounding=settings.use_photo_grounding,
             judge_client=judge_client,
             console=console,
             update_golden=args.update_golden,
@@ -207,6 +216,8 @@ def _run_case(
     *,
     writer_client: AnthropicClient,
     ledger_client: AnthropicClient,
+    vision_client: AnthropicClient,
+    use_photo_grounding: bool,
     judge_client: AnthropicClient | None,
     console: Console,
     update_golden: bool,
@@ -231,6 +242,13 @@ def _run_case(
         except Exception as exc:
             console.print(f"[red]✗ photos load failed:[/red] {exc}")
             return False
+
+        # Phase 3 (ADR-010): vision describer per photo before narrative
+        # generation. Failures inside describe_photos are non-fatal
+        # (per-photo skip + warn) — the orchestrator handles a partial
+        # description list, and a single flaky vision call should not
+        # tank a whole eval run.
+        photos = describe_photos(photos, client=vision_client, enabled=use_photo_grounding)
 
         try:
             narrative = generate_narrative(

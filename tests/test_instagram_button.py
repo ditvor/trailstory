@@ -123,6 +123,22 @@ def _make_ledger_client() -> MagicMock:
     return fake
 
 
+def _make_vision_client() -> MagicMock:
+    """Mocked ADR-010 vision client. Constant PhotoDescription JSON per photo."""
+    fake = MagicMock(spec=AnthropicClient)
+    fake.model = "claude-haiku-4-5-vision-test"
+    fake.complete_vision.return_value = json.dumps(
+        {
+            "people_visible": [],
+            "objects_visible": ["path"],
+            "location_clues": [],
+            "season_clues": [],
+            "body_language_notes": [],
+        }
+    )
+    return fake
+
+
 def _read_sample_photos(limit: int) -> list[tuple[str, bytes, str]]:
     out: list[tuple[str, bytes, str]] = []
     for path in sorted(SAMPLE_PHOTOS.iterdir()):
@@ -172,6 +188,7 @@ def app_factory(
         storage=storage,
         client_factory=lambda: fake,
         ledger_client_factory=lambda: _make_ledger_client(),
+        vision_client_factory=lambda: _make_vision_client(),
         enable_sweeper=False,
     )
     yield app
@@ -186,6 +203,7 @@ def app_factory_4_photos(tmp_path: Path) -> Iterator[FastAPI]:
         storage=storage,
         client_factory=lambda: fake,
         ledger_client_factory=lambda: _make_ledger_client(),
+        vision_client_factory=lambda: _make_vision_client(),
         enable_sweeper=False,
     )
     yield app
@@ -222,6 +240,7 @@ def test_save_for_instagram_button_renders_in_every_style(tmp_path: Path, style:
         storage=storage,
         client_factory=lambda: fake,
         ledger_client_factory=lambda: _make_ledger_client(),
+        vision_client_factory=lambda: _make_vision_client(),
         enable_sweeper=False,
     )
     client, slug = _generate_and_render(app, style=style)
