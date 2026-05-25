@@ -2,51 +2,50 @@
   "schema_version": 2,
   "title": {
     "en": "Mia and the Wide Blue",
-    "ru": "Мия и бескрайняя синева",
+    "ru": "Мия и широкая синева",
     "de": "Mia und das weite Blau"
   },
   "subtitle": {
-    "en": "A small girl, a small mountain, and a sky big enough for both",
-    "ru": "Маленькая девочка, маленькая гора и небо, которого хватило на двоих",
-    "de": "Ein kleines Mädchen, ein kleiner Berg und ein Himmel, der für beide reichte"
+    "en": "An April morning in the Bavarian Alps, measured in laughter",
+    "ru": "Апрельское утро в Баварских Альпах, отмеренное смехом",
+    "de": "Ein Aprilmorgen in den Bayerischen Alpen, gemessen in Lachen"
   },
   "paragraphs": {
     "en": [
-      "We started the path slowly, the way you have to when you walk with Mia — not because her legs are tired, but because the world keeps stopping her. A blackbird in the spruce. A stream curling under the boards of a little bridge. A gust of wind that lifted her hair and made her laugh as if the mountain itself had told her a joke.",
-      "The climb was steeper than the map promised, and for a while it was just the two of us breathing and the soft crunch of the path. Mia held my hand on the narrow stretches and let go on the wide ones, running ahead a few steps and then turning back, checking that I was still part of the morning. The Bavarian forest smelled of warm needles and damp stone, and somewhere far below us a cowbell rang twice and then forgot itself.",
-      "At the top — not such a great top, only thirteen hundred metres, but high enough for a four-year-old to feel like a queen — we sat on a flat rock and took out the apples. She ate hers in tiny, serious bites, looking out over the valley as though she were memorising it. Then she put the core down beside her, clapped her hands once, and announced to no one in particular that the sky was very, very blue.",
-      "I don't think I'll forget that clap. It was the sound of a child agreeing with the whole world. We stayed up there a long time, longer than the walk itself, and when we finally turned back down she was still humming — some little tune she had invented somewhere between the stream and the summit."
+      "We set out into one of those soft April mornings the Bavarian Alps keep for people willing to climb a little. The air still had that thin spring sharpness, the kind that wakes you without scolding you, and the slopes above us were just beginning to remember their green. From the very first steps Mia was laughing — at the way her own boots sounded on the path, at a bird she couldn't see, at me, at nothing at all.",
+      "The climb was short on the map and long on the legs: a steep little ribbon of trail that lifted us six hundred metres in not much more than an hour and a half. Every stream we crossed got a laugh. Every gust that pushed her hair sideways got a laugh. I kept stopping to catch my breath and pretending I was stopping to look at the view, and she saw straight through me, the way she always does, and laughed at that too.",
+      "At the top — a modest summit by these mountains' standards, but the whole world from where we stood — we sat down on the warm stones and took out the apples. She ate hers in the serious, two-handed way small children eat fruit they're proud of. Then she looked up, saw how far the sky went, and clapped. Just clapped, for the blue, as if it had finally arrived after a long journey.",
+      "I don't think I'll remember the distance or the time or the name of the trail. I'll remember her small hands meeting in the bright air, and the apples, and the feeling that the mountain had been built, quietly and patiently, for exactly this afternoon."
     ],
     "ru": [
-      "Мы шли по тропе медленно — иначе с Мией нельзя. Не потому что у неё устают ножки, а потому что её то и дело останавливает мир. Чёрный дрозд в еловых ветках. Ручеёк, изгибающийся под досками маленького мостика. Порыв ветра, который поднял ей волосы, и она засмеялась так, будто сама гора рассказала ей шутку.",
-      "Подъём оказался круче, чем обещала карта, и какое-то время были только мы двое — наше дыхание да тихий хруст тропы. На узких местах Мия держала меня за руку, а на широких отпускала, убегала вперёд на несколько шагов и оборачивалась — проверяла, остаюсь ли я частью этого утра. Баварский лес пах нагретой хвоей и влажным камнем, а где-то далеко внизу дважды звякнул коровий колокольчик и снова умолк.",
-      "Наверху — не таком уж большом верху, всего тысяча триста метров, но достаточно высоком, чтобы четырёхлетняя девочка почувствовала себя королевой, — мы уселись на плоский камень и достали яблоки. Она ела своё крошечными серьёзными укусами, глядя на долину так, будто заучивала её наизусть. Потом положила огрызок рядом, один раз хлопнула в ладоши и сообщила никому конкретно, что небо очень-очень синее.",
-      "Кажется, этот хлопок я не забуду. Так звучит ребёнок, который согласен со всем миром. Мы просидели там долго — дольше, чем шли, — а когда наконец двинулись обратно вниз, она всё ещё что-то напевала: какую-то свою мелодию, придуманную где-то между ручьём и вершиной."
+      "Мы вышли в одно из тех мягких апрельских утр, какие Баварские Альпы берегут для тех, кто готов немного подняться. В воздухе ещё держалась тонкая весенняя резкость — та, что будит, но не ругает, — а склоны над нами только начинали вспоминать свой зелёный цвет. С первых же шагов Мия смеялась: над тем, как её ботинки стучат по тропе, над птицей, которую не было видно, надо мной, просто так.",
+      "Подъём был коротким на карте и долгим для ног: крутая узкая лента тропы, поднявшая нас на шестьсот метров чуть больше чем за полтора часа. Каждый ручей, который мы переходили, получал свой смех. Каждый порыв ветра, отбрасывавший её волосы вбок, получал свой смех. Я то и дело останавливался отдышаться и делал вид, что остановился полюбоваться видом, а она видела меня насквозь, как всегда, и смеялась и над этим тоже.",
+      "Наверху — скромная вершина по здешним меркам, но с неё открывался весь мир — мы сели на тёплые камни и достали яблоки. Она ела своё серьёзно, двумя руками, как маленькие дети едят фрукт, которым гордятся. Потом подняла глаза, увидела, как далеко уходит небо, и захлопала в ладоши. Просто захлопала — этой синеве, будто она наконец добралась после долгого пути.",
+      "Я, наверное, не запомню ни расстояния, ни времени, ни названия тропы. Я запомню её маленькие ладони, встретившиеся в светлом воздухе, и яблоки, и ощущение, что гора была сложена — тихо и терпеливо — именно ради этого дня."
     ],
     "de": [
-      "Wir gingen den Weg langsam an, so wie man es muss, wenn man mit Mia unterwegs ist — nicht weil ihre Beine müde wären, sondern weil die Welt sie immer wieder anhält. Eine Amsel in der Fichte. Ein Bach, der sich unter den Brettern einer kleinen Brücke krümmt. Eine Windböe, die ihr die Haare hob und sie lachen ließ, als hätte der Berg selbst ihr einen Witz erzählt.",
-      "Der Anstieg war steiler, als die Karte versprochen hatte, und eine Weile waren nur wir beide da, unser Atem und das leise Knirschen des Pfades. An den schmalen Stellen hielt Mia meine Hand, an den breiten ließ sie los, lief ein paar Schritte voraus und drehte sich um, um zu prüfen, ob ich noch zum Morgen gehörte. Der bayerische Wald roch nach warmen Nadeln und feuchtem Stein, und irgendwo weit unter uns klang zweimal eine Kuhglocke und vergaß sich dann wieder.",
-      "Oben — kein besonders hohes Oben, nur dreizehnhundert Meter, aber hoch genug, damit eine Vierjährige sich wie eine Königin fühlte — saßen wir auf einem flachen Stein und holten die Äpfel heraus. Sie aß ihren in winzigen, ernsthaften Bissen und blickte über das Tal, als wollte sie es auswendig lernen. Dann legte sie das Kerngehäuse neben sich, klatschte einmal in die Hände und verkündete an niemand Bestimmten, dass der Himmel sehr, sehr blau sei.",
-      "Dieses Klatschen werde ich, glaube ich, nicht vergessen. So klingt ein Kind, das mit der ganzen Welt einverstanden ist. Wir blieben lange da oben, länger als der Weg selbst gedauert hatte, und als wir uns endlich wieder hinunter wandten, summte sie noch immer — irgendeine kleine Melodie, die sie sich zwischen dem Bach und dem Gipfel ausgedacht hatte."
+      "Wir brachen in einen dieser sanften Aprilmorgen auf, die die Bayerischen Alpen für Leute aufheben, die bereit sind, ein Stück zu steigen. In der Luft lag noch jene feine Frühlingsschärfe, die einen weckt, ohne zu schimpfen, und die Hänge über uns begannen gerade erst, sich an ihr Grün zu erinnern. Vom ersten Schritt an lachte Mia — über den Klang ihrer eigenen Schuhe auf dem Pfad, über einen Vogel, den sie nicht sehen konnte, über mich, über gar nichts.",
+      "Der Anstieg war auf der Karte kurz und in den Beinen lang: ein steiles, schmales Band von Weg, das uns in kaum mehr als anderthalb Stunden sechshundert Meter hinaufhob. Jeder Bach, den wir querten, bekam ein Lachen. Jeder Windstoß, der ihr die Haare zur Seite schob, bekam ein Lachen. Ich blieb immer wieder stehen, um Luft zu holen, und tat so, als bliebe ich wegen der Aussicht stehen, und sie durchschaute mich, wie sie es immer tut, und lachte auch darüber.",
+      "Oben — ein bescheidener Gipfel an diesen Bergen gemessen, und doch die ganze Welt von dort aus — setzten wir uns auf die warmen Steine und holten die Äpfel hervor. Sie aß ihren auf diese ernste, zweihändige Art, mit der kleine Kinder Obst essen, auf das sie stolz sind. Dann schaute sie auf, sah, wie weit der Himmel ging, und klatschte in die Hände. Einfach so, für das Blau, als wäre es endlich nach langer Reise angekommen.",
+      "Ich werde wohl weder die Entfernung noch die Zeit noch den Namen des Weges behalten. Ich werde ihre kleinen Hände behalten, wie sie sich in der hellen Luft trafen, und die Äpfel, und das Gefühl, dass dieser Berg leise und geduldig genau für diesen Nachmittag aufgetürmt worden war."
     ]
   },
   "pull_quote": {
-    "en": "She clapped her hands once and announced to no one in particular that the sky was very, very blue.",
-    "ru": "Она один раз хлопнула в ладоши и сообщила никому конкретно, что небо очень-очень синее.",
-    "de": "Sie klatschte einmal in die Hände und verkündete an niemand Bestimmten, dass der Himmel sehr, sehr blau sei."
+    "en": "She looked up, saw how far the sky went, and clapped — just clapped, for the blue.",
+    "ru": "Она подняла глаза, увидела, как далеко уходит небо, и захлопала в ладоши — просто захлопала, этой синеве.",
+    "de": "Sie schaute auf, sah, wie weit der Himmel ging, und klatschte in die Hände — einfach so, für das Blau."
   },
   "milestone": {
-    "en": "Mia's first summit",
-    "ru": "Первая вершина Мии",
-    "de": "Mias erster Gipfel"
+    "en": "Mia's first spring summit",
+    "ru": "Первая весенняя вершина Мии",
+    "de": "Mias erster Frühlingsgipfel"
   },
   "selected_photo_indices": [
     0,
     2,
-    3,
-    5,
-    7,
-    9,
+    4,
+    6,
+    8,
     10,
     11
   ]

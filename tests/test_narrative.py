@@ -44,7 +44,14 @@ def _hike_input() -> HikeInput:
     )
 
 
-def _gpx_stats() -> GpxStats:
+def _gpx_stats(
+    *,
+    waypoint_time: datetime | None = datetime(2026, 4, 18, 10, 25, 0),
+    lat: float = 47.55,
+) -> GpxStats:
+    """Build a GpxStats fixture. ``waypoint_time`` and ``lat`` are
+    parameterised so tests can exercise the date/season inference under
+    no-timestamps and southern-hemisphere conditions (ADR-008)."""
     return GpxStats(
         distance_km=6.2,
         elevation_gain_m=610,
@@ -52,8 +59,8 @@ def _gpx_stats() -> GpxStats:
         start_elev_m=720.0,
         summit_elev_m=1330.0,
         waypoints=[
-            Waypoint(lat=47.55, lon=11.78, ele_m=720.0, time=None),
-            Waypoint(lat=47.56, lon=11.79, ele_m=1330.0, time=None),
+            Waypoint(lat=lat, lon=11.78, ele_m=720.0, time=waypoint_time),
+            Waypoint(lat=lat + 0.01, lon=11.79, ele_m=1330.0, time=waypoint_time),
         ],
     )
 
@@ -202,6 +209,9 @@ def test_generate_narrative_passes_hike_data_to_prompt() -> None:
     assert "fog cleared" in sent
     # Photo count and zero-indexed upper bound.
     assert "Photos available: 8 (indexed 0-7)" in sent
+    # ADR-008 — date + season grounding.
+    assert "2026-04-18" in sent
+    assert "spring (April; northern hemisphere)" in sent
 
 
 def test_generate_narrative_uses_default_location_when_not_supplied() -> None:
@@ -374,6 +384,61 @@ def test_generate_narrative_supplies_every_template_placeholder() -> None:
 
     leftover = re.findall(r"\{[a-zA-Z_][a-zA-Z0-9_]*\}", sent)
     assert leftover == [], f"unfilled placeholders {leftover}; expected none of {expected}"
+
+
+# ── date + season inference (ADR-008) ────────────────────────────────────────
+#
+# The writer prompt grounds against an inferred season so April hikes don't
+# get described in "summer-milky river" terms (an observed failure mode in
+# Phase 0 baseline output). The orchestrator computes the season from the
+# first timed waypoint and passes it into the prompt — these tests exercise
+# the inference's branches via the prompt content.
+
+
+def test_generate_narrative_grounds_northern_spring_in_prompt() -> None:
+    client = _client(_valid_response_json())
+    stats = _gpx_stats(waypoint_time=datetime(2026, 4, 18, 10, 25, 0), lat=47.55)
+
+    generate_narrative(_hike_input(), stats, _photos(), client=client, **_NO_CACHE)
+
+    sent = client.complete.call_args.kwargs["prompt"]
+    assert "2026-04-18" in sent
+    assert "spring (April; northern hemisphere)" in sent
+
+
+def test_generate_narrative_grounds_southern_hemisphere_in_prompt() -> None:
+    """A negative latitude inverts the season — April in Patagonia is autumn."""
+    client = _client(_valid_response_json())
+    stats = _gpx_stats(waypoint_time=datetime(2026, 4, 18, 10, 25, 0), lat=-41.5)
+
+    generate_narrative(_hike_input(), stats, _photos(), client=client, **_NO_CACHE)
+
+    sent = client.complete.call_args.kwargs["prompt"]
+    assert "autumn (April; southern hemisphere)" in sent
+
+
+def test_generate_narrative_grounds_no_timestamps_as_unknown() -> None:
+    """Manually-edited GPX files sometimes strip timing — fall back to 'unknown'."""
+    client = _client(_valid_response_json())
+    stats = _gpx_stats(waypoint_time=None)
+
+    generate_narrative(_hike_input(), stats, _photos(), client=client, **_NO_CACHE)
+
+    sent = client.complete.call_args.kwargs["prompt"]
+    assert "Date: unknown (unknown)" in sent
+
+
+def test_generate_narrative_prompt_contains_anti_fabrication_clause() -> None:
+    """Smoke test: the writer prompt now carries the ADR-008 fabrication guard."""
+    client = _client(_valid_response_json())
+
+    generate_narrative(_hike_input(), _gpx_stats(), _photos(), client=client, **_NO_CACHE)
+
+    sent = client.complete.call_args.kwargs["prompt"]
+    # Specific example nouns the clause forbids without source grounding.
+    assert "duck" in sent.lower()
+    # The grounding rule itself.
+    assert "sources of fact" in sent.lower() or "trace to the seed" in sent.lower()
 
 
 # ── streaming variant ────────────────────────────────────────────────────────

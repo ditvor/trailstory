@@ -33,6 +33,8 @@ from trailstory.models import NarrativeOutput
 EXPECTED_PLACEHOLDERS: frozenset[str] = frozenset(
     {
         "location",
+        "hike_date",
+        "season",
         "distance_km",
         "elevation_gain_m",
         "duration_min",
@@ -54,6 +56,8 @@ def sample_fields() -> dict[str, object]:
     """Plausible values for every documented placeholder."""
     return {
         "location": "Tegernsee, Bavaria",
+        "hike_date": "2026-04-18",
+        "season": "spring (April; northern hemisphere)",
         "distance_km": 6.2,
         "elevation_gain_m": 610,
         "duration_min": 165,

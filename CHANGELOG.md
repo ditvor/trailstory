@@ -10,6 +10,22 @@ Versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 ## [Unreleased]
 
 ### Changed
+- **Writer prompt grounded in date + season; anti-fabrication clause added
+  (Phase 1 of the narrative-faithfulness initiative;
+  [ADR-008](docs/adr/008-writer-prompt-temporal-grounding-and-anti-fabrication.md)).**
+  `USER_NARRATIVE_TEMPLATE` now receives `{hike_date}` and `{season}`
+  placeholders, populated by a new `_infer_date_and_season(gpx_stats)`
+  helper in `trailstory/llm/narrative.py` that walks waypoints for the
+  first non-None timestamp and picks hemisphere from latitude (Apr in
+  Bavaria → "spring (April; northern hemisphere)"; Apr in Patagonia →
+  "autumn (April; southern hemisphere)"). The "Write the memory…"
+  paragraph extended with an explicit anti-fabrication clause that
+  enumerates concrete forbidden examples (ducks, chopsticks, named
+  objects) and permits generic nature words. Previous prompt preserved
+  as a dated comment per CLAUDE.md convention. Target: lift average
+  faithfulness ≥ 0.5 from the 1.32 / 5 Phase 0 baseline. CLI cache
+  intentionally not invalidated (see ADR-008 known limitations); web
+  builder streaming path is unaffected since it bypasses cache.
 - **Builder UI redesign — single-page builder, editorial design system.**
   The builder (`web/`) now uses the same `Editorial Serif` /
   `Editorial Mono` design system as the rendered memory page, served

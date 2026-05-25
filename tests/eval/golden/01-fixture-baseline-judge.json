@@ -1,115 +1,90 @@
 {
   "warmth": 4.5,
   "narrative_arc": 5.0,
-  "russian_fidelity": 5.0,
-  "photo_selection_plausibility": 4.5,
+  "russian_fidelity": 4.5,
+  "photo_selection_plausibility": 4.0,
   "claim_verdicts": [
     {
-      "claim": "the path was soft from last night's rain",
+      "claim": "the hike took place in April",
       "verdict": "UNSUPPORTED",
       "quote": ""
     },
     {
-      "claim": "pines held the air close",
+      "claim": "the setting is the Bavarian Alps",
       "verdict": "UNSUPPORTED",
       "quote": ""
     },
     {
-      "claim": "valley was hidden beneath them",
-      "verdict": "INFERRED",
-      "quote": "The fog cleared just as we reached the ridge."
-    },
-    {
-      "claim": "sound of cowbells without visible cows",
-      "verdict": "UNSUPPORTED",
-      "quote": ""
-    },
-    {
-      "claim": "climbed inside fog that felt grey and breathing",
-      "verdict": "INFERRED",
-      "quote": "The fog cleared just as we reached the ridge."
-    },
-    {
-      "claim": "voices came back muffled",
-      "verdict": "UNSUPPORTED",
-      "quote": ""
-    },
-    {
-      "claim": "climb was steeper than the map suggested",
-      "verdict": "UNSUPPORTED",
-      "quote": ""
-    },
-    {
-      "claim": "six hundred metres in under an hour and a half",
-      "verdict": "UNSUPPORTED",
-      "quote": ""
-    },
-    {
-      "claim": "path had switchbacks where roots made small staircases",
-      "verdict": "UNSUPPORTED",
-      "quote": ""
-    },
-    {
-      "claim": "smell of wet stone",
-      "verdict": "UNSUPPORTED",
-      "quote": ""
-    },
-    {
-      "claim": "jacket sleeves went dark at the cuffs",
-      "verdict": "UNSUPPORTED",
-      "quote": ""
-    },
-    {
-      "claim": "they didn't talk much during the climb",
-      "verdict": "UNSUPPORTED",
-      "quote": ""
-    },
-    {
-      "claim": "fog cleared just as they reached the ridge",
+      "claim": "fog surrounded the hikers so thickly trees a few steps ahead were barely visible",
       "verdict": "SUPPORTED",
       "quote": "The fog cleared just as we reached the ridge."
     },
     {
-      "claim": "fog stepped aside rather than drifting off",
+      "claim": "the path went upward almost immediately",
       "verdict": "UNSUPPORTED",
       "quote": ""
     },
     {
-      "claim": "Bavarian valleys visible below the ridge",
+      "claim": "the smell of wet earth coming back to life",
+      "verdict": "INFERRED",
+      "quote": "The fog cleared just as we reached the ridge."
+    },
+    {
+      "claim": "six hundred metres of elevation gain",
       "verdict": "UNSUPPORTED",
       "quote": ""
     },
     {
-      "claim": "valleys appeared in soft scrubbed green after rain",
+      "claim": "climb completed in barely an hour and a half",
       "verdict": "UNSUPPORTED",
       "quote": ""
     },
     {
-      "claim": "far peaks visible from the ridge",
+      "claim": "first thin grass pushing through last year's matted brown",
       "verdict": "UNSUPPORTED",
       "quote": ""
     },
     {
-      "claim": "elevation of 1330 metres",
+      "claim": "the fog cleared as they reached the ridge",
+      "verdict": "SUPPORTED",
+      "quote": "The fog cleared just as we reached the ridge."
+    },
+    {
+      "claim": "the valley was visible beneath them when the fog cleared",
+      "verdict": "INFERRED",
+      "quote": "The fog cleared just as we reached the ridge."
+    },
+    {
+      "claim": "further peaks became visible when the fog cleared",
+      "verdict": "INFERRED",
+      "quote": "The fog cleared just as we reached the ridge."
+    },
+    {
+      "claim": "patches of old snow in the hollows",
       "verdict": "UNSUPPORTED",
       "quote": ""
     },
     {
-      "claim": "they sat on cold rock for a long time",
+      "claim": "new green vegetation lower down the mountain",
       "verdict": "UNSUPPORTED",
       "quote": ""
     },
     {
-      "claim": "shared a sandwich from a crumpled paper bag",
+      "claim": "the sky turned blue",
       "verdict": "UNSUPPORTED",
       "quote": ""
     },
     {
-      "claim": "light kept changing where it landed",
+      "claim": "they stood on the ridge at thirteen hundred metres",
+      "verdict": "UNSUPPORTED",
+      "quote": ""
+    },
+    {
+      "claim": "a cold wind smelling of stone on the ridge",
       "verdict": "UNSUPPORTED",
       "quote": ""
     }
   ],
-  "notes": "The English prose is exceptionally warm and specific — phrases like 'a rumor of cowbells without any cows to prove it' and 'the light kept changing its mind about where to land' avoid all boilerplate. The arc is textbook: descent-in-fog opening, effortful climb, transformative ridge moment, quiet human coda — every paragraph earns its place. The Russian translation is fluent, idiomatic, and register-matched; 'не Бог весть какая высота' for '1330 metres isn't much, as mountains go' is a native-sounding localisation rather than a literal rendering. Photo indices span a believable range (0–11, seven frames, distributed across the arc), though without knowing the actual photo set the match is plausible rather than confirmed.",
-  "faithfulness": 0.48
+  "notes": "The English prose is beautifully crafted with specific sensory details and a clear arc from fogbound ascent to luminous revelation, earning near-top warmth and a full narrative arc score. The Russian translation is natural and fluent — phrases like 'намёками на самих себя' and 'пройти сквозь ничто и выйти ко всему' read as genuine Russian rather than translated text; one minor stiffness is 'смотрели друг другу в плечи' (slightly literal for 'watching each other's shoulders'), hence 4.5. Photo indices (7 frames, well-distributed 0–11) plausibly cover the arc but cannot be verified against actual beat positions, earning a solid 4.0. Almost all concrete claims are UNSUPPORTED because the seed text provides only one sentence; the writer extrapolated extensively, which is expected but must be flagged.",
+  "faithfulness": 1.09
 }

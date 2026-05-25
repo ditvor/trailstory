@@ -1,100 +1,100 @@
 {
-  "warmth": 5.0,
+  "warmth": 4.5,
   "narrative_arc": 5.0,
-  "russian_fidelity": 5.0,
-  "photo_selection_plausibility": 4.5,
+  "russian_fidelity": 4.5,
+  "photo_selection_plausibility": 4.0,
   "claim_verdicts": [
     {
-      "claim": "Mia laughed during the climb",
+      "claim": "It was an April morning",
+      "verdict": "INFERRED",
+      "quote": "subtitle: 'An April morning in the Bavarian Alps'"
+    },
+    {
+      "claim": "The setting is the Bavarian Alps",
+      "verdict": "INFERRED",
+      "quote": "subtitle: 'An April morning in the Bavarian Alps'"
+    },
+    {
+      "claim": "Mia was laughing from the very first steps",
       "verdict": "SUPPORTED",
       "quote": "Mia laughed the whole way up"
     },
     {
-      "claim": "a blackbird was in the spruce",
-      "verdict": "UNSUPPORTED",
-      "quote": ""
+      "claim": "Mia laughed at a bird she couldn't see",
+      "verdict": "SUPPORTED",
+      "quote": "every bird"
     },
     {
-      "claim": "there was a stream under a small bridge",
-      "verdict": "INFERRED",
+      "claim": "Mia laughed at every stream they crossed",
+      "verdict": "SUPPORTED",
       "quote": "every stream"
     },
     {
-      "claim": "a gust of wind lifted Mia's hair and made her laugh",
-      "verdict": "INFERRED",
+      "claim": "Mia laughed at every gust of wind",
+      "verdict": "SUPPORTED",
       "quote": "every gust of wind"
     },
     {
-      "claim": "the climb was steeper than the map promised",
+      "claim": "The trail climbed 600 metres",
       "verdict": "UNSUPPORTED",
       "quote": ""
     },
     {
-      "claim": "Mia held the narrator's hand on narrow stretches",
+      "claim": "The climb took about an hour and a half",
       "verdict": "UNSUPPORTED",
       "quote": ""
     },
     {
-      "claim": "the Bavarian forest smelled of warm needles and damp stone",
+      "claim": "The narrator stopped pretending to look at the view when catching breath",
       "verdict": "UNSUPPORTED",
       "quote": ""
     },
     {
-      "claim": "a cowbell rang far below",
+      "claim": "They sat on warm stones at the summit",
       "verdict": "UNSUPPORTED",
       "quote": ""
     },
     {
-      "claim": "the summit was thirteen hundred metres",
-      "verdict": "UNSUPPORTED",
-      "quote": ""
-    },
-    {
-      "claim": "Mia is four years old",
-      "verdict": "UNSUPPORTED",
-      "quote": ""
-    },
-    {
-      "claim": "they sat on a flat rock at the summit",
-      "verdict": "INFERRED",
-      "quote": "We sat at the summit"
-    },
-    {
-      "claim": "they ate apples at the summit",
+      "claim": "They ate apples at the summit",
       "verdict": "SUPPORTED",
       "quote": "eating apples"
     },
     {
-      "claim": "Mia ate her apple in tiny, serious bites",
+      "claim": "Mia ate her apple with both hands in a serious way",
       "verdict": "UNSUPPORTED",
       "quote": ""
     },
     {
-      "claim": "Mia clapped her hands at the summit",
+      "claim": "Mia clapped her hands at the wide blue sky",
       "verdict": "SUPPORTED",
       "quote": "she clapped her hands at the wide blue"
     },
     {
-      "claim": "Mia announced that the sky was very, very blue",
+      "claim": "The slopes were beginning to turn green",
       "verdict": "INFERRED",
-      "quote": "she clapped her hands at the wide blue"
+      "quote": "April morning"
     },
     {
-      "claim": "they stayed at the summit longer than the walk up took",
+      "claim": "The air had a thin spring sharpness",
+      "verdict": "INFERRED",
+      "quote": "April morning"
+    },
+    {
+      "claim": "The summit was modest by alpine standards",
       "verdict": "UNSUPPORTED",
       "quote": ""
     },
     {
-      "claim": "Mia was humming a tune on the way down",
-      "verdict": "UNSUPPORTED",
-      "quote": ""
+      "claim": "A gust pushed Mia's hair sideways",
+      "verdict": "INFERRED",
+      "quote": "every gust of wind"
     },
     {
-      "claim": "the tune was invented between the stream and the summit",
+      "claim": "Mia clapped as if the sky had finally arrived after a long journey",
       "verdict": "UNSUPPORTED",
       "quote": ""
     }
   ],
-  "notes": "The English prose is exceptionally warm and specific — phrases like 'checking that I was still part of the morning' and 'the sound of a child agreeing with the whole world' go well beyond boilerplate and feel authentically personal. The arc is textbook: gentle opening, effort beat, landscape immersion, the summit apple-and-clap climax, and a luminous falling action. The Russian is idiomatic throughout — 'сообщила никому конкретно', 'заучивала её наизусть', and 'снова умолк' are native-register choices, not calques. Photo indices span 0–11 with eight frames, distributed credibly across the arc; a very slight front-loading (0,2,3) keeps it from a perfect 5.",
-  "faithfulness": 1.39
+  "notes": "The English prose is exceptionally warm and specific, with the 'clapped, for the blue' moment being a near-perfect elevation of the seed detail. The arc is textbook: departure, ascent effort, arrival, human-detail beat, reflective close — every paragraph earns its place. The Russian is fluent and idiomatic; 'надо мной' (missing space notwithstanding) and 'тонкая весенняя резкость' read as natural Russian rather than translated English, though 'получал свой смех' is slightly mechanical. Photo indices span 0–11 with 7 frames, well-distributed and plausible against the narrative beats, though without photo metadata the match to specific prose moments cannot be fully confirmed.",
+  "faithfulness": 2.36
 }

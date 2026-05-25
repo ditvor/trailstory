@@ -10,91 +10,116 @@
       "quote": "The fog never lifted."
     },
     {
-      "claim": "They entered the fog at the trailhead",
+      "claim": "The hike took place in April",
       "verdict": "INFERRED",
-      "quote": "The fog never lifted. Mia cried for the last hour"
+      "quote": "An April climb in the Bavarian Alps"
     },
     {
-      "claim": "The route was approximately two kilometres on paper",
+      "claim": "The hike was in the Bavarian Alps",
+      "verdict": "INFERRED",
+      "quote": "An April climb in the Bavarian Alps"
+    },
+    {
+      "claim": "Fog pressed in close from the first switchbacks",
       "verdict": "UNSUPPORTED",
       "quote": ""
     },
     {
-      "claim": "The mountain gained six hundred metres of elevation",
+      "claim": "The fog was soft and grey",
       "verdict": "UNSUPPORTED",
       "quote": ""
     },
     {
-      "claim": "Mia was patient for a long time before crying",
-      "verdict": "INFERRED",
-      "quote": "Mia cried for the last hour"
-    },
-    {
-      "claim": "Mia cried for the last hour of ascent",
+      "claim": "Mia cried for the last hour before the top",
       "verdict": "SUPPORTED",
       "quote": "Mia cried for the last hour"
     },
     {
-      "claim": "Mia was carried in a carrier on the narrator's shoulders",
-      "verdict": "INFERRED",
-      "quote": "my shoulders burned"
-    },
-    {
-      "claim": "The narrator's shoulders went hot then numb",
-      "verdict": "INFERRED",
-      "quote": "my shoulders burned"
-    },
-    {
-      "claim": "There was a wooden post at the summit",
+      "claim": "The crying was about being small and tired",
       "verdict": "UNSUPPORTED",
       "quote": ""
     },
     {
-      "claim": "Mia went quiet at the summit before falling asleep",
-      "verdict": "INFERRED",
-      "quote": "Mia cried for the last hour"
+      "claim": "The hiker shifted Mia's weight again and again",
+      "verdict": "UNSUPPORTED",
+      "quote": ""
     },
     {
-      "claim": "Mia fell asleep on the descent",
+      "claim": "The hiker's shoulders burned",
+      "verdict": "SUPPORTED",
+      "quote": "my shoulders burned"
+    },
+    {
+      "claim": "The strap dug a line still felt that night",
+      "verdict": "UNSUPPORTED",
+      "quote": ""
+    },
+    {
+      "claim": "Six hundred metres of climbing on two and a bit kilometres of path",
+      "verdict": "UNSUPPORTED",
+      "quote": ""
+    },
+    {
+      "claim": "The hiker thought they had made a mistake",
+      "verdict": "SUPPORTED",
+      "quote": "I was sure we'd made a mistake"
+    },
+    {
+      "claim": "The summit was barely a summit, just a flatter place in greyness",
+      "verdict": "UNSUPPORTED",
+      "quote": ""
+    },
+    {
+      "claim": "The air at the summit was cold and wet",
+      "verdict": "INFERRED",
+      "quote": "The fog never lifted."
+    },
+    {
+      "claim": "Nothing to see at the summit",
+      "verdict": "INFERRED",
+      "quote": "The fog never lifted."
+    },
+    {
+      "claim": "Mia fell asleep on the descent against the hiker's collarbone",
       "verdict": "SUPPORTED",
       "quote": "she fell asleep on the descent"
     },
     {
-      "claim": "The narrator noticed ferns underfoot on the descent",
+      "claim": "Sleeping children are heavy in a trusting way",
+      "verdict": "UNSUPPORTED",
+      "quote": ""
+    },
+    {
+      "claim": "The hiker noticed ferns underfoot on the descent",
       "verdict": "SUPPORTED",
       "quote": "I noticed the ferns underfoot"
     },
     {
-      "claim": "The ferns were bright green against the grey",
+      "claim": "The ferns were new April ones, tight pale-green coils",
       "verdict": "UNSUPPORTED",
       "quote": ""
     },
     {
-      "claim": "The narrator had not seen the ferns on the way up",
+      "claim": "The ferns were pushing up through last year's brown",
       "verdict": "UNSUPPORTED",
       "quote": ""
     },
     {
-      "claim": "The narrator walked the descent very slowly so as not to wake Mia",
+      "claim": "The ferns had been there the whole climb",
       "verdict": "UNSUPPORTED",
       "quote": ""
     },
     {
-      "claim": "The narrator imagined a café with a warm bench and cake in the valley",
+      "claim": "Mia's breath was warm through the jacket",
       "verdict": "UNSUPPORTED",
       "quote": ""
     },
     {
-      "claim": "The hike was in the Bavarian Alps",
+      "claim": "The hiker does not remember the view from the top",
       "verdict": "UNSUPPORTED",
       "quote": ""
-    },
-    {
-      "claim": "The narrator felt they had made a mistake during the ascent",
-      "verdict": "SUPPORTED",
-      "quote": "I was sure we'd made a mistake"
     }
   ],
-  "notes": "The prose is exceptionally warm and specific — 'her crying tucked against my collarbone,' 'hot and then numb' — earning a full 5 for warmth. The arc is textbook: fog-shrouded opening, effort-and-doubt middle, spare summit, and the fern revelation on descent; every paragraph earns its place. The Russian is idiomatic and register-matched throughout — 'тем маленьким, почти звериным образом' and 'в белом мареве' are native-sounding choices, not translationese. Photo indices (7 frames, spread 0–11) trace the arc plausibly, though the clustering of 8-9-11 at the end is slightly heavy on the descent beat.",
-  "faithfulness": 2.08
+  "notes": "Warmth is exceptional: 'the kind of crying that is not really about anything you can fix' and 'trusting way only sleeping children are heavy' are precisely the intimate, specific observations that earn a 5. The arc is textbook — fog/setting, effort/crying, doubt/summit, revelation/ferns, coda — and every paragraph serves the shape. The Russian is genuinely native-register: 'жила по своим правилам', 'та доверчивая тяжесть', 'я ошибалась насчёт всего дня' are idiomatic and emotionally exact, not calques. Photo selection is plausible (7 indices, distributed 0–11), though without knowing what photos 1, 3, 6, 8, 10 depict it is impossible to confirm the descent/fern beat is covered, hence 4.0 rather than 5.0. Many narrative details (the switchbacks, the strap line, the 600m elevation, the April fern coils) are well-motivated expansions but have no grounding in the seed text and are correctly marked UNSUPPORTED.",
+  "faithfulness": 1.74
 }
