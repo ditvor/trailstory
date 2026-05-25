@@ -10,6 +10,28 @@ Versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 ## [Unreleased]
 
 ### Changed
+- **Two-pass narrative pipeline with a structured `FactLedger` (Phase 2 of
+  the narrative-faithfulness initiative;
+  [ADR-009](docs/adr/009-two-pass-narrative-with-fact-ledger.md)).** Narrative
+  generation is now a two-LLM-call flow: a cheap Haiku-class extractor
+  reads the seed + GPX + photo timestamps and emits a structured
+  `FactLedger` (people, weather, chronology beats with
+  `objects_mentioned`); the Opus writer consumes the serialized ledger as
+  its sole input — no raw seed text reaches it. The writer is therefore
+  structurally unable to introduce a duck if the ledger contains no
+  duck; the prompt's anti-fabrication clause now enforces grounding
+  against the ledger's typed shape, not against free-form prose. New
+  `Person`, `Beat`, `FactLedger` Pydantic models in `trailstory/models.py`;
+  new `extract_ledger()` public function and `LedgerExtractionError` in
+  `trailstory/llm/narrative.py`; new `SYSTEM_LEDGER_EXTRACTOR` +
+  `USER_LEDGER_EXTRACTOR_TEMPLATE` prompts; new `Settings.ledger_model`
+  (default `claude-haiku-4-5`). The CLI, the web pipeline, and the eval
+  runner all construct two `AnthropicClient` instances per generate run;
+  `web.create_app` gains a parallel `ledger_client_factory` parameter
+  for tests + fake-LLM dev mode. Previous ADR-008 writer prompt
+  preserved as a dated comment for revertability. Renderers
+  (`render_html`, `render_instagram_carousel`) are unchanged — they
+  consume `Memory`, not the ledger.
 - **Writer prompt grounded in date + season; anti-fabrication clause added
   (Phase 1 of the narrative-faithfulness initiative;
   [ADR-008](docs/adr/008-writer-prompt-temporal-grounding-and-anti-fabrication.md)).**

@@ -370,11 +370,16 @@ async def generate_stream(request: Request, slug: str) -> Response:
         raise HTTPException(status_code=404, detail="Memory has already been generated or expired")
 
     client = _client_factory(request)()
+    ledger_client = _ledger_client_factory(request)()
 
     def event_stream() -> Iterator[bytes]:
         yield _sse_event("status", {"phase": "writing"})
         try:
-            for event in stream_pipeline(workspace, client=client):
+            for event in stream_pipeline(
+                workspace,
+                client=client,
+                ledger_client=ledger_client,
+            ):
                 if isinstance(event, PipelineStreamChunk):
                     yield _sse_event("chunk", {"text": event.text})
                 elif isinstance(event, PipelineStreamRetry):
@@ -551,6 +556,17 @@ def _settings(request: Request) -> Settings:
 
 def _client_factory(request: Request) -> Callable[[], AnthropicClient]:
     factory: Callable[[], AnthropicClient] = request.app.state.client_factory
+    return factory
+
+
+def _ledger_client_factory(request: Request) -> Callable[[], AnthropicClient]:
+    """Resolve the ledger-extractor factory injected by :func:`create_app`.
+
+    Mirrors :func:`_client_factory` for the Phase 2 (ADR-009) extractor
+    pass — separate factory so each pass's model can be overridden
+    independently.
+    """
+    factory: Callable[[], AnthropicClient] = request.app.state.ledger_client_factory
     return factory
 
 

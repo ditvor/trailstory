@@ -1,0 +1,115 @@
+{
+  "warmth": 4.5,
+  "narrative_arc": 4.5,
+  "russian_fidelity": 5.0,
+  "photo_selection_plausibility": 3.0,
+  "claim_verdicts": [
+    {
+      "claim": "There were four people: Katya, Olga, Igor, and little Danny",
+      "verdict": "SUPPORTED",
+      "quote": "It was four of us: Katya, Olga, Igor and little Danny"
+    },
+    {
+      "claim": "They arrived at the parking spot a little after noon",
+      "verdict": "SUPPORTED",
+      "quote": "We arrived to the parking spot around 12"
+    },
+    {
+      "claim": "It was a bright, generous April day",
+      "verdict": "INFERRED",
+      "quote": "The weather was amazing"
+    },
+    {
+      "claim": "They wandered toward the city centre",
+      "verdict": "SUPPORTED",
+      "quote": "Went to the city centre"
+    },
+    {
+      "claim": "They had brunch in the city centre",
+      "verdict": "SUPPORTED",
+      "quote": "enjoyed some brunch"
+    },
+    {
+      "claim": "Everyone loved little Danny",
+      "verdict": "SUPPORTED",
+      "quote": "Everyone loved little Danny"
+    },
+    {
+      "claim": "They walked along the Isar river",
+      "verdict": "SUPPORTED",
+      "quote": "we started our trip along the river Isar"
+    },
+    {
+      "claim": "The Isar river was high and clear, still half-remembering the snow",
+      "verdict": "UNSUPPORTED",
+      "quote": ""
+    },
+    {
+      "claim": "Danny was carried (in a carrier) during the hike",
+      "verdict": "UNSUPPORTED",
+      "quote": ""
+    },
+    {
+      "claim": "Danny was small and solemn, with light moving over his face",
+      "verdict": "UNSUPPORTED",
+      "quote": ""
+    },
+    {
+      "claim": "They visited an old church",
+      "verdict": "SUPPORTED",
+      "quote": "we visited an old church"
+    },
+    {
+      "claim": "Inside the church were wax figures behind glass",
+      "verdict": "SUPPORTED",
+      "quote": "those wax figures were waiting for us in unexpected places"
+    },
+    {
+      "claim": "The figures depicted Jesus and his friends",
+      "verdict": "SUPPORTED",
+      "quote": "very strange figures of Jesus and his friends"
+    },
+    {
+      "claim": "The wax figures' painted eyes caught the light at wrong angles",
+      "verdict": "UNSUPPORTED",
+      "quote": ""
+    },
+    {
+      "claim": "The church and figures were creepy/unsettling",
+      "verdict": "SUPPORTED",
+      "quote": "It was creepy"
+    },
+    {
+      "claim": "They did not linger in the church",
+      "verdict": "INFERRED",
+      "quote": "It was creepy and those wax figures were waiting for us in unexpected places"
+    },
+    {
+      "claim": "They picked up Asian food to go",
+      "verdict": "SUPPORTED",
+      "quote": "we grabbed some Asian food to go"
+    },
+    {
+      "claim": "They ate dinner near the water/river",
+      "verdict": "SUPPORTED",
+      "quote": "enjoyed our dinner near the water"
+    },
+    {
+      "claim": "The light lowered behind rooftops as they ate",
+      "verdict": "UNSUPPORTED",
+      "quote": ""
+    },
+    {
+      "claim": "Danny was tired by evening",
+      "verdict": "UNSUPPORTED",
+      "quote": ""
+    },
+    {
+      "claim": "Nobody hurried at the end of the day",
+      "verdict": "UNSUPPORTED",
+      "quote": ""
+    }
+  ],
+  "notes": "Warmth is high: the prose avoids boilerplate and uses specific, intimate sensory phrasing ('the river in April has a particular voice', 'Danny took it all in… small and solemn'). The narrative arc is well-shaped — arrival, brunch, riverside walk, creepy church, evening meal — each paragraph earns its place, though the 'effort' beat is essentially absent given this is a gentle town walk. Russian is excellent: register matches, idioms are natural ('хорошей усталостью', 'вынырнуть на поверхность'), no calques or stiff constructions detectable. Photo indices are simply 0–5 in sequence without apparent editorial reasoning, which is plausible but mechanically clustered rather than narratively curated.",
+  "faithfulness": 3.1
+}

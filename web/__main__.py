@@ -43,16 +43,26 @@ def _build_app() -> FastAPI:
     if os.environ.get(_FAKE_LLM_ENV) == "1":
         # Importing here keeps ``web.dev`` (and its ``unittest.mock``
         # dependency) out of the production import graph.
-        from web.dev import banner, make_fake_client_factory
+        from web.dev import (
+            banner,
+            make_fake_client_factory,
+            make_fake_ledger_client_factory,
+        )
 
         # ``Settings`` requires ``ANTHROPIC_API_KEY``. In fake-LLM mode
-        # the value is never used — the client factory returns a
-        # MagicMock — so a placeholder keeps ``load_settings()`` happy
+        # the value is never used — the client factories return
+        # MagicMocks — so a placeholder keeps ``load_settings()`` happy
         # without forcing the developer to keep an unused real key in
         # their shell.
         os.environ.setdefault("ANTHROPIC_API_KEY", "sk-dev-fake-llm-mode")
         logging.getLogger(__name__).warning(banner())
-        return create_app(client_factory=make_fake_client_factory())
+        # Both passes (extractor + writer, see ADR-009) get fake clients
+        # so the SSE flow exercises the full two-pass shape without
+        # paying for any Anthropic calls.
+        return create_app(
+            client_factory=make_fake_client_factory(),
+            ledger_client_factory=make_fake_ledger_client_factory(),
+        )
     return create_app()
 
 

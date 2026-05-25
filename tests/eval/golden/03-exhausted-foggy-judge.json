@@ -1,125 +1,105 @@
 {
-  "warmth": 5.0,
-  "narrative_arc": 5.0,
-  "russian_fidelity": 5.0,
+  "warmth": 4.5,
+  "narrative_arc": 4.5,
+  "russian_fidelity": 4.5,
   "photo_selection_plausibility": 4.0,
   "claim_verdicts": [
     {
-      "claim": "The fog never lifted during the hike",
+      "claim": "The fog did not lift during the hike",
       "verdict": "SUPPORTED",
       "quote": "The fog never lifted."
     },
     {
+      "claim": "The hike took place in the Bavarian Alps",
+      "verdict": "UNSUPPORTED",
+      "quote": ""
+    },
+    {
       "claim": "The hike took place in April",
-      "verdict": "INFERRED",
-      "quote": "An April climb in the Bavarian Alps"
-    },
-    {
-      "claim": "The hike was in the Bavarian Alps",
-      "verdict": "INFERRED",
-      "quote": "An April climb in the Bavarian Alps"
-    },
-    {
-      "claim": "Fog pressed in close from the first switchbacks",
       "verdict": "UNSUPPORTED",
       "quote": ""
     },
     {
-      "claim": "The fog was soft and grey",
-      "verdict": "UNSUPPORTED",
-      "quote": ""
+      "claim": "It was a spring climb",
+      "verdict": "INFERRED",
+      "quote": "The fog never lifted. Mia cried for the last hour and my shoulders burned."
     },
     {
-      "claim": "Mia cried for the last hour before the top",
+      "claim": "Mia cried during the hike",
       "verdict": "SUPPORTED",
       "quote": "Mia cried for the last hour"
     },
     {
-      "claim": "The crying was about being small and tired",
-      "verdict": "UNSUPPORTED",
-      "quote": ""
+      "claim": "Mia cried for roughly the last hour",
+      "verdict": "SUPPORTED",
+      "quote": "Mia cried for the last hour"
     },
     {
-      "claim": "The hiker shifted Mia's weight again and again",
-      "verdict": "UNSUPPORTED",
-      "quote": ""
-    },
-    {
-      "claim": "The hiker's shoulders burned",
+      "claim": "The hiker's shoulder ached",
       "verdict": "SUPPORTED",
       "quote": "my shoulders burned"
     },
     {
-      "claim": "The strap dug a line still felt that night",
-      "verdict": "UNSUPPORTED",
-      "quote": ""
-    },
-    {
-      "claim": "Six hundred metres of climbing on two and a bit kilometres of path",
-      "verdict": "UNSUPPORTED",
-      "quote": ""
-    },
-    {
-      "claim": "The hiker thought they had made a mistake",
+      "claim": "The hiker felt they had made a mistake",
       "verdict": "SUPPORTED",
       "quote": "I was sure we'd made a mistake"
     },
     {
-      "claim": "The summit was barely a summit, just a flatter place in greyness",
-      "verdict": "UNSUPPORTED",
-      "quote": ""
-    },
-    {
-      "claim": "The air at the summit was cold and wet",
-      "verdict": "INFERRED",
-      "quote": "The fog never lifted."
-    },
-    {
-      "claim": "Nothing to see at the summit",
-      "verdict": "INFERRED",
-      "quote": "The fog never lifted."
-    },
-    {
-      "claim": "Mia fell asleep on the descent against the hiker's collarbone",
+      "claim": "Mia fell asleep on the descent",
       "verdict": "SUPPORTED",
       "quote": "she fell asleep on the descent"
     },
     {
-      "claim": "Sleeping children are heavy in a trusting way",
-      "verdict": "UNSUPPORTED",
-      "quote": ""
-    },
-    {
-      "claim": "The hiker noticed ferns underfoot on the descent",
+      "claim": "There were ferns underfoot on the descent",
       "verdict": "SUPPORTED",
       "quote": "I noticed the ferns underfoot"
     },
     {
-      "claim": "The ferns were new April ones, tight pale-green coils",
+      "claim": "The ferns were pale and unfurling spring ferns",
+      "verdict": "INFERRED",
+      "quote": "The fog never lifted... she fell asleep on the descent and I noticed the ferns underfoot"
+    },
+    {
+      "claim": "The fog swallowed trees ahead on the path",
       "verdict": "UNSUPPORTED",
       "quote": ""
     },
     {
-      "claim": "The ferns were pushing up through last year's brown",
+      "claim": "The fog closed the path behind them",
       "verdict": "UNSUPPORTED",
       "quote": ""
     },
     {
-      "claim": "The ferns had been there the whole climb",
+      "claim": "The hiker kept waiting for the world to open",
+      "verdict": "INFERRED",
+      "quote": "I was sure we'd made a mistake"
+    },
+    {
+      "claim": "The doubt sat in the hiker's chest",
+      "verdict": "INFERRED",
+      "quote": "I was sure we'd made a mistake"
+    },
+    {
+      "claim": "Mia's cry had nowhere to go in the muffled air",
       "verdict": "UNSUPPORTED",
       "quote": ""
     },
     {
-      "claim": "Mia's breath was warm through the jacket",
+      "claim": "Every step became a small negotiation due to the ache",
+      "verdict": "INFERRED",
+      "quote": "my shoulders burned"
+    },
+    {
+      "claim": "The hiker walked slowly on the descent",
       "verdict": "UNSUPPORTED",
       "quote": ""
     },
     {
-      "claim": "The hiker does not remember the view from the top",
-      "verdict": "UNSUPPORTED",
-      "quote": ""
+      "claim": "The hiker felt relieved despite the morning's difficulties",
+      "verdict": "INFERRED",
+      "quote": "I was sure we'd made a mistake — until she fell asleep on the descent and I noticed the ferns underfoot"
     }
   ],
-  "notes": "Warmth is exceptional: 'the kind of crying that is not really about anything you can fix' and 'trusting way only sleeping children are heavy' are precisely the intimate, specific observations that earn a 5. The arc is textbook — fog/setting, effort/crying, doubt/summit, revelation/ferns, coda — and every paragraph serves the shape. The Russian is genuinely native-register: 'жила по своим правилам', 'та доверчивая тяжесть', 'я ошибалась насчёт всего дня' are idiomatic and emotionally exact, not calques. Photo selection is plausible (7 indices, distributed 0–11), though without knowing what photos 1, 3, 6, 8, 10 depict it is impossible to confirm the descent/fern beat is covered, hence 4.0 rather than 5.0. Many narrative details (the switchbacks, the strap line, the 600m elevation, the April fern coils) are well-motivated expansions but have no grounding in the seed text and are correctly marked UNSUPPORTED.",
-  "faithfulness": 1.74
+  "notes": "The English prose is genuinely intimate and avoids boilerplate, earning high warmth; phrases like 'a small, damp stone' and 'it felt like a room' are memorable and specific. The arc moves cleanly from ascent-in-fog through effort and doubt to the fern-lit descent, with each paragraph earning its place. The Russian translation reads naturally and idiomatically — 'маленькую сделку с самим собой' and 'откуда-то из тайного места' are excellent native-register choices, not mechanical back-translations. Photo indices (7 frames, spread across 0–11) plausibly trace the arc but we cannot verify beat-by-beat match without the actual images; the distribution is reasonable. The Bavarian Alps location and April date are the main unsupported fabrications relative to the seed text.",
+  "faithfulness": 2.63
 }

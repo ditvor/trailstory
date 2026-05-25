@@ -1,90 +1,95 @@
 {
   "warmth": 4.5,
-  "narrative_arc": 5.0,
+  "narrative_arc": 4.5,
   "russian_fidelity": 4.5,
   "photo_selection_plausibility": 4.0,
   "claim_verdicts": [
     {
-      "claim": "the hike took place in April",
+      "claim": "The hike took place in April",
       "verdict": "UNSUPPORTED",
       "quote": ""
     },
     {
-      "claim": "the setting is the Bavarian Alps",
+      "claim": "The setting is the Bavarian Alps",
       "verdict": "UNSUPPORTED",
       "quote": ""
     },
     {
-      "claim": "fog surrounded the hikers so thickly trees a few steps ahead were barely visible",
+      "claim": "The fog was pale grey in colour",
+      "verdict": "INFERRED",
+      "quote": "The fog cleared just as we reached the ridge."
+    },
+    {
+      "claim": "The path lifted gently at first, then more steeply",
+      "verdict": "INFERRED",
+      "quote": "The fog cleared just as we reached the ridge."
+    },
+    {
+      "claim": "Stones underfoot were damp",
+      "verdict": "UNSUPPORTED",
+      "quote": ""
+    },
+    {
+      "claim": "Branches were still bare from winter",
+      "verdict": "UNSUPPORTED",
+      "quote": ""
+    },
+    {
+      "claim": "The hiker could hear their own breathing",
+      "verdict": "UNSUPPORTED",
+      "quote": ""
+    },
+    {
+      "claim": "There were no meadows or blue distances visible",
+      "verdict": "UNSUPPORTED",
+      "quote": ""
+    },
+    {
+      "claim": "The altitude gain was six hundred metres",
+      "verdict": "UNSUPPORTED",
+      "quote": ""
+    },
+    {
+      "claim": "The fog began to thin upon reaching the ridge",
       "verdict": "SUPPORTED",
       "quote": "The fog cleared just as we reached the ridge."
     },
     {
-      "claim": "the path went upward almost immediately",
+      "claim": "The fog lifted in long drifting sheets rather than all at once",
       "verdict": "UNSUPPORTED",
       "quote": ""
     },
     {
-      "claim": "the smell of wet earth coming back to life",
+      "claim": "Light returned to the air as the fog cleared",
       "verdict": "INFERRED",
       "quote": "The fog cleared just as we reached the ridge."
     },
     {
-      "claim": "six hundred metres of elevation gain",
-      "verdict": "UNSUPPORTED",
-      "quote": ""
-    },
-    {
-      "claim": "climb completed in barely an hour and a half",
-      "verdict": "UNSUPPORTED",
-      "quote": ""
-    },
-    {
-      "claim": "first thin grass pushing through last year's matted brown",
-      "verdict": "UNSUPPORTED",
-      "quote": ""
-    },
-    {
-      "claim": "the fog cleared as they reached the ridge",
-      "verdict": "SUPPORTED",
-      "quote": "The fog cleared just as we reached the ridge."
-    },
-    {
-      "claim": "the valley was visible beneath them when the fog cleared",
+      "claim": "Mountain shoulders became visible",
       "verdict": "INFERRED",
       "quote": "The fog cleared just as we reached the ridge."
     },
     {
-      "claim": "further peaks became visible when the fog cleared",
+      "claim": "A pale spring sky became visible",
+      "verdict": "UNSUPPORTED",
+      "quote": ""
+    },
+    {
+      "claim": "The hiker looked back down at the valley they had climbed from",
       "verdict": "INFERRED",
       "quote": "The fog cleared just as we reached the ridge."
     },
     {
-      "claim": "patches of old snow in the hollows",
+      "claim": "The hiker stood on the ridge listening to the wind",
       "verdict": "UNSUPPORTED",
       "quote": ""
     },
     {
-      "claim": "new green vegetation lower down the mountain",
-      "verdict": "UNSUPPORTED",
-      "quote": ""
-    },
-    {
-      "claim": "the sky turned blue",
-      "verdict": "UNSUPPORTED",
-      "quote": ""
-    },
-    {
-      "claim": "they stood on the ridge at thirteen hundred metres",
-      "verdict": "UNSUPPORTED",
-      "quote": ""
-    },
-    {
-      "claim": "a cold wind smelling of stone on the ridge",
-      "verdict": "UNSUPPORTED",
-      "quote": ""
+      "claim": "The last of the fog slipped away below the hiker",
+      "verdict": "INFERRED",
+      "quote": "The fog cleared just as we reached the ridge."
     }
   ],
-  "notes": "The English prose is beautifully crafted with specific sensory details and a clear arc from fogbound ascent to luminous revelation, earning near-top warmth and a full narrative arc score. The Russian translation is natural and fluent — phrases like 'намёками на самих себя' and 'пройти сквозь ничто и выйти ко всему' read as genuine Russian rather than translated text; one minor stiffness is 'смотрели друг другу в плечи' (slightly literal for 'watching each other's shoulders'), hence 4.5. Photo indices (7 frames, well-distributed 0–11) plausibly cover the arc but cannot be verified against actual beat positions, earning a solid 4.0. Almost all concrete claims are UNSUPPORTED because the seed text provides only one sentence; the writer extrapolated extensively, which is expected but must be flagged.",
-  "faithfulness": 1.09
+  "notes": "The English prose is genuinely warm and literary, with precise sensory texture ('damp stones underfoot', 'long drifting sheets') and a reflective closing beat that avoids cliché; warmth is high but just short of 5 because the intimacy is slightly impersonal ('I' rather than invoking a companion or specific memory). The arc is clean: fog-shrouded approach, effort, revelation, stillness — each paragraph earns its place, though the 'human detail' beat is thin (no companion, no small physical gesture). The Russian is idiomatic and reads naturally; 'маленьким частным паломничеством' and 'давала утру улечься' are confident native-register choices, with only 'близкая прохладная серость' slightly stiff. Photo indices (7 frames, spread 0–11) plausibly trace dawn-approach through clearing-fog to open ridge, though the even-numbered spacing feels slightly mechanical rather than editorially curated.",
+  "faithfulness": 1.18
 }

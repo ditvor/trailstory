@@ -33,14 +33,51 @@ def _isolated_narrative_cache(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -
     monkeypatch.setenv("TRAILSTORY_CACHE_DIR", str(tmp_path / "narrative-cache"))
 
 
-def _make_fake_client() -> MagicMock:
-    """Mocked Anthropic client whose ``.model`` is a real string.
+_FAKE_LEDGER_JSON = json.dumps(
+    {
+        "people": [{"name": "Mia", "role": "baby in carrier"}],
+        "weather": "amazing weather",
+        "chronology": [
+            {
+                "time_of_day": "morning",
+                "activity": "ascent through fog",
+                "emotion": "anticipation",
+                "objects_mentioned": ["fog", "ridge"],
+            },
+        ],
+    }
+)
 
-    The cache key includes ``client.model``, and ``MagicMock(spec=...)``
-    would expose ``.model`` as a MagicMock that ``json.dumps`` chokes on.
+
+def _make_fake_client() -> MagicMock:
+    """Mocked Anthropic client that serves both ADR-009 passes.
+
+    The CLI constructs two ``AnthropicClient`` instances per generate run
+    (writer + ledger extractor). Both come through the patched
+    ``trailstory.cli.AnthropicClient`` constructor, which in these tests
+    returns this single fake. The fake therefore needs to dispatch each
+    ``complete`` call to the right canned response based on the system
+    prompt — the writer's persona vs the ledger extractor's.
+
+    ``.model`` is a real string because the cache key uses it as a dict
+    value; ``MagicMock(spec=...)`` would expose ``.model`` as a MagicMock
+    that ``json.dumps`` chokes on.
     """
     fake = MagicMock(spec=AnthropicClient)
     fake.model = "claude-opus-4-7-test"
+
+    # Default writer response set by individual tests via
+    # fake.complete.return_value = _valid_response_json(...).
+    # We wrap that with a side_effect that intercepts the ledger pass
+    # and serves the canned extractor JSON instead.
+    def _dispatch(*, prompt: str, system: str) -> str:
+        if "ledger" in system.lower() or "fact ledger" in system.lower():
+            return _FAKE_LEDGER_JSON
+        # Writer pass — return whatever return_value the test set.
+        result: object = fake.complete.return_value
+        return str(result) if not isinstance(result, str) else result
+
+    fake.complete.side_effect = _dispatch
     return fake
 
 
@@ -132,7 +169,9 @@ def test_generate_happy_path(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) ->
     assert "data:image/jpeg;base64," in html
     assert "bavarian-alps" in rendered[0].name
 
-    assert fake_client.complete.call_count == 1
+    # Under ADR-009 a generate run makes two complete() calls per pipeline:
+    # one for the ledger extractor, one for the writer. Same fake serves both.
+    assert fake_client.complete.call_count == 2
 
 
 def test_generate_surfaces_domain_errors_as_exit_one(
@@ -238,8 +277,10 @@ def test_generate_second_run_uses_cache_and_skips_llm_call(
 
     assert first.exit_code == 0, first.output
     assert second.exit_code == 0, second.output
-    # Second run must hit the cache — no new client call.
-    assert fake_client.complete.call_count == 1
+    # ADR-009 two-pass: first run does ledger + writer = 2 calls. Second run
+    # hits the narrative cache and skips BOTH passes (cache stores the
+    # final NarrativeOutput, so the ledger pass is short-circuited too).
+    assert fake_client.complete.call_count == 2
     # The HTML must still be produced both times (rendering is not cached).
     assert list(out_dir.glob("*.html"))
 
@@ -274,7 +315,9 @@ def test_generate_no_cache_flag_forces_fresh_llm_call(
     # Same inputs but with --no-cache: must bypass the cache entirely.
     runner.invoke(cli, [*args, "--no-cache"], catch_exceptions=False)
 
-    assert fake_client.complete.call_count == 2
+    # ADR-009: each generate run is 2 calls (ledger + writer). First run
+    # caches, second --no-cache run forces a fresh pipeline = 4 total.
+    assert fake_client.complete.call_count == 4
 
 
 def test_generate_requires_anthropic_api_key(
@@ -304,18 +347,22 @@ def test_generate_passes_model_env_override_into_client(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
     """``MODEL=claude-sonnet-4-6`` must flow through ``Settings`` into the
-    ``AnthropicClient`` constructor — that is the only knob the user has to
-    swap writers without editing ``config.py``."""
+    WRITER ``AnthropicClient`` constructor — that is the only knob the user
+    has to swap writers without editing ``config.py``. Under ADR-009 the CLI
+    also constructs a second (ledger) client from ``LEDGER_MODEL``; this
+    test only asserts on the writer side, but captures every constructor
+    call so the assertion can pick out the writer one specifically.
+    """
     monkeypatch.setenv("ANTHROPIC_API_KEY", "sk-test-fake")
     monkeypatch.setenv("MODEL", "claude-sonnet-4-6")
 
     fake_client = _make_fake_client()
     fake_client.complete.return_value = _valid_response_json()
 
-    captured_kwargs: dict[str, object] = {}
+    captured_models: list[str] = []
 
     def _capture(*_args: object, **kwargs: object) -> MagicMock:
-        captured_kwargs.update(kwargs)
+        captured_models.append(str(kwargs.get("model")))
         return fake_client
 
     monkeypatch.setattr("trailstory.cli.AnthropicClient", _capture)
@@ -338,7 +385,11 @@ def test_generate_passes_model_env_override_into_client(
     )
 
     assert result.exit_code == 0, result.output
-    assert captured_kwargs.get("model") == "claude-sonnet-4-6"
+    # Writer client built first; ledger client built second (ADR-009).
+    assert "claude-sonnet-4-6" in captured_models, captured_models
+    # Both passes happened — sanity check the two-pass shape didn't
+    # silently collapse to one.
+    assert len(captured_models) == 2, captured_models
 
 
 # ── helpers ──────────────────────────────────────────────────────────────────

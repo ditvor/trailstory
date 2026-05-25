@@ -32,10 +32,11 @@ import json
 import logging
 from collections.abc import Iterator
 from dataclasses import dataclass
+from datetime import UTC, datetime
 from json import JSONDecodeError
 from typing import Any
 
-from pydantic import ValidationError
+from pydantic import BaseModel, ConfigDict, ValidationError
 
 from trailstory.llm import cache as narrative_cache
 from trailstory.llm.client import (
@@ -44,11 +45,22 @@ from trailstory.llm.client import (
     LLMRetryExhaustedError,
 )
 from trailstory.llm.prompts import (
+    SYSTEM_LEDGER_EXTRACTOR,
     SYSTEM_NARRATIVE,
+    USER_LEDGER_EXTRACTOR_TEMPLATE,
+    USER_LEDGER_RETRY_SUFFIX,
     USER_NARRATIVE_RETRY_SUFFIX,
     USER_NARRATIVE_TEMPLATE,
 )
-from trailstory.models import GpxStats, HikeInput, NarrativeOutput, PhotoMeta
+from trailstory.models import (
+    Beat,
+    FactLedger,
+    GpxStats,
+    HikeInput,
+    NarrativeOutput,
+    Person,
+    PhotoMeta,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -93,6 +105,37 @@ class NarrativeGenerationError(Exception):
     against ``NarrativeOutput``. Higher layers (CLI) catch this and
     surface it to the user.
     """
+
+
+class LedgerExtractionError(Exception):
+    """Terminal failure of the ledger-extraction pass (ADR-009, Phase 2).
+
+    Same retry policy and failure-mode separation as
+    :class:`NarrativeGenerationError`: client-level errors propagate up
+    immediately, JSON-parse failures retry once, schema-validation
+    failures surface without retry. Higher layers (the narrative
+    orchestrator) catch this and re-raise as
+    :class:`NarrativeGenerationError` so callers above the LLM layer
+    only have to handle one error type.
+    """
+
+
+class _ExtractorOutput(BaseModel):
+    """LLM-derived subset of :class:`FactLedger`.
+
+    The extractor returns only the fields it can reason about (people
+    named in the seed, the weather phrase, the chronology beats).
+    Deterministic fields (GPX stats, derived season, photo count) are
+    merged in Python by :func:`extract_ledger` — feeding numbers through
+    an LLM just invites transcription errors. Keeping the LLM contract
+    narrow also lets us validate a small, predictable JSON shape.
+    """
+
+    model_config = ConfigDict(frozen=True)
+
+    people: list[Person]
+    weather: str
+    chronology: list[Beat]
 
 
 # Northern-hemisphere meteorological season per calendar month. December
@@ -151,23 +194,126 @@ def _infer_date_and_season(gpx_stats: GpxStats) -> tuple[str, str]:
     return "unknown", "unknown"
 
 
-def generate_narrative(
+def extract_ledger(
     hike_input: HikeInput,
     gpx_stats: GpxStats,
     photos: list[PhotoMeta],
     *,
     client: AnthropicClient,
     location: str = "the trail",
+) -> FactLedger:
+    """Extract a structured :class:`FactLedger` from raw hike inputs.
+
+    The first pass of the two-pass narrative pipeline introduced in
+    ADR-009. A cheap, fast model (default ``claude-haiku-4-5``, see
+    ``Settings.ledger_model``) reads the seed text + photo timestamps and
+    emits the people / weather / chronology subset; this function then
+    merges in deterministic GPX-derived fields and validates the whole.
+
+    Args:
+        hike_input: Hiker's seed text and source paths.
+        gpx_stats: Parsed GPX stats — used both as deterministic facts
+            (distances, summit, duration) and for date/season inference.
+        photos: Loaded photos. Their first and last timestamps bracket the
+            chronology so the extractor can place beats on the
+            morning/afternoon axis even when the seed is elliptical.
+            The list must be non-empty.
+        client: Anthropic client wrapper, typically constructed with the
+            cheap ``Settings.ledger_model``. Injected so tests can mock.
+        location: Fallback place name when ``hike_input.location_name``
+            is unset.
+
+    Returns:
+        Validated :class:`FactLedger` — the single input the writer pass
+        receives.
+
+    Raises:
+        LedgerExtractionError: photos list empty, LLM errored, the model
+            returned non-JSON twice in a row, or the parsed JSON did not
+            validate against :class:`_ExtractorOutput`.
+    """
+    if not photos:
+        raise LedgerExtractionError("at least one photo is required to extract a ledger")
+
+    place = hike_input.location_name or location
+    hike_date, season = _infer_date_and_season(gpx_stats)
+    when = _hike_start_datetime(gpx_stats)
+
+    first_photo_time = photos[0].timestamp.isoformat(timespec="minutes")
+    last_photo_time = photos[-1].timestamp.isoformat(timespec="minutes")
+
+    base_prompt = USER_LEDGER_EXTRACTOR_TEMPLATE.format(
+        location=place,
+        hike_date=hike_date,
+        season=season,
+        distance_km=gpx_stats.distance_km,
+        duration_min=gpx_stats.duration_min,
+        n_photos=len(photos),
+        first_photo_time=first_photo_time,
+        last_photo_time=last_photo_time,
+        seed_text=hike_input.seed_text,
+    )
+
+    parsed = _call_and_parse_with_system(client, base_prompt, SYSTEM_LEDGER_EXTRACTOR)
+    if parsed is None:
+        logger.warning("ledger response did not parse as JSON; retrying with explicit directive")
+        retry_prompt = base_prompt + USER_LEDGER_RETRY_SUFFIX
+        parsed = _call_and_parse_with_system(client, retry_prompt, SYSTEM_LEDGER_EXTRACTOR)
+        if parsed is None:
+            raise LedgerExtractionError(
+                "Ledger extractor returned non-JSON output on both attempts."
+            )
+
+    try:
+        extracted = _ExtractorOutput.model_validate(parsed)
+    except ValidationError as exc:
+        raise LedgerExtractionError(
+            f"Extractor JSON did not match _ExtractorOutput schema: {exc}"
+        ) from exc
+
+    return FactLedger(
+        people=extracted.people,
+        weather=extracted.weather,
+        chronology=extracted.chronology,
+        where=place,
+        when=when,
+        season=season,
+        duration_min=gpx_stats.duration_min,
+        distance_km=gpx_stats.distance_km,
+        elevation_gain_m=gpx_stats.elevation_gain_m,
+        summit_elev_m=gpx_stats.summit_elev_m,
+        n_photos=len(photos),
+    )
+
+
+def generate_narrative(
+    hike_input: HikeInput,
+    gpx_stats: GpxStats,
+    photos: list[PhotoMeta],
+    *,
+    client: AnthropicClient,
+    ledger_client: AnthropicClient,
+    location: str = "the trail",
     use_cache: bool = True,
 ) -> NarrativeOutput:
-    """Generate a tri-lingual narrative from hike inputs.
+    """Generate a tri-lingual narrative via the two-pass pipeline (ADR-009).
+
+    Pass 1: :func:`extract_ledger` (cheap model) builds a structured
+    :class:`FactLedger` from seed + GPX + photo timestamps.
+    Pass 2: the writer model receives the ledger as its sole input and
+    produces a :class:`NarrativeOutput`.
 
     Args:
         hike_input: Hiker's seed text and source paths.
         gpx_stats: Parsed GPX stats (distance, elevation, duration, summit).
-        photos: Loaded photos. The model selects 6-8 indices into this list,
+        photos: Loaded photos. The writer selects 6-8 indices into this list,
             so the list must be non-empty.
-        client: Anthropic client wrapper. Injected so tests can mock the LLM.
+        client: Anthropic client wrapper for the WRITER pass (typically the
+            Opus-class model from ``Settings.model``). Injected so tests can mock.
+        ledger_client: Anthropic client wrapper for the EXTRACTOR pass
+            (typically the Haiku-class model from ``Settings.ledger_model``).
+            Two clients because each pass has its own model identifier; the
+            writer's quality matters more than the extractor's.
         location: Fallback place name. ``hike_input.location_name`` wins when
             set; this kwarg is the default the prompt sees otherwise.
         use_cache: When ``True`` (the default), check the on-disk cache
@@ -179,9 +325,9 @@ def generate_narrative(
         Validated ``NarrativeOutput``.
 
     Raises:
-        NarrativeGenerationError: photos list empty, LLM errored, the model
-            returned non-JSON twice in a row, or the parsed JSON did not
-            validate against the schema.
+        NarrativeGenerationError: photos list empty, either LLM call failed,
+            either pass returned non-JSON twice in a row, or the JSON did
+            not validate against its expected schema.
     """
     if not photos:
         raise NarrativeGenerationError("at least one photo is required to build a narrative")
@@ -195,19 +341,25 @@ def generate_narrative(
             return cached
         logger.info("narrative cache miss for key %s", key)
 
-    place = hike_input.location_name or location
-    hike_date, season = _infer_date_and_season(gpx_stats)
+    try:
+        ledger = extract_ledger(
+            hike_input,
+            gpx_stats,
+            photos,
+            client=ledger_client,
+            location=location,
+        )
+    except LedgerExtractionError as exc:
+        # Funnel into NarrativeGenerationError so callers above the LLM
+        # layer only handle one exception type. The original chain is
+        # preserved via __cause__.
+        raise NarrativeGenerationError(f"ledger extraction failed: {exc}") from exc
+
+    ledger_json = json.dumps(ledger.model_dump(mode="json"), ensure_ascii=False, indent=2)
     base_prompt = USER_NARRATIVE_TEMPLATE.format(
-        location=place,
-        hike_date=hike_date,
-        season=season,
-        distance_km=gpx_stats.distance_km,
-        elevation_gain_m=gpx_stats.elevation_gain_m,
-        duration_min=gpx_stats.duration_min,
-        summit_elev_m=gpx_stats.summit_elev_m,
+        ledger_json=ledger_json,
         n_photos=len(photos),
         n_photos_minus_1=len(photos) - 1,
-        seed_text=hike_input.seed_text,
     )
 
     parsed = _call_and_parse(client, base_prompt)
@@ -237,13 +389,22 @@ def generate_narrative_stream(
     photos: list[PhotoMeta],
     *,
     client: AnthropicClient,
+    ledger_client: AnthropicClient,
     location: str = "the trail",
 ) -> Iterator[NarrativeStreamEvent]:
-    """Streaming variant of :func:`generate_narrative`.
+    """Streaming variant of :func:`generate_narrative` (ADR-009).
+
+    The ledger-extraction pass runs synchronously up front (small Haiku
+    call, ~1-2s) and produces no stream events; the writer pass streams
+    chunks to the UI as before. The first byte of streamed prose is
+    therefore delayed by the extractor's latency — acceptable in
+    exchange for the structural fabrication guard. The web builder UI
+    already shows a "Generating…" spinner during the pre-stream window;
+    extractor latency lands inside that.
 
     Yields a :class:`NarrativeStreamChunk` for every text delta from the
-    LLM, optionally a :class:`NarrativeStreamRetry` between attempts when
-    the first response did not parse, and finally a
+    writer LLM, optionally a :class:`NarrativeStreamRetry` between
+    attempts when the first response did not parse, and finally a
     :class:`NarrativeStreamComplete` with the validated
     :class:`NarrativeOutput`.
 
@@ -251,7 +412,9 @@ def generate_narrative_stream(
     with :data:`USER_NARRATIVE_RETRY_SUFFIX` when the first response was
     unparseable. Schema-validation failures are not retried — they raise
     :class:`NarrativeGenerationError` immediately, the same as the
-    non-streaming pipeline.
+    non-streaming pipeline. Ledger-extraction failures are funnelled into
+    :class:`NarrativeGenerationError` so callers above the LLM layer only
+    handle one exception type.
 
     The cache is intentionally bypassed for streaming runs: the user is
     looking at a "writing your story" page and expects to see the words
@@ -261,8 +424,12 @@ def generate_narrative_stream(
     Args:
         hike_input: Hiker's seed text and source paths.
         gpx_stats: Parsed GPX stats.
-        photos: Loaded photos. The model selects 6-8 indices into this list.
-        client: Anthropic client wrapper. Must implement ``complete_stream``.
+        photos: Loaded photos. The writer selects 6-8 indices into this list.
+        client: Anthropic client wrapper for the WRITER pass. Must
+            implement ``complete_stream``.
+        ledger_client: Anthropic client wrapper for the EXTRACTOR pass.
+            Uses ``complete`` (non-streaming); a small JSON dict doesn't
+            benefit from streaming.
         location: Fallback place name when ``hike_input.location_name`` is
             unset.
 
@@ -271,26 +438,29 @@ def generate_narrative_stream(
         always :class:`NarrativeStreamComplete` on success.
 
     Raises:
-        NarrativeGenerationError: photos list empty, LLM call failed, the
-            model returned non-JSON twice in a row, or the parsed JSON did
-            not validate against the schema.
+        NarrativeGenerationError: photos list empty, either LLM call failed,
+            either pass returned non-JSON twice in a row, or the JSON did
+            not validate against its expected schema.
     """
     if not photos:
         raise NarrativeGenerationError("at least one photo is required to build a narrative")
 
-    place = hike_input.location_name or location
-    hike_date, season = _infer_date_and_season(gpx_stats)
+    try:
+        ledger = extract_ledger(
+            hike_input,
+            gpx_stats,
+            photos,
+            client=ledger_client,
+            location=location,
+        )
+    except LedgerExtractionError as exc:
+        raise NarrativeGenerationError(f"ledger extraction failed: {exc}") from exc
+
+    ledger_json = json.dumps(ledger.model_dump(mode="json"), ensure_ascii=False, indent=2)
     base_prompt = USER_NARRATIVE_TEMPLATE.format(
-        location=place,
-        hike_date=hike_date,
-        season=season,
-        distance_km=gpx_stats.distance_km,
-        elevation_gain_m=gpx_stats.elevation_gain_m,
-        duration_min=gpx_stats.duration_min,
-        summit_elev_m=gpx_stats.summit_elev_m,
+        ledger_json=ledger_json,
         n_photos=len(photos),
         n_photos_minus_1=len(photos) - 1,
-        seed_text=hike_input.seed_text,
     )
 
     parsed, chunks_first = _stream_and_parse(client, base_prompt)
@@ -344,7 +514,7 @@ def _stream_and_parse(
 
 
 def _call_and_parse(client: AnthropicClient, prompt: str) -> dict[str, Any] | None:
-    """Call the LLM once and try to parse the response as a JSON object.
+    """Call the writer LLM once and try to parse the response as a JSON object.
 
     Returns the parsed ``dict`` on success, or ``None`` if the response is
     not a JSON object (parse failure, JSON array, JSON literal, etc.) so
@@ -363,6 +533,46 @@ def _call_and_parse(client: AnthropicClient, prompt: str) -> dict[str, Any] | No
     except JSONDecodeError:
         return None
     return result if isinstance(result, dict) else None
+
+
+def _call_and_parse_with_system(
+    client: AnthropicClient, prompt: str, system: str
+) -> dict[str, Any] | None:
+    """Like :func:`_call_and_parse` but with a caller-supplied system prompt.
+
+    Used by :func:`extract_ledger` (Phase 2) which needs the
+    extractor-specific persona instead of the writer's. Client-level
+    errors are funnelled into :class:`LedgerExtractionError` here — the
+    caller decides whether to retry the model on parse failure.
+    """
+    try:
+        raw = client.complete(prompt=prompt, system=system)
+    except (LLMResponseError, LLMRetryExhaustedError) as exc:
+        raise LedgerExtractionError(f"Ledger LLM call failed: {exc}") from exc
+
+    cleaned = _strip_code_fences(raw)
+    try:
+        result = json.loads(cleaned)
+    except JSONDecodeError:
+        return None
+    return result if isinstance(result, dict) else None
+
+
+def _hike_start_datetime(gpx_stats: GpxStats) -> datetime:
+    """Return the first timed waypoint's datetime, or epoch as fallback.
+
+    The :class:`FactLedger.when` field is required and typed as
+    ``datetime``; manually-edited GPX files that strip timestamps would
+    otherwise force us to make the field optional everywhere. Picking
+    UTC epoch keeps the type stable; the orchestrator and prompt already
+    surface "unknown" date/season text via
+    :func:`_infer_date_and_season` so callers downstream see the
+    semantically-correct unknown signal.
+    """
+    for wp in gpx_stats.waypoints:
+        if wp.time is not None:
+            return wp.time
+    return datetime(1970, 1, 1, tzinfo=UTC)
 
 
 def _strip_code_fences(text: str) -> str:

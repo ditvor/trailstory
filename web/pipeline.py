@@ -183,13 +183,16 @@ def stream_pipeline(
     workspace: Workspace,
     *,
     client: AnthropicClient,
+    ledger_client: AnthropicClient,
 ) -> Iterator[PipelineStreamEvent]:
     """Resume a prepared pipeline run and stream the narrative.
 
     Reads the pending state written by :func:`prepare_pipeline`, calls
-    the streaming LLM, yields :class:`PipelineStreamEvent` instances as
-    chunks arrive, and on success renders the HTML and persists the
-    final ``state.json``. The terminal event is always
+    the streaming LLM (now two passes per ADR-009 — a Haiku-class
+    extractor synchronously up front, then the Opus writer streamed to
+    the client), yields :class:`PipelineStreamEvent` instances as chunks
+    arrive, and on success renders the HTML and persists the final
+    ``state.json``. The terminal event is always
     :class:`PipelineStreamRendered`.
 
     Raises :class:`PipelineError` if the workspace has no pending state,
@@ -203,6 +206,7 @@ def stream_pipeline(
             pending.gpx_stats,
             pending.photos,
             client=client,
+            ledger_client=ledger_client,
         ):
             if isinstance(event, NarrativeStreamChunk):
                 yield PipelineStreamChunk(text=event.text)

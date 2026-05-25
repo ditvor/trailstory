@@ -111,6 +111,56 @@ def make_fake_client_factory() -> Callable[[], AnthropicClient]:
     return _factory
 
 
+# Deterministic FactLedger fixture for the ADR-009 extractor pass in
+# fake-LLM dev mode. Matches the prose in _FAKE_NARRATIVE — the chronology
+# beats line up with the three "above the fog line" paragraphs so the
+# round-trip looks coherent in click-through UI testing.
+_FAKE_LEDGER_EXTRACTOR_OUTPUT: Final[str] = json.dumps(
+    {
+        "people": [],
+        "weather": "fog clearing to sun",
+        "chronology": [
+            {
+                "time_of_day": "first light",
+                "activity": "leaving the trailhead through damp moss",
+                "emotion": "anticipation",
+                "objects_mentioned": ["moss"],
+            },
+            {
+                "time_of_day": "morning",
+                "activity": "ascent toward the saddle through thinning cloud",
+                "emotion": "focused",
+                "objects_mentioned": ["cloud", "saddle"],
+            },
+            {
+                "time_of_day": "midday",
+                "activity": "the ridge moment — sun breaking, valley vanishing",
+                "emotion": "awe",
+                "objects_mentioned": ["ridge", "sun", "valley"],
+            },
+        ],
+    }
+)
+
+
+def make_fake_ledger_client_factory() -> Callable[[], AnthropicClient]:
+    """Return a factory for the ADR-009 extractor pass in fake-LLM dev mode.
+
+    Mirrors :func:`make_fake_client_factory` for the second client the
+    two-pass narrative pipeline needs. Returns a deterministic ledger so
+    the dev UI exercises the same end-to-end shape real users see, with
+    no Anthropic API calls.
+    """
+
+    def _factory() -> AnthropicClient:
+        fake = MagicMock(spec=AnthropicClient)
+        fake.model = "trailstory-dev-fake-ledger"
+        fake.complete.return_value = _FAKE_LEDGER_EXTRACTOR_OUTPUT
+        return fake
+
+    return _factory
+
+
 def banner() -> str:
     """Short banner printed when the dev mode is active."""
     return (

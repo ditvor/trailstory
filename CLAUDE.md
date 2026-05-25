@@ -512,6 +512,16 @@ don't relitigate them.
    permitting generic nature words. Closes the prompt-engineering
    ceiling; Phase 2 (two-pass writer with `FactLedger`) is the
    structural fix.
+9. [ADR-009 — two-pass narrative pipeline with `FactLedger`](docs/adr/009-two-pass-narrative-with-fact-ledger.md):
+   Phase 2. A cheap Haiku-class extractor reads the seed + GPX + photo
+   timestamps and emits a typed `FactLedger` (people, weather,
+   chronology beats with `objects_mentioned`); the Opus writer consumes
+   the serialized ledger as its sole input — no raw seed text reaches
+   it. Writer is structurally unable to introduce a duck if the ledger
+   contains no duck. `generate_narrative` and
+   `generate_narrative_stream` gain a required `ledger_client` kwarg;
+   the CLI, web pipeline, and eval runner all build two
+   `AnthropicClient` instances per render. Renderers unchanged.
 
 If you're about to do something that touches an area covered by an existing
 ADR, **read the ADR first**. If the change is incompatible with the recorded

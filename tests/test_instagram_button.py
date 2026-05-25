@@ -102,6 +102,27 @@ def _make_client(*, response: str | None = None) -> MagicMock:
     return fake
 
 
+def _make_ledger_client() -> MagicMock:
+    """Mocked ADR-009 extractor client. Constant ledger JSON for every call."""
+    fake = MagicMock(spec=AnthropicClient)
+    fake.model = "claude-haiku-4-5-test"
+    fake.complete.return_value = json.dumps(
+        {
+            "people": [{"name": "Mia", "role": "baby in carrier"}],
+            "weather": "amazing weather",
+            "chronology": [
+                {
+                    "time_of_day": "morning",
+                    "activity": "ascent through fog",
+                    "emotion": "anticipation",
+                    "objects_mentioned": ["fog", "ridge"],
+                },
+            ],
+        }
+    )
+    return fake
+
+
 def _read_sample_photos(limit: int) -> list[tuple[str, bytes, str]]:
     out: list[tuple[str, bytes, str]] = []
     for path in sorted(SAMPLE_PHOTOS.iterdir()):
@@ -150,6 +171,7 @@ def app_factory(
         settings=_settings(),
         storage=storage,
         client_factory=lambda: fake,
+        ledger_client_factory=lambda: _make_ledger_client(),
         enable_sweeper=False,
     )
     yield app
@@ -163,6 +185,7 @@ def app_factory_4_photos(tmp_path: Path) -> Iterator[FastAPI]:
         settings=_settings(),
         storage=storage,
         client_factory=lambda: fake,
+        ledger_client_factory=lambda: _make_ledger_client(),
         enable_sweeper=False,
     )
     yield app
@@ -198,6 +221,7 @@ def test_save_for_instagram_button_renders_in_every_style(tmp_path: Path, style:
         settings=_settings(),
         storage=storage,
         client_factory=lambda: fake,
+        ledger_client_factory=lambda: _make_ledger_client(),
         enable_sweeper=False,
     )
     client, slug = _generate_and_render(app, style=style)
