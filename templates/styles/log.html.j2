@@ -79,6 +79,84 @@
   body.lang-ru .en, body.lang-ru .de { display: none; }
   body.lang-de .en, body.lang-de .ru { display: none; }
 
+  /* ADR-014 / Phase 4: sentence-level provenance.
+     The log register can't carry editorial's always-on treatment
+     without looking busy, so provenance is opt-in here via a "Notes"
+     toggle next to the language switcher. The vocabulary (body.audit,
+     #notesBtn, data-tip, localStorage key) mirrors editorial.html.j2
+     so a creator who turns notes on in one style sees the same audit
+     UI everywhere.
+
+     When body.audit is set:
+       - INFERRED sentences gain a faint highlighter background
+       - Per-source bottom-edge underline colors mark photo / seed /
+         gpx provenance (matches editorial)
+       - Hovering any sentence surfaces a custom ::after tooltip
+         reading data-tip (the native title attribute is slow,
+         low-contrast, and absent on touch — same fix as editorial)
+     When unset, the sentence spans render as plain text. */
+  .sent {
+    transition: background-color 120ms ease, box-shadow 120ms ease;
+  }
+  body.audit .sent { position: relative; }
+  body.audit .sent[data-prov="inferred"] {
+    background: #fff8d4;
+    border-radius: 2px;
+    padding: 0 2px;
+  }
+  body.audit .sent[data-prov="photo"]  { box-shadow: inset 0 -2px 0 oklch(0.78 0.10 220 / 0.55); }
+  body.audit .sent[data-prov="seed"]   { box-shadow: inset 0 -2px 0 oklch(0.78 0.10 150 / 0.55); }
+  body.audit .sent[data-prov="gpx"]    { box-shadow: inset 0 -2px 0 oklch(0.78 0.06 60  / 0.55); }
+  body.audit .sent:hover {
+    background: #ffeb9c;
+    cursor: help;
+  }
+  body.audit .sent:hover::after {
+    content: attr(data-tip);
+    position: absolute;
+    bottom: calc(100% + 4px); left: 0;
+    background: #1f2328; color: #f4f5f7;
+    padding: 6px 8px;
+    font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+    font-size: 11px;
+    letter-spacing: 0.02em; line-height: 1.35;
+    max-width: 280px; white-space: normal;
+    border-radius: 2px;
+    z-index: 30; pointer-events: none;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.18);
+  }
+  @media print {
+    body.audit .sent[data-prov] { background: transparent; box-shadow: none; }
+  }
+
+  /* ── notes (audit) toggle ──────────────────────────────────────── */
+  .article-tools {
+    display: flex;
+    justify-content: flex-end;
+    margin: 0 0 0.5rem;
+  }
+  .article-tools button {
+    font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+    font-size: 0.7rem;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    background: transparent;
+    color: #57606a;
+    border: 1px solid #d0d7de;
+    padding: 0.25rem 0.6rem;
+    cursor: pointer;
+    border-radius: 3px;
+  }
+  .article-tools button:hover {
+    border-color: #1f2328;
+    color: #1f2328;
+  }
+  .article-tools button[aria-pressed="true"] {
+    background: #1f2328;
+    color: #f4f5f7;
+    border-color: #1f2328;
+  }
+
   /* stats — list, not a grid; aligned key/value pairs */
   .stats {
     list-style: none;
@@ -236,20 +314,52 @@
          L 100,30"/>
     </svg>
 
+    {# Reading tools — Notes (audit) toggle. Defaults to hidden so the
+       log reads as plain prose; the author flips body.audit on to see
+       the per-sentence provenance treatment. Same vocabulary as the
+       editorial template so a creator's preference travels. #}
+    <div class="article-tools" role="group" aria-label="Show writing notes">
+      <button
+        type="button"
+        id="notesBtn"
+        aria-pressed="false"
+        aria-label="Show or hide per-sentence writing notes"
+      >Notes</button>
+    </div>
+
     <article>
-      {# ADR-014 / Phase 4: paragraphs now carry per-sentence provenance.
-         The log style uses the flat-text fallback (no sentence spans /
-         hover UI yet — that's the editorial template's job; Phase 4.1
-         will port log + encyclopedia to render sentence-level provenance
-         in this style's idiom). #}
+      {# ADR-014 / Phase 4: sentence-level provenance.
+         Each sentence becomes a <span data-prov> so the rendered HTML
+         carries the grounding info. The log register hides the
+         treatment by default — `body.audit` opts in (see the
+         article-tools button above). Tooltips render via the custom
+         ::after data-tip pattern, not the native title attribute. #}
       <div class="en">
-        {% for p in flat_paragraphs.en %}<p>{{ p }}</p>{% endfor %}
+        {% for paragraph in narrative.paragraphs %}
+          <p>
+            {% for sentence in paragraph -%}
+              <span class="sent" data-prov="{{ sentence.provenance.source }}" data-tip="{{ sentence.provenance.source }}: {{ sentence.provenance.reference }}">{{ sentence.text.en }}</span>{% if not loop.last %} {% endif -%}
+            {% endfor %}
+          </p>
+        {% endfor %}
       </div>
       <div class="ru">
-        {% for p in flat_paragraphs.ru %}<p>{{ p }}</p>{% endfor %}
+        {% for paragraph in narrative.paragraphs %}
+          <p>
+            {% for sentence in paragraph -%}
+              <span class="sent" data-prov="{{ sentence.provenance.source }}" data-tip="{{ sentence.provenance.source }}: {{ sentence.provenance.reference }}">{{ sentence.text.ru }}</span>{% if not loop.last %} {% endif -%}
+            {% endfor %}
+          </p>
+        {% endfor %}
       </div>
       <div class="de">
-        {% for p in flat_paragraphs.de %}<p>{{ p }}</p>{% endfor %}
+        {% for paragraph in narrative.paragraphs %}
+          <p>
+            {% for sentence in paragraph -%}
+              <span class="sent" data-prov="{{ sentence.provenance.source }}" data-tip="{{ sentence.provenance.source }}: {{ sentence.provenance.reference }}">{{ sentence.text.de }}</span>{% if not loop.last %} {% endif -%}
+            {% endfor %}
+          </p>
+        {% endfor %}
       </div>
 
       <blockquote>
@@ -328,6 +438,26 @@
         var idx = langs.indexOf(currentLang());
         setLang(langs[(idx + 1) % langs.length]);
       });
+
+      // ── Notes (audit) toggle (ADR-014 sentence-level provenance) ──
+      // Mirrors the editorial template's toggle vocabulary so a creator
+      // who flips notes on in one style sees the audit UI everywhere.
+      // Preference persists in localStorage.
+      var NOTES_KEY = 'trailstory.notes';
+      var notesBtn = document.getElementById('notesBtn');
+      function setNotes(on) {
+        document.body.classList.toggle('audit', !!on);
+        if (notesBtn) notesBtn.setAttribute('aria-pressed', on ? 'true' : 'false');
+        try { localStorage.setItem(NOTES_KEY, on ? '1' : '0'); } catch (e) {}
+      }
+      if (notesBtn) {
+        var notesStored = null;
+        try { notesStored = localStorage.getItem(NOTES_KEY); } catch (e) {}
+        if (notesStored === '1') setNotes(true);
+        notesBtn.addEventListener('click', function () {
+          setNotes(!document.body.classList.contains('audit'));
+        });
+      }
 
       var titleEn = {{ narrative.title.en | tojson }};
       var quoteEn = {{ narrative.pull_quote.en | tojson }};
