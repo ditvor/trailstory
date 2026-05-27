@@ -35,9 +35,15 @@ One-liners. When in doubt, this is the meaning the codebase intends.
   inside the template as `{{ meta.slug }}` and used as the output directory
   and HTML filename.
 - **narrative** — the LLM-generated content (`NarrativeOutput`): tri-lingual
-  title, subtitle, paragraphs, pull quote, milestone, and selected photo
-  indices. Each user-facing field is a `LocalizedString` (or
-  `LocalizedParagraphs`) carrying `en` / `ru` / `de` variants.
+  title, subtitle, exactly six chapters (each with its own body, bound
+  photo, and per-chapter title / time / place metadata), pull quote, and
+  milestone. Each user-facing field is a `LocalizedString` (or, for
+  paragraph blocks, a sentence-leveled `Paragraph`) carrying `en` /
+  `ru` / `de` variants. See ADR-015.
+- **chapter** — one stop in the hike (`Chapter`): `id` + `time` +
+  `place` + `lat`/`lon` + tri-lingual `title` + sentence-leveled `body`
+  + one bound `photo_index`. Six per narrative. The Trailpath layouts
+  (Letter / Zine / Sunday / Postcard / Album) all consume this shape.
 - **LocalizedString** — small Pydantic model with `en` / `ru` / `de` string
   fields. The shape that lets one prompt + one LLM call produce all three
   languages at once. See ADR-005.
@@ -152,7 +158,8 @@ llm/narrative.py        takes HikeInput + GpxStats + list[PhotoMeta]
     │                   calls Anthropic with structured prompt
     │                   validates JSON response
     ▼
-NarrativeOutput         (tri-lingual title, paragraphs, pull quote, selected_photo_indices)
+NarrativeOutput         (tri-lingual title, subtitle, six chapters, pull quote, milestone)
+    │                   each chapter binds one photo via chapter.photo_index
     │
     ├─► renderers/html.py       → {slug}.html
     └─► renderers/instagram.py  → carousel/*.jpg  (only if --instagram flag)
@@ -193,25 +200,38 @@ class LocalizedString:
     ru: str
     de: str
 
-class LocalizedParagraphs:
-    en: list[str]                       # 3-5 paragraphs
-    ru: list[str]
-    de: list[str]
+class Sentence:                         # ADR-014
+    text: LocalizedString
+    provenance: Provenance              # source: SEED | PHOTO | GPX | INFERRED
+
+Paragraph = list[Sentence]
+
+class Chapter:                          # ADR-015 — one stop in the hike
+    id: str                             # short slug, "arrival" / "river" / ...
+    time: str                           # "HH:MM"
+    place: LocalizedString              # locality
+    lat: float
+    lon: float
+    title: LocalizedString              # short noun phrase
+    body: Paragraph                     # 2-4 sentences with provenance
+    photo_index: int                    # one bound photo per chapter
 
 class NarrativeOutput:
-    schema_version: int = 2
+    schema_version: int = 4
     title: LocalizedString
     subtitle: LocalizedString
-    paragraphs: LocalizedParagraphs
+    chapters: list[Chapter]             # exactly 6 (CHAPTER_COUNT)
     pull_quote: LocalizedString
     milestone: LocalizedString          # e.g. "First mountain hike"
-    selected_photo_indices: list[int]   # 6-8 indices into PhotoMeta list
+    # selected_photo_indices is a read-only @property over chapters[*].photo_index;
+    # paragraphs_as_localized() is a computed view over chapters[*].body for
+    # legacy consumers (carousel, eval rubric flat-text checks).
 
 class Memory:
     hike_input: HikeInput
     gpx_stats: GpxStats
     narrative: NarrativeOutput
-    selected_photos: list[PhotoMeta]    # resolved from indices
+    selected_photos: list[PhotoMeta]    # ordered to match chapters (one per chapter)
 ```
 
 ---
@@ -279,23 +299,24 @@ See `docs/adr/001-base64-photo-embedding.md`.
 
 ### 2. The LLM selects photos, not the user
 
-The user provides a directory of photos. The LLM receives a numbered list and selects
-6–8 indices that it judges will tell the best narrative arc (start, effort, landscape,
-a human-detail beat drawn from the seed, summit). The user does not curate.
+The user provides a directory of photos. The LLM receives a numbered list and binds
+one photo to each of six chapters that together tell the best narrative arc
+(opening, effort, landscape, a human-detail beat drawn from the seed, summit-or-
+endpoint). The user does not curate.
 
 This is a core UX decision. Do not add a `--select-photos` flag without discussion.
+See ADR-015 for the chapter-binding contract.
 
 ### 3. Tri-lingual output is the default, not an option
 
-Every user-facing `NarrativeOutput` field is a `LocalizedString` (or
-`LocalizedParagraphs`) carrying `en` / `ru` / `de` variants — produced in a single LLM
-call. The HTML template renders all three; the reader cycles through with a button.
-There is no `--language` flag.
+Every user-facing `NarrativeOutput` field is a `LocalizedString` (or, for paragraph
+blocks, a sentence-leveled `Paragraph`) carrying `en` / `ru` / `de` variants —
+produced in a single LLM call. The HTML template renders all three; the reader
+cycles through with a button. There is no `--language` flag.
 
-To add a fourth language, add the field to `LocalizedString` and
-`LocalizedParagraphs`, update the prompt's JSON skeleton, extend the
-template's body class swap, and refresh goldens — all in one PR. Do not add
-partial language support. See ADR-005.
+To add a fourth language, add the field to `LocalizedString`, update the prompt's
+JSON skeleton, extend the template's body class swap, and refresh goldens — all in
+one PR. Do not add partial language support. See ADR-005.
 
 ### 4. The HTML template is a Jinja2 file, not a string in Python
 
@@ -345,18 +366,21 @@ Quick reference: intent → recipe. Slash-command shortcuts live in
 ### Add a field to `NarrativeOutput`
 
 1. Add the field to `NarrativeOutput` in `trailstory/models.py`. User-facing
-   strings should be `LocalizedString` (en / ru / de) and paragraph blocks
-   should be `LocalizedParagraphs`; do not invent flat per-language fields.
+   strings should be `LocalizedString` (en / ru / de). Per-chapter fields
+   go on `Chapter`. Do not invent flat per-language fields (ADR-005).
 2. Update the JSON skeleton in `llm/prompts.py` so the model is instructed to
    produce it (with the `en` / `ru` / `de` keys when the field is localized).
    Leave the previous version as a dated comment.
 3. Update mocks: `tests/test_narrative.py`, `tests/test_cli.py`,
    `tests/test_renderers.py`, `tests/test_instagram.py`,
-   `tests/test_cache.py`, `tests/conftest.py`. The `render_with_fixtures`
-   helper and any stub `NarrativeOutput` constructor must include the new
-   field — otherwise `make ci` and `/render-test` will break.
-4. Reference the field in `templates/memory.html.j2` (one `<span class="en">`/
-   `ru`/`de` block per language, or `narrative.<field>.<lang>` directly).
+   `tests/test_cache.py`, `tests/test_web.py`, `tests/conftest.py`. The
+   `chapters_from_strings` / `chapters_dict_from_strings` helpers and
+   any stub `NarrativeOutput` constructor must include the new field —
+   otherwise `make ci` and `/render-test` will break.
+4. Reference the field in the editorial style template
+   (`templates/styles/editorial.html.j2`) — one `<span class="en">` /
+   `ru` / `de` block per language, or `narrative.<field>.<lang>`
+   directly.
 5. If it appears in the carousel, update `trailstory/renderers/instagram.py`
    (the carousel reads the English variants only).
 6. `make ci` (free) → `make eval` (paid writer call). Confirm the model
@@ -414,15 +438,23 @@ Quick reference: intent → recipe. Slash-command shortcuts live in
 
 ### Change the output page design
 
-Edit `templates/memory.html.j2`. This is a Jinja2 template. Available
-context variables:
+Edit `templates/styles/<style>.html.j2` (v0 ships `editorial.html.j2`
+only). The top-level `templates/memory.html.j2` is a thin shell that
+`{% include %}`s the right style template. Available context variables:
 
 ```
-{{ narrative }}     NarrativeOutput object — access as narrative.title.en, .ru, .de etc.
+{{ narrative }}     NarrativeOutput — narrative.chapters is the six-chapter list;
+                    narrative.title.en/.ru/.de etc. for tri-lingual scalars.
+                    narrative.paragraphs_as_localized() flattens chapter bodies
+                    per language for legacy flat-text consumers.
 {{ stats }}         GpxStats object
-{{ photos }}        list of dicts with { 'data_uri': str, 'caption': str, 'index': int }
+{{ photos }}        list of dicts { 'data_uri': str, 'index': int }, in chapter order
+{{ elevation }}     list of (x, y) tuples for the elevation sparkline
 {{ meta.date }}     formatted hike date
+{{ meta.location }} display location label
 {{ meta.slug }}     url-safe hike identifier
+{{ meta.style }}    style value (editorial)
+{{ fonts }}         dict of base64 WOFF2 payloads (editorial only; empty for other styles)
 ```
 
 After editing, run `make test-render` (or `/render-test`) to produce a test
@@ -492,10 +524,14 @@ don't relitigate them.
    of two flat `_en` / `_ru` strings. EN, RU, and DE are produced in a
    single LLM call. Adding a fourth language is one Pydantic field +
    prompt-skeleton edit + template arm + golden refresh.
-6. [ADR-006 — three visual styles share one narrative](docs/adr/006-three-visual-styles-share-one-narrative.md):
-   `editorial`, `log`, and `encyclopedia` are three rendering treatments
-   of one prompt's output, not three prompt families. The eval suite
-   stays calibrated against the editorial register.
+6. [ADR-006 — one narrative, many visual treatments](docs/adr/006-three-visual-styles-share-one-narrative.md):
+   the rendering treatments of one prompt's output, not separate prompt
+   families. The eval suite stays calibrated against the editorial
+   register. ADR-006 originally named `editorial` / `log` /
+   `encyclopedia`; ADR-015 trimmed `log` and `encyclopedia` and the v0
+   product decision is to ship the five Trailpath styles (Letter, Zine,
+   Sunday, Postcard, Album) instead — Letter is `editorial` in this
+   PR; the other four land in subsequent renderer PRs.
 7. [ADR-007 — faithfulness eval axis](docs/adr/007-faithfulness-eval-axis.md):
    the paid LLM judge now extracts every concrete claim from the
    narrative and labels it `SUPPORTED` / `INFERRED` / `UNSUPPORTED`. A
@@ -558,6 +594,19 @@ don't relitigate them.
     on INFERRED. Log and Encyclopedia templates use the
     `paragraphs_as_localized()` flat fallback until Phase 4.1 ports
     them. `schema_version=3`.
+15. [ADR-015 — chapter-based narrative](docs/adr/015-chapter-based-narrative.md):
+    `NarrativeOutput.chapters: list[Chapter]` (exactly 6) replaces
+    flat `paragraphs` + `selected_photo_indices` as canonical state.
+    Each chapter envelope binds one photo and carries its own
+    `id` + `time` + `place` + `lat`/`lon` + tri-lingual `title` +
+    sentence-leveled `body`. `paragraphs_as_localized()` becomes a
+    computed view over `chapters[*].body`; `selected_photo_indices`
+    survives as a read-only `@property`. The Trailpath layouts
+    (Zine / Sunday / Postcard / Album) consume this shape natively
+    in subsequent renderer PRs; the Letter template walks chapter
+    bodies with no visible-output change. `Style.log` and
+    `Style.encyclopedia` removed — the v0 product decision is to
+    ship the five Trailpath styles only. `schema_version=4`.
 
 If you're about to do something that touches an area covered by an existing
 ADR, **read the ADR first**. If the change is incompatible with the recorded

@@ -71,7 +71,15 @@ class Settings(BaseSettings):
         description="JPEG quality (1-95) used when writing Instagram carousel slides.",
     )
     narrative_max_tokens: int = Field(
-        default=4096,
+        # Bumped 4096 -> 8192 under ADR-015. The new chapter envelope
+        # (six chapter envelopes, three languages, sentence-level
+        # provenance plus per-chapter title/time/place/lat/lon) easily
+        # crosses 4k output tokens on a longer hike. Pilot showed case
+        # 04 (bad-tolz-family) failing both JSON-parse attempts at
+        # 4096 because the response was truncated mid-array. 8192 buys
+        # headroom; output tokens are billed, not reserved, so the
+        # higher ceiling costs nothing on shorter hikes.
+        default=8192,
         description="Upper bound on tokens requested for the narrative completion.",
     )
     narrative_max_retries: int = Field(

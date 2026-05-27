@@ -34,7 +34,7 @@ from fastapi import FastAPI
 from fastapi.testclient import TestClient
 from pydantic import SecretStr
 
-from tests.conftest import paragraphs_dict_from_strings
+from tests.conftest import chapters_dict_from_strings
 from trailstory.config import Settings
 from trailstory.llm.client import AnthropicClient
 from web.app import create_app
@@ -69,11 +69,17 @@ def _settings() -> Settings:
     )
 
 
-def _valid_response_json(n_photos: int = 5) -> str:
-    """Same shape as ``tests/test_cli.py::_valid_response_json``."""
+def _valid_response_json(n_photos: int = 6) -> str:
+    """Same shape as ``tests/test_cli.py::_valid_response_json`` — ADR-015 chapters.
+
+    Photo indices wrap to ``min(5, n_photos - 1)`` so any caller using
+    fewer than 6 fixtures still passes the chapter-binding-in-range
+    Pydantic check.
+    """
+    photo_indices = [min(i, max(0, n_photos - 1)) for i in range(6)]
     return json.dumps(
         {
-            "schema_version": 3,
+            "schema_version": 4,
             "title": {
                 "en": "Above the fog line",
                 "ru": "Над линией тумана",
@@ -84,13 +90,32 @@ def _valid_response_json(n_photos: int = 5) -> str:
                 "ru": "Утро над морем облаков",
                 "de": "Ein Morgen über dem Wolkenmeer",
             },
-            "paragraphs": paragraphs_dict_from_strings(
-                en=["First light.", "Saddle. Cloud thinning."],
+            "chapters": chapters_dict_from_strings(
+                en=[
+                    "First light.",
+                    "Pines closed in.",
+                    "Saddle. Cloud thinning.",
+                    "Mia slept the climb.",
+                    "Ridge clear.",
+                    "Coming down golden.",
+                ],
                 ru=[
                     "Первые лучи.",
+                    "Сосны сомкнулись.",
                     "Седловина. Облака редеют.",
+                    "Мия проспала подъём.",
+                    "Хребет чист.",
+                    "Спуск золотой.",
                 ],
-                de=["Erstes Licht.", "Sattel. Wolke lichtet sich."],
+                de=[
+                    "Erstes Licht.",
+                    "Kiefern schlossen sich.",
+                    "Sattel. Wolke lichtet sich.",
+                    "Mia schlief am Aufstieg.",
+                    "Grat klar.",
+                    "Abstieg golden.",
+                ],
+                photo_indices=photo_indices,
             ),
             "pull_quote": {
                 "en": "The fog cleared just as we reached the ridge.",
@@ -102,7 +127,6 @@ def _valid_response_json(n_photos: int = 5) -> str:
                 "ru": "Первый горный поход",
                 "de": "Erste Bergwanderung",
             },
-            "selected_photo_indices": list(range(n_photos)),
         }
     )
 
@@ -832,10 +856,17 @@ def test_carousel_slide_has_attachment_disposition(
     assert slug in disposition
 
 
-def test_carousel_returns_n_slides_for_n_photos(
+def test_carousel_returns_eight_slides_for_six_chapter_binding(
     client: TestClient,
 ) -> None:
-    """Title + N photos + quote slides — locks in the carousel shape."""
+    """Title + 6 chapter photos + quote = 8 slides.
+
+    ADR-015 pins the chapter count at six, so the carousel emits a
+    fixed-shape 8-slide set regardless of how many photos the user
+    uploads (the writer's six chapter bindings get clamped into the
+    available range; tests below upload 4 photos so the bindings
+    duplicate but stay valid).
+    """
     fake = _make_client(response=_valid_response_json(n_photos=4))
     app = create_app(
         settings=_settings(),
@@ -856,8 +887,8 @@ def test_carousel_returns_n_slides_for_n_photos(
         assert events[-1][0] == "done"
 
         car = c.post(f"/memory/{slug}/carousel").json()
-        # Title + 4 photos + quote.
-        assert len(car["slides"]) == 6
+        # Title + 6 chapter photos + quote.
+        assert len(car["slides"]) == 8
 
 
 # ── validation ───────────────────────────────────────────────────────────────

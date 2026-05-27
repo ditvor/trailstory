@@ -8,15 +8,12 @@ inactive two. See ``web/static/builder.css`` for the toggle rule.
 This module owns:
 
 * :data:`STYLE_CARDS` — display metadata for each style the picker
-  surfaces, in the order they render. Names match the Claude Design
-  proposal: The Letter / The Zine / Sunday / Postcard Set / Album.
-  Only The Letter has a built renderer in v0; the other four are
-  visible but ``coming_soon=True`` (rendered with a SOON pill, the
-  radio is ``disabled``, and ``accepted_style_values()`` excludes
-  them). The legacy ``log`` and ``encyclopedia`` renderers stay in
-  the codebase but are intentionally not surfaced in the picker
-  because their visual treatment does not match the design's
-  promises for those cards.
+  surfaces, in the order they render. Names match the Trailpath
+  design handoff: The Letter / The Zine / Sunday / Postcard Set /
+  Album. Only The Letter has a built renderer in v0; the other four
+  are visible but ``coming_soon=True`` (rendered with a SOON pill,
+  the radio is ``disabled``, and ``accepted_style_values()`` excludes
+  them). Their renderer PRs flip ``coming_soon=False`` one at a time.
 * :data:`SUPPORTED_LANGS` — the three language codes the toggle exposes,
   in display order.
 

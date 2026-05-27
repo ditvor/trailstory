@@ -151,7 +151,7 @@ def test_fact_ledger_rejects_negative_distance() -> None:
 
 
 def test_fact_ledger_rejects_zero_photos() -> None:
-    """``n_photos >= 1`` guards the writer's selected_photo_indices contract."""
+    """``n_photos >= 1`` guards the writer's chapter photo-binding contract."""
     with pytest.raises(Exception):  # noqa: B017 — Pydantic ValidationError
         FactLedger(
             people=[],

@@ -1,117 +1,282 @@
 {
-  "schema_version": 3,
+  "schema_version": 4,
   "title": {
-    "en": "Through the Fog with Mia",
-    "ru": "Сквозь туман с Мией",
-    "de": "Durch den Nebel mit Mia"
+    "en": "A morning in the fog with Mia",
+    "ru": "Утро в тумане с Мией",
+    "de": "Ein Morgen im Nebel mit Mia"
   },
   "subtitle": {
-    "en": "A spring morning in the Bavarian Alps",
-    "ru": "Весеннее утро в Баварских Альпах",
-    "de": "Ein Frühlingsmorgen in den Bayerischen Alpen"
+    "en": "A spring climb in the Bavarian Alps, and a quiet turn on the way down",
+    "ru": "Весенний подъём в Баварских Альпах и тихая перемена на спуске",
+    "de": "Ein Frühlingsaufstieg in den Bayerischen Alpen und eine stille Wendung beim Abstieg"
   },
-  "paragraphs": [
-    [
-      {
-        "text": {
-          "en": "We set out into the Bavarian Alps on a grey April morning, the fog so thick I couldn't see more than a few steps ahead.",
-          "ru": "Мы вышли в Баварские Альпы серым апрельским утром, туман был такой густой, что я не видела дальше нескольких шагов.",
-          "de": "Wir sind an einem grauen Aprilmorgen in die Bayerischen Alpen aufgebrochen, der Nebel war so dicht, dass ich kaum ein paar Schritte weit sehen konnte."
-        },
-        "provenance": {
-          "source": "gpx",
-          "reference": "where, season, when"
-        }
+  "chapters": [
+    {
+      "id": "into-the-fog",
+      "time": "07:00",
+      "place": {
+        "en": "Bavarian Alps",
+        "ru": "Баварские Альпы",
+        "de": "Bayerische Alpen"
       },
-      {
-        "text": {
-          "en": "Mia was with me, and more than once I stopped and wondered whether we were even on the right path.",
-          "ru": "Мия шла со мной, и не раз я останавливалась и сомневалась, той ли тропой мы идём.",
-          "de": "Mia war bei mir, und mehr als einmal blieb ich stehen und fragte mich, ob wir überhaupt auf dem richtigen Weg waren."
-        },
-        "provenance": {
-          "source": "seed",
-          "reference": "hiking in fog with Mia, doubting the route"
-        }
-      }
-    ],
-    [
-      {
-        "text": {
-          "en": "For a solid hour Mia cried, and I kept climbing with her while my shoulders burned under the straps.",
-          "ru": "Целый час Мия плакала, а я всё шла вверх, и плечи горели под лямками.",
-          "de": "Eine ganze Stunde lang weinte Mia, und ich stieg weiter, während meine Schultern unter den Trägern brannten."
-        },
-        "provenance": {
-          "source": "seed",
-          "reference": "Mia crying for the last hour, shoulders burning"
-        }
+      "lat": 0.0,
+      "lon": 0.0,
+      "title": {
+        "en": "Into the fog",
+        "ru": "В туман",
+        "de": "Hinein in den Nebel"
       },
-      {
-        "text": {
-          "en": "I'm not going to pretend it wasn't discouraging — there were moments I didn't know if we should turn around.",
-          "ru": "Не буду делать вид, что не было тяжело — были минуты, когда я не знала, не повернуть ли назад.",
-          "de": "Ich tue nicht so, als wäre es nicht entmutigend gewesen — es gab Momente, da wusste ich nicht, ob wir umkehren sollten."
+      "body": [
+        {
+          "text": {
+            "en": "Mia and I set off in thick fog, the kind that swallows the trail a few steps ahead.",
+            "ru": "Мы с Мией вышли в плотный туман — такой, что тропа исчезает уже через пару шагов.",
+            "de": "Mia und ich brachen im dichten Nebel auf, der den Weg schon nach wenigen Schritten verschluckt."
+          },
+          "provenance": {
+            "source": "seed",
+            "reference": "hiking through fog with Mia"
+          }
         },
-        "provenance": {
-          "source": "seed",
-          "reference": "strained, discouraged"
+        {
+          "text": {
+            "en": "It was an April morning in the Bavarian Alps, cool and grey, and right from the start I wondered whether we should have stayed in bed.",
+            "ru": "Было апрельское утро в Баварских Альпах, прохладное и серое, и с самого начала я думал, не стоило ли нам просто остаться дома.",
+            "de": "Es war ein Aprilmorgen in den Bayerischen Alpen, kühl und grau, und gleich zu Beginn fragte ich mich, ob wir nicht besser liegen geblieben wären."
+          },
+          "provenance": {
+            "source": "gpx",
+            "reference": "season, where, when"
+          }
         }
-      }
-    ],
-    [
-      {
-        "text": {
-          "en": "And then, somewhere on the way down, Mia fell asleep against me — just like that, quiet at last.",
-          "ru": "А потом, где-то уже на спуске, Мия уснула, прижавшись ко мне — вот так, наконец тихо.",
-          "de": "Und dann, irgendwo auf dem Abstieg, schlief Mia an mir ein — einfach so, endlich still."
-        },
-        "provenance": {
-          "source": "seed",
-          "reference": "Mia fell asleep on the descent"
-        }
+      ],
+      "photo_index": 0
+    },
+    {
+      "id": "doubting-the-choice",
+      "time": "07:40",
+      "place": {
+        "en": "Bavarian Alps",
+        "ru": "Баварские Альпы",
+        "de": "Bayerische Alpen"
       },
-      {
-        "text": {
-          "en": "I looked down and noticed ferns brushing at my boots, and somehow that was the moment I knew we were going to be fine.",
-          "ru": "Я посмотрела вниз, увидела папоротники, задевающие ботинки, и почему-то именно тогда поняла, что всё у нас будет хорошо.",
-          "de": "Ich schaute nach unten, sah Farne, die meine Stiefel streiften, und irgendwie war das der Moment, in dem ich wusste, dass alles gut werden würde."
-        },
-        "provenance": {
-          "source": "photo",
-          "reference": "ferns"
-        }
+      "lat": 0.0,
+      "lon": 0.0,
+      "title": {
+        "en": "Doubting the choice",
+        "ru": "Сомнения в пути",
+        "de": "Zweifel am Weg"
       },
-      {
-        "text": {
-          "en": "The fog was still there, but it didn't feel like being lost anymore.",
-          "ru": "Туман никуда не делся, но больше не казалось, что мы заблудились.",
-          "de": "Der Nebel war immer noch da, aber es fühlte sich nicht mehr an, als wären wir verloren."
+      "body": [
+        {
+          "text": {
+            "en": "For most of the climb the fog never lifted, and I kept turning the choice over in my head.",
+            "ru": "Почти весь подъём туман не рассеивался, и я снова и снова прокручивал в голове наш выбор.",
+            "de": "Den größten Teil des Aufstiegs hob sich der Nebel nicht, und ich drehte unsere Entscheidung immer wieder im Kopf um."
+          },
+          "provenance": {
+            "source": "seed",
+            "reference": "uncertain, doubting the choice"
+          }
         },
-        "provenance": {
-          "source": "inferred",
-          "reference": "shift from uncertainty to reassurance across beats"
+        {
+          "text": {
+            "en": "Mia walked beside me without much to say, and I tried not to let her see how unsure I felt.",
+            "ru": "Мия шла рядом, почти не говоря ни слова, и я старался не показывать ей, насколько мне самому не по себе.",
+            "de": "Mia ging neben mir und sagte nicht viel, und ich versuchte, sie nicht spüren zu lassen, wie unsicher ich war."
+          },
+          "provenance": {
+            "source": "seed",
+            "reference": "hiking with Mia, uncertain mood"
+          }
         }
-      }
-    ]
+      ],
+      "photo_index": 2
+    },
+    {
+      "id": "the-last-hour-up",
+      "time": "08:10",
+      "place": {
+        "en": "Bavarian Alps",
+        "ru": "Баварские Альпы",
+        "de": "Bayerische Alpen"
+      },
+      "lat": 0.0,
+      "lon": 0.0,
+      "title": {
+        "en": "The last hour up",
+        "ru": "Последний час вверх",
+        "de": "Die letzte Stunde hinauf"
+      },
+      "body": [
+        {
+          "text": {
+            "en": "In the last hour before we turned around, Mia began to cry, quietly at first, then harder.",
+            "ru": "В последний час перед тем, как мы повернули назад, Мия начала плакать — сначала тихо, потом сильнее.",
+            "de": "In der letzten Stunde vor unserer Umkehr fing Mia an zu weinen, zuerst leise, dann heftiger."
+          },
+          "provenance": {
+            "source": "seed",
+            "reference": "Mia crying while hiking"
+          }
+        },
+        {
+          "text": {
+            "en": "I felt the whole morning press down on me — the grey, the climb, her tears — and I had no idea what to say.",
+            "ru": "На меня разом навалилось всё утро — серое небо, подъём, её слёзы, — и я не знал, что сказать.",
+            "de": "Der ganze Morgen lastete plötzlich auf mir — das Grau, der Anstieg, ihre Tränen — und ich wusste nicht, was ich sagen sollte."
+          },
+          "provenance": {
+            "source": "seed",
+            "reference": "distressed emotion in last hour"
+          }
+        }
+      ],
+      "photo_index": 5
+    },
+    {
+      "id": "turning-around",
+      "time": "08:40",
+      "place": {
+        "en": "Bavarian Alps",
+        "ru": "Баварские Альпы",
+        "de": "Bayerische Alpen"
+      },
+      "lat": 0.0,
+      "lon": 0.0,
+      "title": {
+        "en": "Turning around",
+        "ru": "Поворот назад",
+        "de": "Die Umkehr"
+      },
+      "body": [
+        {
+          "text": {
+            "en": "We turned and started down without ceremony, just the two of us and the fog still close around us.",
+            "ru": "Мы развернулись и пошли вниз без лишних слов — только мы вдвоём и всё тот же туман вокруг.",
+            "de": "Wir drehten um und gingen ohne viel Aufheben hinunter, nur wir beide und der Nebel, der noch immer dicht um uns stand."
+          },
+          "provenance": {
+            "source": "seed",
+            "reference": "descent with Mia in fog"
+          }
+        },
+        {
+          "text": {
+            "en": "After a while Mia grew quiet against me, and at some point her breathing went soft and even — she had fallen asleep.",
+            "ru": "Через какое-то время Мия затихла, прижавшись ко мне, и в какой-то момент её дыхание стало ровным и тихим — она уснула.",
+            "de": "Nach einer Weile wurde Mia an mir ganz still, und irgendwann ging ihr Atem ruhig und gleichmäßig — sie war eingeschlafen."
+          },
+          "provenance": {
+            "source": "seed",
+            "reference": "Mia fell asleep on descent"
+          }
+        }
+      ],
+      "photo_index": 7
+    },
+    {
+      "id": "ferns-underfoot",
+      "time": "09:10",
+      "place": {
+        "en": "Bavarian Alps",
+        "ru": "Баварские Альпы",
+        "de": "Bayerische Alpen"
+      },
+      "lat": 0.0,
+      "lon": 0.0,
+      "title": {
+        "en": "Ferns underfoot",
+        "ru": "Папоротники под ногами",
+        "de": "Farne unter den Füßen"
+      },
+      "body": [
+        {
+          "text": {
+            "en": "It was on the way down, with her asleep, that I finally looked at the ground and noticed the ferns.",
+            "ru": "Именно на спуске, когда она уже спала, я наконец посмотрел под ноги и заметил папоротники.",
+            "de": "Erst beim Abstieg, als sie schon schlief, schaute ich endlich nach unten und sah die Farne."
+          },
+          "provenance": {
+            "source": "photo",
+            "reference": "ferns"
+          }
+        },
+        {
+          "text": {
+            "en": "They were everywhere underfoot, young and green against the wet earth, and something in me let go.",
+            "ru": "Они были повсюду под ногами — молодые, зелёные на влажной земле, — и что-то внутри меня отпустило.",
+            "de": "Sie waren überall unter den Füßen, jung und grün auf der nassen Erde, und in mir löste sich etwas."
+          },
+          "provenance": {
+            "source": "photo",
+            "reference": "ferns"
+          }
+        },
+        {
+          "text": {
+            "en": "For the first time all morning I wasn't doubting anything — we were exactly where we were meant to be.",
+            "ru": "Впервые за всё утро я ни в чём не сомневался — мы были именно там, где должны были быть.",
+            "de": "Zum ersten Mal an diesem Morgen zweifelte ich an nichts mehr — wir waren genau dort, wo wir hingehörten."
+          },
+          "provenance": {
+            "source": "seed",
+            "reference": "relieved, moment of clarity"
+          }
+        }
+      ],
+      "photo_index": 9
+    },
+    {
+      "id": "down-quietly",
+      "time": "09:40",
+      "place": {
+        "en": "Bavarian Alps",
+        "ru": "Баварские Альпы",
+        "de": "Bayerische Alpen"
+      },
+      "lat": 0.0,
+      "lon": 0.0,
+      "title": {
+        "en": "Down quietly",
+        "ru": "Тихо вниз",
+        "de": "Still nach unten"
+      },
+      "body": [
+        {
+          "text": {
+            "en": "The rest of the way down I walked slowly so as not to wake her, the fog finally beginning to thin.",
+            "ru": "Остаток пути вниз я шёл медленно, чтобы не разбудить её, и туман наконец начал редеть.",
+            "de": "Den Rest des Weges nach unten ging ich langsam, um sie nicht zu wecken, und der Nebel begann endlich, dünner zu werden."
+          },
+          "provenance": {
+            "source": "seed",
+            "reference": "descent, Mia asleep"
+          }
+        },
+        {
+          "text": {
+            "en": "I'll remember this short spring morning for a long time — not the climb itself, but the moment when the doubt fell away.",
+            "ru": "Это короткое весеннее утро я буду помнить долго — не сам подъём, а ту минуту, когда сомнения отступили.",
+            "de": "Diesen kurzen Frühlingsmorgen werde ich lange in Erinnerung behalten — nicht den Aufstieg selbst, sondern den Moment, in dem die Zweifel verschwanden."
+          },
+          "provenance": {
+            "source": "inferred",
+            "reference": "closing reflection from clarity beat"
+          }
+        }
+      ],
+      "photo_index": 11
+    }
   ],
   "pull_quote": {
-    "en": "Mia fell asleep against me, and the ferns at my boots told me we were going to be fine.",
-    "ru": "Мия уснула, прижавшись ко мне, и папоротники у ботинок сказали мне, что всё у нас будет хорошо.",
-    "de": "Mia schlief an mir ein, und die Farne an meinen Stiefeln sagten mir, dass alles gut werden würde."
+    "en": "It was on the way down, with Mia asleep, that I looked at the ground and noticed the ferns — and something in me let go.",
+    "ru": "Именно на спуске, когда Мия уснула, я посмотрел под ноги и увидел папоротники — и что-то внутри меня отпустило.",
+    "de": "Erst beim Abstieg, als Mia schlief, schaute ich auf den Boden und sah die Farne — und in mir löste sich etwas."
   },
   "milestone": {
-    "en": "First hike with Mia",
-    "ru": "Первый поход с Мией",
-    "de": "Erste Wanderung mit Mia"
-  },
-  "selected_photo_indices": [
-    0,
-    2,
-    4,
-    6,
-    8,
-    10,
-    11
-  ]
+    "en": "Fog, then clarity",
+    "ru": "Туман, потом ясность",
+    "de": "Nebel, dann Klarheit"
+  }
 }

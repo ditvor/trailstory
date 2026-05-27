@@ -12,7 +12,7 @@ from pathlib import Path
 import pytest
 from PIL import Image, ImageDraw, ImageFont
 
-from tests.conftest import paragraphs_from_strings
+from tests.conftest import chapters_from_strings
 from trailstory.models import (
     GpxStats,
     HikeInput,
@@ -38,7 +38,7 @@ from trailstory.renderers.instagram import (
 
 def _narrative() -> NarrativeOutput:
     return NarrativeOutput(
-        schema_version=3,
+        schema_version=4,
         title=LocalizedString(
             en="Above the fog line",
             ru="Над линией тумана",
@@ -49,10 +49,11 @@ def _narrative() -> NarrativeOutput:
             ru="Утро над морем облаков",
             de="Ein Morgen über dem Wolkenmeer",
         ),
-        paragraphs=paragraphs_from_strings(
-            en=["First.", "Second."],
-            ru=["Первый.", "Второй."],
-            de=["Erstens.", "Zweitens."],
+        chapters=chapters_from_strings(
+            en=["First.", "Second.", "Third.", "Fourth.", "Fifth.", "Sixth."],
+            ru=["Первый.", "Второй.", "Третий.", "Четвёртый.", "Пятый.", "Шестой."],
+            de=["Erstens.", "Zweitens.", "Drittens.", "Viertens.", "Fünftens.", "Sechstens."],
+            photo_indices=[0, 1, 2, 0, 1, 2],
         ),
         pull_quote=LocalizedString(
             en="The fog cleared just as we reached the ridge.",
@@ -64,7 +65,6 @@ def _narrative() -> NarrativeOutput:
             ru="Первый горный поход",
             de="Erste Bergwanderung",
         ),
-        selected_photo_indices=[0, 1, 2],
     )
 
 

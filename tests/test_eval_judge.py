@@ -15,7 +15,7 @@ from unittest.mock import MagicMock
 
 import pytest
 
-from tests.conftest import paragraphs_from_strings
+from tests.conftest import chapters_from_strings
 from tests.eval.judge import (
     DEFAULT_JUDGE_MODEL,
     ClaimVerdict,
@@ -49,7 +49,7 @@ def _hike_input() -> HikeInput:
 
 def _narrative() -> NarrativeOutput:
     return NarrativeOutput(
-        schema_version=3,
+        schema_version=4,
         title=LocalizedString(
             en="Above the fog line",
             ru="Над линией тумана",
@@ -60,22 +60,32 @@ def _narrative() -> NarrativeOutput:
             ru="Утро над морем облаков",
             de="Ein Morgen über dem Wolkenmeer",
         ),
-        paragraphs=paragraphs_from_strings(
+        chapters=chapters_from_strings(
             en=[
                 "We left the trailhead at first light.",
+                "Pines closed in.",
                 "By the saddle the cloud was thinning.",
                 "Mia slept the whole climb.",
+                "At the ridge the fog cleared.",
+                "We came down slowly, the meadow gold.",
             ],
             ru=[
                 "Вышли на тропу с первыми лучами.",  # noqa: RUF001
+                "Сосны сомкнулись.",
                 "К седловине облака начали редеть.",  # noqa: RUF001
                 "Мия проспала весь подъём.",
+                "На хребте туман рассеялся.",  # noqa: RUF001
+                "Мы спускались медленно, луг золотился.",
             ],
             de=[
                 "Bei erstem Licht brachen wir auf.",
+                "Die Kiefern schlossen sich.",
                 "Am Sattel begann die Wolke sich zu lichten.",
                 "Mia schlief den ganzen Aufstieg.",
+                "Am Grat klärte sich der Nebel.",
+                "Wir stiegen langsam ab, die Wiese golden.",
             ],
+            photo_indices=[0, 2, 4, 6, 8, 10],
         ),
         pull_quote=LocalizedString(
             en="The fog cleared just as we reached the ridge.",
@@ -87,7 +97,6 @@ def _narrative() -> NarrativeOutput:
             ru="Первый горный поход",
             de="Erste Bergwanderung",
         ),
-        selected_photo_indices=[0, 2, 4, 6, 8, 10],
     )
 
 

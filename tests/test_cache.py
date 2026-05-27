@@ -13,7 +13,7 @@ from pathlib import Path
 
 import pytest
 
-from tests.conftest import paragraphs_from_strings
+from tests.conftest import chapters_from_strings
 from trailstory.llm import cache
 from trailstory.models import (
     GpxStats,
@@ -67,7 +67,7 @@ def _hike_input(gpx_path: Path) -> HikeInput:
 
 def _narrative() -> NarrativeOutput:
     return NarrativeOutput(
-        schema_version=3,
+        schema_version=4,
         title=LocalizedString(
             en="Above the fog line",
             ru="Над линией тумана",
@@ -78,10 +78,31 @@ def _narrative() -> NarrativeOutput:
             ru="Утро над морем облаков",
             de="Ein Morgen über dem Wolkenmeer",
         ),
-        paragraphs=paragraphs_from_strings(
-            en=["First paragraph.", "Second paragraph."],
-            ru=["Первый абзац.", "Второй абзац."],
-            de=["Erster Absatz.", "Zweiter Absatz."],
+        chapters=chapters_from_strings(
+            en=[
+                "First chapter.",
+                "Second chapter.",
+                "Third chapter.",
+                "Fourth chapter.",
+                "Fifth chapter.",
+                "Sixth chapter.",
+            ],
+            ru=[
+                "Первая глава.",
+                "Вторая глава.",
+                "Третья глава.",
+                "Четвёртая глава.",
+                "Пятая глава.",
+                "Шестая глава.",
+            ],
+            de=[
+                "Erstes Kapitel.",
+                "Zweites Kapitel.",
+                "Drittes Kapitel.",
+                "Viertes Kapitel.",
+                "Fünftes Kapitel.",
+                "Sechstes Kapitel.",
+            ],
         ),
         pull_quote=LocalizedString(
             en="The fog cleared just as we reached the ridge.",
@@ -93,7 +114,6 @@ def _narrative() -> NarrativeOutput:
             ru="Первый горный поход",
             de="Erste Bergwanderung",
         ),
-        selected_photo_indices=[0, 1, 2, 3, 4, 5],
     )
 
 

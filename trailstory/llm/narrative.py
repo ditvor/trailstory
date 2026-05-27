@@ -451,13 +451,16 @@ def generate_narrative(
 def _inferred_ratio(narrative: NarrativeOutput) -> float:
     """Self-reported INFERRED-sentence share. Used by the Phase 2.5 verifier.
 
-    Returns ``0.0`` for an empty narrative (defensive — the schema
-    requires paragraphs, so this should not happen in practice).
+    Walks every chapter's body once (ADR-015) — sentence-level
+    provenance now lives inside ``chapter.body`` rather than a flat
+    top-level ``paragraphs`` list. Returns ``0.0`` for an empty
+    narrative (defensive — the schema requires six chapters, so this
+    should not happen in practice).
     """
     total = 0
     inferred = 0
-    for paragraph in narrative.paragraphs:
-        for sentence in paragraph:
+    for chapter in narrative.chapters:
+        for sentence in chapter.body:
             total += 1
             if sentence.provenance.source == ProvenanceSource.INFERRED:
                 inferred += 1

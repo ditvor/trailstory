@@ -591,40 +591,38 @@
           <figure class="figure v-a"><img src="{{ photos[0].data_uri }}" alt="" loading="eager"></figure>
         {% endif %}
 
-        {# Photo distribution. ADR-014 (Phase 4): paragraphs is a list
-           of Paragraph, each a list of Sentence with tri-lingual text
-           and a provenance tag. Each sentence becomes a <span data-prov>
-           so the rendered HTML carries the grounding info; the Notes
-           toggle (`.notes` above) flips ``body.audit`` to reveal it.
+        {# Photo distribution. ADR-015: narrative.chapters is a list of
+           six Chapter envelopes, each carrying its own body (sentences
+           with tri-lingual text + per-sentence provenance from
+           ADR-014). The Letter template intentionally renders chapter
+           bodies as plain paragraphs — chapter title / time / place
+           live in the data for the future Letter redesign and for the
+           four new styles (Zine / Sunday / Postcard / Album).
 
            Layout: photos[0] is the hero float (emitted above). The
            remaining photos are interleaved one-per-paragraph through
            the body so the photo rhythm matches the prose rhythm; any
-           overflow falls after the pull quote.
-
-           Previous layout (2026-05) put a single mid-body photo at
-           index ``n//2 - 1`` and stacked photos[2:] in a tail after
-           the quote. With 6–8 selected photos that produced one photo
-           in the top half and five-to-seven crowded after the bottom
-           quote — pilot users read it as a photo dump. Interleaving
-           keeps the page balanced. #}
+           overflow falls after the pull quote. Photo binding now
+           comes from the chapter envelope (Memory.selected_photos is
+           already ordered by chapter), so photos[i] is the photo bound
+           to chapter[i]. #}
         {% set extras = photos[1:] if photos|length > 1 else [] %}
-        {% set inter = extras[:narrative.paragraphs | length] %}
-        {% set tail = extras[narrative.paragraphs | length:] %}
+        {% set inter = extras[:narrative.chapters | length] %}
+        {% set tail = extras[narrative.chapters | length:] %}
         <div class="body swap">
-          {% for paragraph in narrative.paragraphs %}
+          {% for chapter in narrative.chapters %}
             <p class="en">
-              {% for sentence in paragraph -%}
+              {% for sentence in chapter.body -%}
                 <span class="sent" data-prov="{{ sentence.provenance.source }}" data-tip="{{ sentence.provenance.source }}: {{ sentence.provenance.reference }}">{{ sentence.text.en }}</span>{% if not loop.last %} {% endif -%}
               {% endfor %}
             </p>
             <p class="ru">
-              {% for sentence in paragraph -%}
+              {% for sentence in chapter.body -%}
                 <span class="sent" data-prov="{{ sentence.provenance.source }}" data-tip="{{ sentence.provenance.source }}: {{ sentence.provenance.reference }}">{{ sentence.text.ru }}</span>{% if not loop.last %} {% endif -%}
               {% endfor %}
             </p>
             <p class="de">
-              {% for sentence in paragraph -%}
+              {% for sentence in chapter.body -%}
                 <span class="sent" data-prov="{{ sentence.provenance.source }}" data-tip="{{ sentence.provenance.source }}: {{ sentence.provenance.reference }}">{{ sentence.text.de }}</span>{% if not loop.last %} {% endif -%}
               {% endfor %}
             </p>

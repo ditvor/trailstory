@@ -1,60 +1,80 @@
 {
   "warmth": 4.0,
-  "narrative_arc": 4.0,
+  "narrative_arc": 4.5,
   "russian_fidelity": 4.5,
-  "photo_selection_plausibility": 4.0,
+  "photo_selection_plausibility": 3.5,
   "claim_verdicts": [
     {
-      "claim": "hike took place in the Bavarian Alps",
-      "verdict": "UNSUPPORTED",
-      "quote": ""
-    },
-    {
-      "claim": "the hike was on a cool April morning",
-      "verdict": "UNSUPPORTED",
-      "quote": ""
-    },
-    {
-      "claim": "damp spring air that gets into your sleeves",
-      "verdict": "INFERRED",
-      "quote": "The fog cleared just as we reached the ridge — spring/fog conditions inferred"
-    },
-    {
-      "claim": "fog was thick from the very first steps",
-      "verdict": "INFERRED",
-      "quote": "The fog cleared just as we reached the ridge — implies fog was present before the ridge"
-    },
-    {
-      "claim": "fog was soft and grey",
-      "verdict": "INFERRED",
-      "quote": "The fog cleared just as we reached the ridge — fog character inferred from seed"
-    },
-    {
-      "claim": "climbed toward the ridge through mist, seeing only a few steps ahead",
-      "verdict": "INFERRED",
-      "quote": "The fog cleared just as we reached the ridge — implies limited visibility during ascent"
-    },
-    {
-      "claim": "it was a long, steady climb for a short distance",
-      "verdict": "UNSUPPORTED",
-      "quote": ""
-    },
-    {
-      "claim": "climb made your legs remember it",
-      "verdict": "UNSUPPORTED",
-      "quote": ""
-    },
-    {
-      "claim": "fog lifted just as the group reached the ridge",
+      "claim": "the whole valley was wrapped in grey at the start",
       "verdict": "SUPPORTED",
       "quote": "The fog cleared just as we reached the ridge."
     },
     {
-      "claim": "stood above the fog line in clean spring light",
+      "claim": "you could only see a few steps of path ahead before it vanished",
       "verdict": "INFERRED",
-      "quote": "The fog cleared just as we reached the ridge — standing above fog line inferred from fog clearing at ridge; spring from April context"
+      "quote": "atmosphere of being inside fog"
+    },
+    {
+      "claim": "the path tilted up almost straight away",
+      "verdict": "INFERRED",
+      "quote": "elevation_gain_m"
+    },
+    {
+      "claim": "spring had only just reached the slope",
+      "verdict": "INFERRED",
+      "quote": "season"
+    },
+    {
+      "claim": "the ground was still cold",
+      "verdict": "INFERRED",
+      "quote": "cold spring morning"
+    },
+    {
+      "claim": "the air was sharper than at home",
+      "verdict": "INFERRED",
+      "quote": "cold spring morning"
+    },
+    {
+      "claim": "hiker kept hands warm in pockets between steps",
+      "verdict": "UNSUPPORTED",
+      "quote": ""
+    },
+    {
+      "claim": "light came through in patches partway up the climb",
+      "verdict": "INFERRED",
+      "quote": "fog clearing"
+    },
+    {
+      "claim": "the ridge came into view ahead as a long clean line against the cloud",
+      "verdict": "INFERRED",
+      "quote": "hiking towards the ridge"
+    },
+    {
+      "claim": "the valley was still hidden under a soft white floor of fog from above",
+      "verdict": "INFERRED",
+      "quote": "view above fog line"
+    },
+    {
+      "claim": "hiker stopped a moment just to look",
+      "verdict": "UNSUPPORTED",
+      "quote": ""
+    },
+    {
+      "claim": "they reached the ridge a little before morning had fully made up its mind",
+      "verdict": "SUPPORTED",
+      "quote": "The fog cleared just as we reached the ridge."
+    },
+    {
+      "claim": "it was a steep, short morning of climbing",
+      "verdict": "INFERRED",
+      "quote": "duration_min and elevation_gain_m"
+    },
+    {
+      "claim": "hiker wished reader could have stood there with them",
+      "verdict": "UNSUPPORTED",
+      "quote": ""
     }
   ],
-  "notes": "Warmth is strong — 'damp spring air that settles into your sleeves' and 'the kind that makes your legs remember it' feel personal and specific. The arc is clean: opening atmosphere, effort/ascent, reveal, emotional payoff — though the human-detail beat is thin (no individual person or specific action). Russian fidelity is excellent; phrasings like 'из тех, что ноги потом долго помнят' read as idiomatic native Russian with no calque artifacts. Photo indices span 0–11 with 7 frames, distributed reasonably across the arc, though without photo metadata the match to specific beats cannot be fully verified.",
-  "faithfulness": 1.75
+  "notes": "The narrative builds a clean arc from foggy valley floor to above the cloud line, with the seed moment ('fog cleared just as we reached the ridge') handled as a satisfying climax rather than an afterthought. Warmth is strong — 'the way it does when weather is about to change its mind' and the closing wish are genuinely personal — but a 5 would require one more grounded sensory specific (a named flower, a smell, a sound). The Russian is fluid and idiomatic: 'погода вот-вот передумает' and 'заслуженной' are natural choices a translator would make; only 'Жаль, что ты не мог стоять там рядом со мной' reads very slightly bookish versus colloquial 'жаль, тебя не было рядом'. Photo indices (0, 2, 4, 6, 8, 10) are evenly spaced across 6 frames and map neatly to the six chapters, but the even step of 2 feels mechanical rather than editorially chosen, and without knowing the total photo count their upper-range validity is unclear.",
+  "faithfulness": 2.32
 }

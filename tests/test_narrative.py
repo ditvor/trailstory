@@ -14,7 +14,7 @@ from unittest.mock import MagicMock
 
 import pytest
 
-from tests.conftest import paragraphs_dict_from_strings
+from tests.conftest import chapters_dict_from_strings
 from trailstory.llm.client import (
     AnthropicClient,
     LLMResponseError,
@@ -79,7 +79,7 @@ def _photos(n: int = 12) -> list[PhotoMeta]:
 
 def _valid_response_dict(indices: list[int] | None = None) -> dict[str, object]:
     return {
-        "schema_version": 3,
+        "schema_version": 4,
         "title": {
             "en": "Above the fog line",
             "ru": "Над линией тумана",
@@ -90,25 +90,35 @@ def _valid_response_dict(indices: list[int] | None = None) -> dict[str, object]:
             "ru": "Утро над морем облаков",
             "de": "Ein Morgen über dem Wolkenmeer",
         },
-        "paragraphs": paragraphs_dict_from_strings(
+        "chapters": chapters_dict_from_strings(
             en=[
                 "We left the trailhead at first light.",
+                "Pines closed around the path and the air went still.",
                 "By the saddle the cloud was thinning.",
                 "Mia slept the whole climb, her cheek warm against the carrier.",
+                "At the ridge the fog cleared into a blue valley.",
+                "We came down with golden light on the meadow.",
             ],
             ru=[
                 # noqa lines: "с" and "К" are genuine single-letter Russian
                 # prepositions; ruff flags them as Cyrillic-Latin lookalikes
                 # (RUF001), but they are correct Russian here.
                 "Вышли на тропу с первыми лучами.",  # noqa: RUF001
+                "Сосны сомкнулись над тропой, и воздух замер.",
                 "К седловине облака начали редеть.",  # noqa: RUF001
                 "Мия проспала весь подъём, прижавшись щекой к переноске.",
+                "На хребте туман рассеялся в синюю долину.",  # noqa: RUF001
+                "Мы спускались, и золотой свет ложился на луг.",
             ],
             de=[
                 "Bei erstem Licht brachen wir auf.",
+                "Die Kiefern schlossen sich über dem Pfad, die Luft wurde still.",
                 "Am Sattel begann die Wolke sich zu lichten.",
                 "Mia schlief den ganzen Aufstieg, die Wange warm an der Trage.",
+                "Am Grat klärte sich der Nebel zu einem blauen Tal.",
+                "Wir stiegen ab, goldenes Licht auf der Wiese.",
             ],
+            photo_indices=indices or [0, 2, 4, 6, 8, 10],
         ),
         "pull_quote": {
             "en": "The fog cleared just as we reached the ridge.",
@@ -120,7 +130,6 @@ def _valid_response_dict(indices: list[int] | None = None) -> dict[str, object]:
             "ru": "Первый горный поход",
             "de": "Erste Bergwanderung",
         },
-        "selected_photo_indices": indices or [0, 2, 4, 6, 8, 10],
     }
 
 
@@ -216,6 +225,9 @@ def test_generate_narrative_happy_path() -> None:
     assert out.title.en == "Above the fog line"
     assert out.title.ru == "Над линией тумана"
     assert out.title.de == "Über der Nebelgrenze"
+    # ADR-015: selected_photo_indices is now a computed view over
+    # chapters[*].photo_index, so it reflects whatever indices the
+    # writer bound to each chapter.
     assert out.selected_photo_indices == [0, 2, 4, 6, 8, 10]
     assert client.complete.call_count == 1
 

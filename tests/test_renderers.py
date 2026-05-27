@@ -17,15 +17,18 @@ import pytest
 from PIL import Image
 from PIL.TiffImagePlugin import IFDRational
 
-from tests.conftest import paragraphs_from_strings
+from tests.conftest import chapters_from_strings
 from trailstory.models import (
+    Chapter,
     GpxStats,
     HikeInput,
     LocalizedString,
     Memory,
     NarrativeOutput,
-    Paragraph,
     PhotoMeta,
+    Provenance,
+    ProvenanceSource,
+    Sentence,
     Waypoint,
 )
 from trailstory.photos import load_photos
@@ -55,7 +58,7 @@ def _gpx_stats() -> GpxStats:
 
 def _narrative() -> NarrativeOutput:
     return NarrativeOutput(
-        schema_version=3,
+        schema_version=4,
         title=LocalizedString(
             en="Above the fog line",
             ru="Над линией тумана",
@@ -66,19 +69,32 @@ def _narrative() -> NarrativeOutput:
             ru="Утро над морем облаков",
             de="Ein Morgen über dem Wolkenmeer",
         ),
-        paragraphs=paragraphs_from_strings(
+        chapters=chapters_from_strings(
             en=[
                 "We left the trailhead at first light.",
                 "By the saddle the cloud was thinning.",
+                "The pines closed in and the path softened.",
+                "Mia slept against the carrier, warm and steady.",
+                "At the ridge the fog cleared.",
+                "We came down slowly, the meadow gold.",
             ],
             ru=[
                 "Вышли на тропу с первыми лучами.",  # noqa: RUF001
                 "К седловине облака начали редеть.",  # noqa: RUF001
+                "Сосны сомкнулись, и тропа стала мягче.",
+                "Мия спала у переноски, тёплая и спокойная.",  # noqa: RUF001
+                "На хребте туман рассеялся.",  # noqa: RUF001
+                "Мы спускались медленно, луг золотился.",
             ],
             de=[
                 "Bei erstem Licht brachen wir auf.",
                 "Am Sattel begann die Wolke sich zu lichten.",
+                "Die Kiefern schlossen sich, der Pfad wurde weich.",
+                "Mia schlief an der Trage, warm und ruhig.",
+                "Am Grat klärte sich der Nebel.",
+                "Wir stiegen langsam ab, die Wiese golden.",
             ],
+            photo_indices=[0, 1, 2, 0, 1, 2],
         ),
         pull_quote=LocalizedString(
             en="The fog cleared just as we reached the ridge.",
@@ -90,7 +106,6 @@ def _narrative() -> NarrativeOutput:
             ru="Первый горный поход",
             de="Erste Bergwanderung",
         ),
-        selected_photo_indices=[0, 1, 2],
     )
 
 
@@ -128,14 +143,34 @@ def _flat_string(en: str = "x", ru: str = "x", de: str = "x") -> LocalizedString
     return LocalizedString(en=en, ru=ru, de=de)
 
 
-def _flat_paragraphs(
-    *, en: list[str] | None = None, ru: list[str] | None = None, de: list[str] | None = None
-) -> list[Paragraph]:
-    return paragraphs_from_strings(
-        en=en if en is not None else ["x"],
-        ru=ru if ru is not None else ["x"],
-        de=de if de is not None else ["x"],
-    )
+def _six_chapters_with_nasty_body_en(payload: str) -> list[Chapter]:
+    """Build six chapters where the first chapter's body sentence carries
+    ``payload`` as its English text. Used by the XSS / autoescape tests.
+    """
+    chapters: list[Chapter] = []
+    place = LocalizedString(en="x", ru="x", de="x")
+    for i in range(6):
+        en = payload if i == 0 else "x"
+        chapters.append(
+            Chapter(
+                id=f"c{i}",
+                time=f"0{i}:00",
+                place=place,
+                lat=47.5,
+                lon=11.7,
+                title=LocalizedString(en="x", ru="x", de="x"),
+                body=[
+                    Sentence(
+                        text=LocalizedString(en=en, ru="x", de="x"),
+                        provenance=Provenance(
+                            source=ProvenanceSource.SEED, reference="autoescape fixture"
+                        ),
+                    )
+                ],
+                photo_index=0,
+            )
+        )
+    return chapters
 
 
 # ── tests ────────────────────────────────────────────────────────────────────
@@ -264,13 +299,12 @@ def test_render_escapes_html_in_narrative_fields(tmp_path: Path) -> None:
     """LLM output is untrusted — autoescape must neutralise HTML."""
     photos = [_make_photo(tmp_path, 0, (50, 80, 120))]
     nasty = NarrativeOutput(
-        schema_version=3,
+        schema_version=4,
         title=_flat_string(en="<script>alert(1)</script>"),
         subtitle=_flat_string(),
-        paragraphs=_flat_paragraphs(en=["</p><img src=x onerror=alert(1)>"]),
+        chapters=_six_chapters_with_nasty_body_en("</p><img src=x onerror=alert(1)>"),
         pull_quote=_flat_string(),
         milestone=_flat_string(),
-        selected_photo_indices=[0],
     )
 
     out_path = render_html(
@@ -293,13 +327,12 @@ def test_render_escapes_narrative_when_emitted_into_script_block(
     """The share-button JS uses ``| tojson``; ``</script>`` must not survive raw."""
     photos = [_make_photo(tmp_path, 0, (50, 80, 120))]
     nasty = NarrativeOutput(
-        schema_version=3,
+        schema_version=4,
         title=_flat_string(en="legit"),
         subtitle=_flat_string(),
-        paragraphs=_flat_paragraphs(),
+        chapters=_six_chapters_with_nasty_body_en("x"),
         pull_quote=_flat_string(en="</script><script>alert(1)</script>"),
         milestone=_flat_string(),
-        selected_photo_indices=[0],
     )
 
     out_path = render_html(

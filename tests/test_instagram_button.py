@@ -30,7 +30,7 @@ from fastapi import FastAPI
 from fastapi.testclient import TestClient
 from pydantic import SecretStr
 
-from tests.conftest import paragraphs_dict_from_strings
+from tests.conftest import chapters_dict_from_strings
 from trailstory.config import Settings
 from trailstory.llm.client import AnthropicClient
 from web.app import create_app
@@ -53,10 +53,17 @@ def _settings() -> Settings:
     )
 
 
-def _valid_response_json(n_photos: int = 5) -> str:
+def _valid_response_json(n_photos: int = 6) -> str:
+    """Build a fake writer response with ADR-015 chapter shape.
+
+    The chapters' ``photo_index`` values map 0..min(5, n_photos-1) so any
+    test using fewer than 6 fixture photos still passes the binding-in-
+    range Pydantic check.
+    """
+    photo_indices = [min(i, max(0, n_photos - 1)) for i in range(6)]
     return json.dumps(
         {
-            "schema_version": 3,
+            "schema_version": 4,
             "title": {
                 "en": "Above the fog line",
                 "ru": "Над линией тумана",
@@ -67,10 +74,32 @@ def _valid_response_json(n_photos: int = 5) -> str:
                 "ru": "Утро над морем облаков",
                 "de": "Ein Morgen über dem Wolkenmeer",
             },
-            "paragraphs": paragraphs_dict_from_strings(
-                en=["First light.", "Saddle. Cloud thinning."],
-                ru=["Первые лучи.", "Седловина. Облака редеют."],
-                de=["Erstes Licht.", "Sattel. Wolke lichtet sich."],
+            "chapters": chapters_dict_from_strings(
+                en=[
+                    "First light.",
+                    "Pines closed.",
+                    "Saddle. Cloud thinning.",
+                    "Mia slept on the climb.",
+                    "Ridge clear.",
+                    "Coming down golden.",
+                ],
+                ru=[
+                    "Первые лучи.",
+                    "Сосны сомкнулись.",
+                    "Седловина. Облака редеют.",
+                    "Мия спала на подъёме.",
+                    "Хребет чист.",
+                    "Спуск золотой.",
+                ],
+                de=[
+                    "Erstes Licht.",
+                    "Kiefern schlossen sich.",
+                    "Sattel. Wolke lichtet sich.",
+                    "Mia schlief am Aufstieg.",
+                    "Grat klar.",
+                    "Abstieg golden.",
+                ],
+                photo_indices=photo_indices,
             ),
             "pull_quote": {
                 "en": "The fog cleared just as we reached the ridge.",
@@ -82,7 +111,6 @@ def _valid_response_json(n_photos: int = 5) -> str:
                 "ru": "Первый горный поход",
                 "de": "Erste Bergwanderung",
             },
-            "selected_photo_indices": list(range(n_photos)),
         }
     )
 
@@ -230,10 +258,12 @@ def _generate_and_render(
 # ── button rendering ─────────────────────────────────────────────────────────
 
 
-@pytest.mark.parametrize("style", ["editorial", "log", "encyclopedia"])
+@pytest.mark.parametrize("style", ["editorial"])
 def test_save_for_instagram_button_renders_in_every_style(tmp_path: Path, style: str) -> None:
-    """All three style templates ship the button so the user gets it
-    whichever visual treatment they pick."""
+    """Every shipped style template ships the button so the user gets it
+    whichever visual treatment they pick. v0 ships ``editorial`` only;
+    the Trailpath renderer PRs (Zine / Sunday / Postcard / Album) add
+    their values to this parametrize list as each lands."""
     storage = Storage(root=tmp_path / "trailstory-web", retention_seconds=RETENTION_SECONDS)
     fake = _make_client()
     app = create_app(
@@ -290,16 +320,17 @@ def test_carousel_post_returns_n_plus_two_slides(app_factory: FastAPI) -> None:
         assert url.startswith(f"/memory/{slug}/carousel/")
 
 
-def test_carousel_post_returns_six_slides_for_four_photos(
+def test_carousel_post_returns_eight_slides_under_six_chapter_binding(
     app_factory_4_photos: FastAPI,
 ) -> None:
-    """Smaller hike, smaller carousel — the count tracks selected photos."""
+    """ADR-015: six chapter envelopes → fixed-shape 8-slide carousel
+    (title + 6 + quote), independent of upload count."""
     client, slug = _generate_and_render(app_factory_4_photos, n_photos=4)
 
     res = client.post(f"/memory/{slug}/carousel")
     assert res.status_code == 200
     slides = res.json()["slides"]
-    assert len(slides) == 6  # title + 4 + quote
+    assert len(slides) == 8  # title + 6 chapter photos + quote
 
 
 def test_carousel_slide_has_jpeg_content_type_and_attachment_disposition(
