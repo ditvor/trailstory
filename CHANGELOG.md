@@ -10,6 +10,57 @@ Versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 ## [Unreleased]
 
 ### Changed
+- **Editorial photo layout: consistent aspect ratio + interleaved
+  through paragraphs.** `templates/styles/editorial.html.j2` now locks
+  every `.figure img` to a `3 / 2` aspect ratio with
+  `object-fit: cover`, so portrait and landscape originals render as
+  the same rectangle instead of a ragged mixed-height stack. Photos
+  past the hero are interleaved one-per-paragraph through the body
+  (full-column variants `v-b` / `v-c` / `v-d`) instead of the previous
+  "one in the middle, all the rest stacked after the pull quote"
+  pattern; any overflow falls after the quote with the original
+  rotation. Pilot users on 6–8-photo hikes were reading the old layout
+  as a top half of prose followed by a bottom half of photo dump;
+  interleaving keeps the visual rhythm matched to the prose rhythm.
+- **Per-sentence provenance UI hidden by default; `Notes` audit toggle
+  added (editorial style).** The ADR-014 INFERRED tint and the
+  per-sentence `title=` tooltip used to be on for every reader; pilot
+  users read the amber background as random highlighting and the
+  resulting `cursor: help` as a broken affordance (the native browser
+  tooltip is slow, low-contrast, and absent on touch). The audit UI
+  now lives behind a `Notes` toggle in the editorial template's top
+  bar, which flips `body.audit` and reveals a richer treatment than
+  before: per-source colour cues (INFERRED amber background; PHOTO /
+  SEED / GPX underline tints) plus a custom `::after` tooltip reading
+  `data-tip` so it actually renders quickly on hover with readable
+  contrast. The `<span class="sent">` carries `data-prov` + `data-tip`
+  on every sentence regardless, so the data is still available; the
+  default rendering just stays clean for the page's actual audience
+  (a family member, not the author). Author preference is persisted
+  in `localStorage` under `trailstory.notes`. Log and encyclopedia
+  styles already used the flat fallback and are unaffected.
+- **Writer prompt softened to mirror the source register.**
+  `SYSTEM_NARRATIVE` and `USER_NARRATIVE_TEMPLATE` in
+  `trailstory/llm/prompts.py` no longer ask for an "intimate, literary"
+  voice / "Bourdain on a quiet afternoon"; pilot output drifted into
+  ornate atmospheric prose that felt detached from the hiker's actual
+  seed text. The prompt now frames the task as "a short letter home,
+  warm and plainspoken, in the hiker's own voice", instructs the
+  model to mirror the register of the ledger entries (sparse facts
+  → sparse prose; matter-of-fact ledger → matter-of-fact prose), and
+  shortens output from "3–5 paragraphs of 2–5 sentences" to "2–3
+  short paragraphs of 2–4 sentences" so the prose is loyal to the
+  source rather than padded to fill space. Grounded-sentence aim
+  bumped from ≥ 60% to ≥ 70% of `seed` / `photo` / `gpx` provenance.
+  Previous prompt preserved as a dated comment for revertability.
+  CLI narrative cache is not invalidated by prompt-only changes —
+  clear `~/.cache/trailstory/narratives/` to regenerate old hikes
+  with the new register; the web builder streaming path bypasses
+  cache and is unaffected. **Eval refresh required before merge:**
+  run `make eval` and `make eval-live` to confirm the rubric / judge
+  scores under the new register, then `make eval-update-golden` and
+  paste both tables in the PR description per CLAUDE.md "Tune a
+  prompt" workflow.
 - **Two-pass narrative pipeline with a structured `FactLedger` (Phase 2 of
   the narrative-faithfulness initiative;
   [ADR-009](docs/adr/009-two-pass-narrative-with-fact-ledger.md)).** Narrative
