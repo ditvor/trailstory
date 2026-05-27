@@ -1,105 +1,85 @@
 {
-  "warmth": 3.5,
-  "narrative_arc": 3.5,
+  "warmth": 4.5,
+  "narrative_arc": 4.0,
   "russian_fidelity": 4.5,
   "photo_selection_plausibility": 4.0,
   "claim_verdicts": [
     {
       "claim": "hike took place in the Bavarian Alps",
-      "verdict": "INFERRED",
-      "quote": "Bavarian Alps inferred from GPX location context"
+      "verdict": "UNSUPPORTED",
+      "quote": ""
     },
     {
-      "claim": "it was an April morning",
-      "verdict": "INFERRED",
-      "quote": "spring season inferred from seed and GPX timestamp"
+      "claim": "hike took place on an April morning",
+      "verdict": "UNSUPPORTED",
+      "quote": ""
     },
     {
-      "claim": "sky was blue",
+      "claim": "the sky was clear and blue",
       "verdict": "SUPPORTED",
-      "quote": "the wide blue"
+      "quote": "wide blue"
     },
     {
-      "claim": "Mia was present on the hike",
-      "verdict": "SUPPORTED",
-      "quote": "Mia laughed the whole way up"
-    },
-    {
-      "claim": "Mia was light-footed / walked easily",
+      "claim": "the air was cool and spring-sharp",
       "verdict": "INFERRED",
-      "quote": "Mia laughed the whole way up — every bird, every stream, every gust of wind"
+      "quote": "inferred from seed context implying a lively, fresh outdoor setting"
     },
     {
-      "claim": "they stopped to listen during the ascent",
-      "verdict": "INFERRED",
-      "quote": "Mia laughed the whole way up — every bird, every stream"
-    },
-    {
-      "claim": "birds were present along the trail",
+      "claim": "birds were singing throughout the ascent",
       "verdict": "SUPPORTED",
       "quote": "every bird"
     },
     {
-      "claim": "a stream ran alongside the path",
+      "claim": "they crossed a stream on the way up",
       "verdict": "SUPPORTED",
       "quote": "every stream"
     },
     {
-      "claim": "the stream was cold and bright / snowmelt in its voice",
-      "verdict": "INFERRED",
-      "quote": "spring season and alpine stream inferred from seed + GPX"
-    },
-    {
-      "claim": "they gained just over 600 metres elevation",
-      "verdict": "INFERRED",
-      "quote": "elevation_gain_m from GPX"
-    },
-    {
-      "claim": "summit elevation was just above 1300 metres",
-      "verdict": "INFERRED",
-      "quote": "summit_elev_m from GPX"
-    },
-    {
-      "claim": "the hike took about an hour and a half",
-      "verdict": "INFERRED",
-      "quote": "duration_min from GPX"
-    },
-    {
-      "claim": "trail distance was barely 2 kilometres",
-      "verdict": "INFERRED",
-      "quote": "distance_km from GPX"
-    },
-    {
-      "claim": "they reached the summit by midday",
-      "verdict": "INFERRED",
-      "quote": "duration and start time inferred from GPX"
-    },
-    {
-      "claim": "they ate apples at the summit",
+      "claim": "Mia laughed during the ascent",
       "verdict": "SUPPORTED",
-      "quote": "eating apples"
+      "quote": "Mia laughed the whole way up"
     },
     {
-      "claim": "Mia clapped her hands / was delighted at the summit",
-      "verdict": "SUPPORTED",
-      "quote": "she clapped her hands at the wide blue"
-    },
-    {
-      "claim": "wind was present during the hike",
+      "claim": "wind was present during the climb",
       "verdict": "SUPPORTED",
       "quote": "every gust of wind"
     },
     {
-      "claim": "weather was clear blue sky",
-      "verdict": "SUPPORTED",
-      "quote": "the wide blue"
+      "claim": "they reached the summit in the afternoon",
+      "verdict": "UNSUPPORTED",
+      "quote": ""
     },
     {
-      "claim": "they sat down at the summit to rest",
+      "claim": "Mia packed apples for the hike",
       "verdict": "SUPPORTED",
-      "quote": "We sat at the summit"
+      "quote": "sitting at the summit eating apples"
+    },
+    {
+      "claim": "apples were eaten at the summit",
+      "verdict": "SUPPORTED",
+      "quote": "We sat at the summit eating apples"
+    },
+    {
+      "claim": "Mia clapped her hands at the view",
+      "verdict": "SUPPORTED",
+      "quote": "she clapped her hands at the wide blue"
+    },
+    {
+      "claim": "they sat at the summit for a while in silence",
+      "verdict": "INFERRED",
+      "quote": "We sat at the summit eating apples and she clapped her hands at the wide blue"
+    },
+    {
+      "claim": "the stream water ran fast and bright",
+      "verdict": "UNSUPPORTED",
+      "quote": ""
+    },
+    {
+      "claim": "the wind came and went in open patches",
+      "verdict": "INFERRED",
+      "quote": "every gust of wind"
     }
   ],
-  "notes": "The English prose is warm and restrained but lacks the specificity needed for a top score — Mia's laughter, the central animating detail from the seed, is only gestured at rather than rendered ('delighted in that uncomplicated way' vs. the vivid 'laughed the whole way up'). The arc is solid: opening / ascent / summit stats / summit rest, though the stats paragraph feels slightly mechanical and interrupts the emotional flow. Russian translation is natural and idiomatic throughout ('с талой водой ещё в голосе' is an elegant solution) with only a minor stiffness in 'та самая правильная малость'. Photo indices (7 frames, well-spread from 0 to 11) plausibly trace the narrative arc.",
-  "faithfulness": 3.68
+  "notes": "The English prose is warm and specific, capturing Mia's joy and the sensory texture of the day without feeling generic; the apple detail and the silence beat are especially strong. The arc is solid — opening, ascent, summit — though the human-detail beat (Mia clapping) is slightly underplayed given how central it is in the seed. Russian reads naturally with good register and idiomatic phrasing; 'под этим бескрайним небом' is a slight expansion of 'all that sky' but fits the spirit well. The Bavarian Alps setting and April date are fabricated (not in the seed), which is the main faithfulness concern; the afternoon summit timing is also invented.",
+  "faithfulness": 3.17
 }

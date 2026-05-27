@@ -1,138 +1,94 @@
 {
   "schema_version": 3,
   "title": {
-    "en": "An April Afternoon in Bad Tölz",
-    "ru": "Апрельский день в Бад-Тёльце",
-    "de": "Ein Apriltag in Bad Tölz"
+    "en": "A Spring Day in Bad Tölz",
+    "ru": "Весенний день в Бад-Тёльце",
+    "de": "Ein Frühlingstag in Bad Tölz"
   },
   "subtitle": {
-    "en": "A slow walk along the Isar with Katya, Olga, Igor and little Danny",
-    "ru": "Неспешная прогулка вдоль Изара с Катей, Олей, Игорем и маленьким Дэнни",
-    "de": "Ein gemächlicher Spaziergang an der Isar mit Katya, Olga, Igor und dem kleinen Danny"
+    "en": "Brunch in town, a walk along the Isar, and dinner by the water with Katya, Olga, Igor and little Danny.",
+    "ru": "Бранч в городе, прогулка вдоль Изара и ужин у воды с Катей, Олей, Игорем и малышом Дэнни.",
+    "de": "Brunch in der Stadt, ein Spaziergang an der Isar und Abendessen am Wasser mit Katja, Olga, Igor und dem kleinen Danny."
   },
   "paragraphs": [
     [
       {
         "text": {
-          "en": "We rolled into Bad Tölz a little after noon, leaving the car among the others already gathered at the edge of town.",
-          "ru": "В Бад-Тёльц мы приехали чуть после полудня и оставили машину среди других, уже собравшихся на краю города.",
-          "de": "Kurz nach zwölf rollten wir in Bad Tölz ein und stellten den Wagen zu den anderen, die schon am Ortsrand standen."
+          "en": "We rolled into Bad Tölz around midday and left the car at the parking spot before heading straight into the centre for brunch.",
+          "ru": "К полудню мы добрались до Бад-Тёльца, оставили машину на парковке и сразу пошли в центр на бранч.",
+          "de": "Gegen Mittag kamen wir in Bad Tölz an, ließen das Auto am Parkplatz stehen und gingen direkt in die Innenstadt zum Brunch."
         },
         "provenance": {
           "source": "seed",
-          "reference": "around 12, arrived at parking spot"
+          "reference": "arrived at parking spot, brunch in centre"
         }
       },
       {
         "text": {
-          "en": "The four of us — Katya, Olga, Igor and Danny in tow — wandered into the centre in search of a brunch table.",
-          "ru": "Вчетвером — Катя, Оля, Игорь и Дэнни рядом с нами — мы побрели в центр в поисках столика на бранч.",
-          "de": "Zu viert — Katya, Olga, Igor und der kleine Danny im Schlepptau — schlenderten wir ins Zentrum, auf der Suche nach einem Tisch zum Brunchen."
+          "en": "The weather was simply amazing — one of those bright spring days that makes you want to be outside with the people you love.",
+          "ru": "Погода была просто чудесная — один из тех ясных весенних дней, когда хочется быть на улице с самыми близкими.",
+          "de": "Das Wetter war einfach traumhaft — einer dieser hellen Frühlingstage, an denen man mit seinen Liebsten draußen sein möchte."
         },
         "provenance": {
           "source": "seed",
-          "reference": "people list + went to city centre for brunch"
-        }
-      },
-      {
-        "text": {
-          "en": "Spring in Bavaria had decided to behave itself, and the light fell on the streets the way you hope it will when you've driven a long way for it.",
-          "ru": "Весна в Баварии в тот день вела себя прилично, и свет ложился на улицы именно так, как мечтаешь, когда едешь ради него издалека.",
-          "de": "Der bayerische Frühling benahm sich an diesem Tag von seiner besten Seite, und das Licht lag auf den Gassen genau so, wie man es sich erhofft, wenn man einen langen Weg dafür auf sich genommen hat."
-        },
-        "provenance": {
-          "source": "gpx",
-          "reference": "season + weather amazing + where"
+          "reference": "weather amazing; season spring"
         }
       }
     ],
     [
       {
         "text": {
-          "en": "By midday we had found our way down to the Isar, and the walk along the river turned into the soft, lazy heart of the day.",
-          "ru": "К середине дня мы спустились к Изару, и прогулка вдоль реки превратилась в тихое, ленивое сердце этого дня.",
-          "de": "Gegen Mittag fanden wir hinunter zur Isar, und der Weg am Fluss entlang wurde zum stillen, gemächlichen Herzstück des Tages."
+          "en": "After we'd eaten, the four of us — Katya, Olga, Igor and little Danny — set off on a walk along the river Isar.",
+          "ru": "После еды мы вчетвером — Катя, Оля, Игорь и малыш Дэнни — отправились гулять вдоль реки Изар.",
+          "de": "Nach dem Essen machten wir uns zu viert — Katja, Olga, Igor und der kleine Danny — auf einen Spaziergang an der Isar."
         },
         "provenance": {
           "source": "seed",
-          "reference": "midday hike along the river Isar"
+          "reference": "people list; hike along Isar"
         }
       },
       {
         "text": {
-          "en": "The water moved beside us with that cold, clean April colour, and none of us was in any hurry to be anywhere else.",
-          "ru": "Вода шла рядом тем самым холодным, чистым апрельским цветом, и никому из нас не хотелось быть где-то ещё.",
-          "de": "Das Wasser zog in jenem kühlen, klaren Aprilton neben uns her, und keiner von uns hatte es eilig, irgendwo anders zu sein."
+          "en": "I loved every step of it: the sound of the water moving past, the soft April light, the easy pace of a walk shaped around a small child.",
+          "ru": "Мне всё в этой прогулке было в радость: шум воды рядом, мягкий апрельский свет, неспешный темп, выстроенный под маленького ребёнка.",
+          "de": "Ich habe jeden Schritt davon genossen: das Rauschen des Wassers, das weiche Aprillicht, das gemütliche Tempo, das sich nach einem kleinen Kind richtet."
         },
         "provenance": {
           "source": "seed",
-          "reference": "enjoyed a lot"
-        }
-      },
-      {
-        "text": {
-          "en": "Six kilometres unrolled almost without our noticing, the path rising gently for a while and then settling back down.",
-          "ru": "Шесть километров размотались почти незаметно — тропа сначала мягко поднималась, а потом снова опускалась.",
-          "de": "Sechs Kilometer rollten sich fast unbemerkt vor uns ab, der Weg stieg eine Weile sanft an und kam dann wieder herunter."
-        },
-        "provenance": {
-          "source": "gpx",
-          "reference": "distance_km + elevation_gain_m"
+          "reference": "enjoyed hike a lot; Danny is small child"
         }
       }
     ],
     [
       {
         "text": {
-          "en": "In the afternoon we stepped into an old church, the kind of cool, dim interior that takes a minute for the eyes to adjust to.",
-          "ru": "После обеда мы заглянули в старую церковь — в такой прохладный полумрак, к которому глаза привыкают не сразу.",
-          "de": "Am Nachmittag traten wir in eine alte Kirche, in jene kühle Dämmerung, an die sich die Augen erst gewöhnen müssen."
+          "en": "In the afternoon we ducked into an old church in town, and honestly, it gave us all a bit of a chill.",
+          "ru": "Днём мы зашли в старую церковь в городе, и, честно говоря, нам всем стало немного не по себе.",
+          "de": "Am Nachmittag schauten wir in eine alte Kirche in der Stadt, und ehrlich gesagt war es uns allen ein bisschen unheimlich."
         },
         "provenance": {
           "source": "seed",
-          "reference": "afternoon visited an old church"
+          "reference": "visited old church; creepy"
         }
       },
       {
         "text": {
-          "en": "Inside, behind glass, were wax figures of Jesus and his friends, frozen mid-gesture with a stillness that was almost too convincing.",
-          "ru": "Внутри, за стеклом, стояли восковые фигуры Иисуса и его учеников, застывшие в жестах с почти слишком убедительной неподвижностью.",
-          "de": "Drinnen, hinter Glas, standen Wachsfiguren von Jesus und seinen Gefährten, mitten in einer Geste erstarrt, mit einer fast zu überzeugenden Stille."
+          "en": "Inside there were wax figures of Jesus and his companions, life-sized and so still that it felt creepy rather than holy.",
+          "ru": "Внутри стояли восковые фигуры Иисуса и его спутников, в человеческий рост и такие неподвижные, что становилось скорее жутко, чем благоговейно.",
+          "de": "Drinnen standen Wachsfiguren von Jesus und seinen Gefährten, lebensgroß und so reglos, dass es eher gruselig als andächtig wirkte."
         },
         "provenance": {
           "source": "photo",
           "reference": "wax figures, Jesus"
         }
-      },
-      {
-        "text": {
-          "en": "It was beautiful and a little creepy at the same time, and we found ourselves whispering without quite meaning to.",
-          "ru": "Было красиво и немного жутко одновременно, и мы как-то сами собой заговорили шёпотом.",
-          "de": "Es war schön und zugleich ein bisschen unheimlich, und wir merkten gar nicht, wie wir anfingen zu flüstern."
-        },
-        "provenance": {
-          "source": "seed",
-          "reference": "creepy"
-        }
       }
     ],
     [
       {
         "text": {
-          "en": "By evening we were hungry in that easy, unhurried way you only get after a long, kind day outside.",
-          "ru": "К вечеру мы проголодались той спокойной, неспешной голодностью, что приходит только после долгого, ласкового дня на воздухе.",
-          "de": "Am Abend waren wir hungrig auf jene ruhige, gelassene Art, wie es nur nach einem langen, freundlichen Tag draußen geschieht."
-        },
-        "provenance": {
-          "source": "inferred",
-          "reference": "mood at transition into evening beat"
-        }
-      },
-      {
-        "text": {
-          "en": "We grabbed Asian food to go and carried the warm boxes down to a spot by the water.",
-          "ru": "Мы взяли азиатскую еду навынос и отнесли тёплые коробочки к воде.",
-          "de": "Wir holten uns asiatisches Essen zum Mitnehmen und trugen die warmen Schachteln hinunter ans Wasser."
+          "en": "By evening we were hungry again, so we grabbed Asian food to go and carried it back down to the water.",
+          "ru": "К вечеру мы снова проголодались, взяли азиатскую еду навынос и спустились с ней обратно к воде.",
+          "de": "Am Abend hatten wir wieder Hunger, holten uns asiatisches Essen zum Mitnehmen und trugen es hinunter ans Wasser."
         },
         "provenance": {
           "source": "seed",
@@ -141,26 +97,26 @@
       },
       {
         "text": {
-          "en": "Sitting there with Katya, Olga and Igor, with Danny somewhere between our knees, it felt like the day had given us exactly what we came for.",
-          "ru": "Сидя там с Катей, Олей и Игорем, с Дэнни где-то между наших коленей, мы почувствовали, что день дал нам ровно то, ради чего мы приехали.",
-          "de": "Wie wir da mit Katya, Olga und Igor saßen, Danny irgendwo zwischen unseren Knien, fühlte es sich an, als hätte uns der Tag genau das geschenkt, wofür wir gekommen waren."
+          "en": "Sitting there together at the end of the day, eating out of the containers with the river in front of us, felt like exactly the right way to close it.",
+          "ru": "Сидеть там всем вместе в конце дня, есть прямо из контейнеров, и река перед нами — это казалось именно тем, чем стоило завершить этот день.",
+          "de": "So am Ende des Tages zusammenzusitzen, aus den Behältern zu essen und den Fluss vor uns zu haben, fühlte sich genau richtig an als Abschluss."
         },
         "provenance": {
           "source": "inferred",
-          "reference": "closing mood from people list + evening beat"
+          "reference": "mood inferred from quiet evening beat by water"
         }
       }
     ]
   ],
   "pull_quote": {
-    "en": "The water moved beside us with that cold, clean April colour, and none of us was in any hurry to be anywhere else.",
-    "ru": "Вода шла рядом тем самым холодным, чистым апрельским цветом, и никому из нас не хотелось быть где-то ещё.",
-    "de": "Das Wasser zog in jenem kühlen, klaren Aprilton neben uns her, und keiner von uns hatte es eilig, irgendwo anders zu sein."
+    "en": "The soft April light, the river beside us, and the easy pace of a walk shaped around a small child.",
+    "ru": "Мягкий апрельский свет, река рядом и неспешный шаг прогулки, выстроенной под маленького ребёнка.",
+    "de": "Das weiche Aprillicht, der Fluss neben uns und das gemütliche Tempo eines Spaziergangs nach einem kleinen Kind."
   },
   "milestone": {
-    "en": "A spring day in Bad Tölz",
-    "ru": "Весенний день в Бад-Тёльце",
-    "de": "Ein Frühlingstag in Bad Tölz"
+    "en": "Day along the Isar",
+    "ru": "День у Изара",
+    "de": "Tag an der Isar"
   },
   "selected_photo_indices": [
     0,

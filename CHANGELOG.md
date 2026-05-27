@@ -39,28 +39,38 @@ Versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   (a family member, not the author). Author preference is persisted
   in `localStorage` under `trailstory.notes`. Log and encyclopedia
   styles already used the flat fallback and are unaffected.
-- **Writer prompt softened to mirror the source register.**
+- **Writer prompt rebalanced for warmth + faithfulness.**
   `SYSTEM_NARRATIVE` and `USER_NARRATIVE_TEMPLATE` in
   `trailstory/llm/prompts.py` no longer ask for an "intimate, literary"
-  voice / "Bourdain on a quiet afternoon"; pilot output drifted into
-  ornate atmospheric prose that felt detached from the hiker's actual
-  seed text. The prompt now frames the task as "a short letter home,
-  warm and plainspoken, in the hiker's own voice", instructs the
-  model to mirror the register of the ledger entries (sparse facts
-  → sparse prose; matter-of-fact ledger → matter-of-fact prose), and
-  shortens output from "3–5 paragraphs of 2–5 sentences" to "2–3
-  short paragraphs of 2–4 sentences" so the prose is loyal to the
-  source rather than padded to fill space. Grounded-sentence aim
-  bumped from ≥ 60% to ≥ 70% of `seed` / `photo` / `gpx` provenance.
-  Previous prompt preserved as a dated comment for revertability.
-  CLI narrative cache is not invalidated by prompt-only changes —
-  clear `~/.cache/trailstory/narratives/` to regenerate old hikes
-  with the new register; the web builder streaming path bypasses
-  cache and is unaffected. **Eval refresh required before merge:**
-  run `make eval` and `make eval-live` to confirm the rubric / judge
-  scores under the new register, then `make eval-update-golden` and
-  paste both tables in the PR description per CLAUDE.md "Tune a
-  prompt" workflow.
+  voice / "Bourdain on a quiet afternoon" framing — pilot output
+  drifted into ornate atmospheric prose detached from the hiker's
+  seed text. The prompt now frames the task as "a letter home to
+  people who love them — warm, intimate, direct", with explicit
+  instructions to name the people from the ledger when they appear
+  in a beat, surface the sensory specifics (light, sound, smell,
+  texture) and emotions the ledger records, and avoid the magazine
+  essay register. Grounded-sentence aim raised from ≥ 60% to ≥ 70%
+  of `seed` / `photo` / `gpx` provenance. New hard rule: do not
+  quote GPX numbers (distance, elevation, duration, summit height)
+  verbatim in the prose — those live in the stats block, qualitative
+  reference only. Milestone JSON skeleton now states the
+  "under 30 characters in every language" rubric ceiling explicitly
+  so the model stops blowing the cap on RU/DE. Paragraph count
+  remains 3–5 (a first iteration shortening it to 2–3 was rejected
+  by the eval). Previous prompt versions preserved as dated comments
+  for revertability. CLI narrative cache is not invalidated by
+  prompt-only changes — clear `~/.cache/trailstory/narratives/` to
+  regenerate old hikes with the new register; the web builder
+  streaming path bypasses cache and is unaffected.
+
+  **Eval status (paid LLM-as-judge, run on PR branch before merge,
+  threshold 1.00):** all 4 cases pass judge regression after two
+  prompt iterations. Cases 01/02/03/04 warmth Δ = -0.5, +0.5, 0.0,
+  -0.5; narrative_arc Δ = -0.5, +0.5, 0.0, -0.5; russian_fidelity
+  Δ = -0.5, 0.0, 0.0, 0.0; faithfulness Δ = +0.12, -0.24, +0.38,
+  +0.90 (faithfulness improved in three cases, dipped marginally on
+  case 02 within threshold). Goldens refreshed via
+  `make eval-update-golden` and committed alongside the prompt.
 - **Two-pass narrative pipeline with a structured `FactLedger` (Phase 2 of
   the narrative-faithfulness initiative;
   [ADR-009](docs/adr/009-two-pass-narrative-with-fact-ledger.md)).** Narrative
