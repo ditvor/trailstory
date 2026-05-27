@@ -5,34 +5,44 @@
   "photo_selection_plausibility": 4.0,
   "claim_verdicts": [
     {
-      "claim": "The hike took place in the Bavarian Alps",
-      "verdict": "UNSUPPORTED",
-      "quote": ""
-    },
-    {
-      "claim": "The hike was on an April morning",
-      "verdict": "UNSUPPORTED",
-      "quote": ""
-    },
-    {
-      "claim": "The fog settled into the trees and stayed grey",
-      "verdict": "SUPPORTED",
-      "quote": "The fog never lifted."
-    },
-    {
-      "claim": "Mia was small and warm against the damp",
+      "claim": "Hike took place in the Bavarian Alps",
       "verdict": "INFERRED",
-      "quote": "Mia cried for the last hour — implies child carried, small and present"
+      "quote": "Bavarian Alps inferred from GPX location data"
     },
     {
-      "claim": "Mia cried on the climb",
+      "claim": "It was a grey April morning",
+      "verdict": "INFERRED",
+      "quote": "spring morning inferred from GPX season/timestamp; grey fog confirmed by seed 'The fog never lifted'"
+    },
+    {
+      "claim": "Fog was thick, visibility limited to a few steps",
+      "verdict": "SUPPORTED",
+      "quote": "The fog never lifted"
+    },
+    {
+      "claim": "Mia was present on the hike",
       "verdict": "SUPPORTED",
       "quote": "Mia cried for the last hour"
     },
     {
-      "claim": "The narrator's shoulders burned",
+      "claim": "Hiker doubted whether they were on the right path",
+      "verdict": "SUPPORTED",
+      "quote": "I was sure we'd made a mistake"
+    },
+    {
+      "claim": "Mia cried for an hour",
+      "verdict": "SUPPORTED",
+      "quote": "Mia cried for the last hour"
+    },
+    {
+      "claim": "Hiker's shoulders burned under straps",
       "verdict": "SUPPORTED",
       "quote": "my shoulders burned"
+    },
+    {
+      "claim": "Hiker considered turning around",
+      "verdict": "SUPPORTED",
+      "quote": "I was sure we'd made a mistake"
     },
     {
       "claim": "Mia fell asleep on the descent",
@@ -40,51 +50,26 @@
       "quote": "she fell asleep on the descent"
     },
     {
-      "claim": "The narrator noticed ferns underfoot",
+      "claim": "Hiker noticed ferns underfoot/at boots",
       "verdict": "SUPPORTED",
       "quote": "I noticed the ferns underfoot"
     },
     {
-      "claim": "The ferns were brand-new and uncurling",
+      "claim": "Ferns were brushing at hiker's boots",
       "verdict": "INFERRED",
-      "quote": "spring climb — uncurling ferns consistent with spring season"
+      "quote": "I noticed the ferns underfoot — brushing detail inferred from photo reference to ferns"
     },
     {
-      "claim": "The hike covered just over two kilometres",
-      "verdict": "UNSUPPORTED",
-      "quote": ""
-    },
-    {
-      "claim": "Elevation gain was six hundred metres",
-      "verdict": "UNSUPPORTED",
-      "quote": ""
-    },
-    {
-      "claim": "Duration was about a hundred minutes",
-      "verdict": "UNSUPPORTED",
-      "quote": ""
-    },
-    {
-      "claim": "The summit was at around thirteen hundred metres",
-      "verdict": "UNSUPPORTED",
-      "quote": ""
-    },
-    {
-      "claim": "The narrator felt sure they had made a mistake",
+      "claim": "The fog persisted throughout and never lifted",
       "verdict": "SUPPORTED",
-      "quote": "I was sure we'd made a mistake"
+      "quote": "The fog never lifted"
     },
     {
-      "claim": "Mia's weight settled into a rhythm the narrator could carry",
+      "claim": "Mia fell asleep against the hiker",
       "verdict": "INFERRED",
-      "quote": "she fell asleep on the descent — implies sleeping child being carried"
-    },
-    {
-      "claim": "Mia was asleep on the narrator's chest during descent",
-      "verdict": "INFERRED",
-      "quote": "she fell asleep on the descent"
+      "quote": "she fell asleep on the descent — 'against me' inferred from carrying position implied by 'shoulders burned under the straps'"
     }
   ],
-  "notes": "The prose is genuinely warm and specific, recovering the seed's emotional arc — doubt, endurance, quiet redemption — with well-chosen sensory detail (ferns uncurling, damp air, the rhythm of a sleeping child). The narrative arc moves cleanly through all required beats and the pull-quote earns its placement. Russian is fluent and natural; 'лёг в ритм, который я мог нести' is slightly literal but not unidiomatic. GPX-derived figures (2 km, 600 m, 100 min, 1300 m summit, Bavarian Alps, April) are all unsupported by the seed, which is expected for GPX provenance, but worth flagging as fabrication risk if no GPX was actually provided. Photo indices span the range with 7 selections and plausibly trace the arc.",
-  "faithfulness": 2.5
+  "notes": "The English prose is genuinely warm and specific, staying close to the seed's emotional texture without embellishment; 'shoulders burned under the straps' and the fern moment earn the high warmth score. The arc is clean: fog-opening → effort/doubt → turn/resolution, with each paragraph earning its place, though the third paragraph's three sentences feel slightly dense compared to the lighter first two. Russian is fluent and natural — 'плечи горели под лямками' and 'наконец тихо' read like native phrasing — with only the pull-quote's 'папоротники у ботинок сказали мне' slightly stiff (literal echo of English idiom). Photo indices span 0–11 with reasonable distribution across seven frames, plausibly matching the arc's beats, though without knowing total photo count the upper-end clustering at 10/11 is a minor concern.",
+  "faithfulness": 4.23
 }

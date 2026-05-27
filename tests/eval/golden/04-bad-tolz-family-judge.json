@@ -1,38 +1,38 @@
 {
-  "warmth": 4.5,
+  "warmth": 4.0,
   "narrative_arc": 4.5,
   "russian_fidelity": 4.5,
   "photo_selection_plausibility": 3.0,
   "claim_verdicts": [
     {
-      "claim": "arrived in Bad Tölz a little after noon",
+      "claim": "arrived in Bad Tölz around midday",
       "verdict": "SUPPORTED",
       "quote": "We arrived to the parking spot around 12"
     },
     {
-      "claim": "left the car at the edge of town",
-      "verdict": "INFERRED",
+      "claim": "left the car at the parking spot",
+      "verdict": "SUPPORTED",
       "quote": "arrived to the parking spot"
     },
     {
-      "claim": "four people: Katya, Olga, Igor and Danny",
-      "verdict": "SUPPORTED",
-      "quote": "It was four of us: Katya, Olga, Igor and little Danny"
-    },
-    {
-      "claim": "wandered into the centre for brunch",
+      "claim": "went into the centre for brunch",
       "verdict": "SUPPORTED",
       "quote": "Went to the city centre and enjoyed some brunch"
     },
     {
-      "claim": "spring in Bavaria, good weather",
+      "claim": "weather was amazing",
       "verdict": "SUPPORTED",
       "quote": "The weather was amazing"
     },
     {
-      "claim": "light fell on the streets pleasantly",
+      "claim": "bright spring day",
       "verdict": "INFERRED",
-      "quote": "The weather was amazing"
+      "quote": "season spring inferred from schema/title context and GPX timestamp"
+    },
+    {
+      "claim": "four people: Katya, Olga, Igor and little Danny",
+      "verdict": "SUPPORTED",
+      "quote": "It was four of us: Katya, Olga, Igor and little Danny"
     },
     {
       "claim": "walked along the river Isar",
@@ -40,54 +40,39 @@
       "quote": "we started our trip along the river Isar"
     },
     {
-      "claim": "cold, clean April colour of the water",
+      "claim": "April light",
       "verdict": "INFERRED",
-      "quote": "The weather was amazing; season inferred as spring/April from context"
+      "quote": "season spring inferred from title and GPX timestamp"
     },
     {
-      "claim": "six kilometres of path",
+      "claim": "easy pace shaped around a small child",
       "verdict": "INFERRED",
-      "quote": "distance_km from GPX provenance"
-    },
-    {
-      "claim": "path rising gently then settling back down",
-      "verdict": "INFERRED",
-      "quote": "elevation_gain_m from GPX provenance"
+      "quote": "Danny and us enjoyed the hike a lot; little Danny"
     },
     {
       "claim": "visited an old church",
       "verdict": "SUPPORTED",
-      "quote": "we visited an old church"
+      "quote": "we visited an old church with very strange figures"
     },
     {
-      "claim": "cool, dim interior of the church",
-      "verdict": "INFERRED",
-      "quote": "old church"
-    },
-    {
-      "claim": "wax figures of Jesus and his friends inside the church",
+      "claim": "wax figures of Jesus and his companions",
       "verdict": "SUPPORTED",
       "quote": "those wax figures were waiting for us in unexpected places"
     },
     {
-      "claim": "figures were behind glass",
+      "claim": "figures were life-sized",
       "verdict": "UNSUPPORTED",
       "quote": ""
     },
     {
-      "claim": "figures frozen mid-gesture",
-      "verdict": "INFERRED",
-      "quote": "wax figures — nature of wax figures"
-    },
-    {
-      "claim": "the church was creepy",
+      "claim": "figures felt creepy rather than holy",
       "verdict": "SUPPORTED",
       "quote": "It was creepy"
     },
     {
-      "claim": "they whispered inside the church",
-      "verdict": "UNSUPPORTED",
-      "quote": ""
+      "claim": "figures appeared in unexpected places",
+      "verdict": "SUPPORTED",
+      "quote": "those wax figures were waiting for us in unexpected places"
     },
     {
       "claim": "grabbed Asian food to go",
@@ -95,26 +80,21 @@
       "quote": "we grabbed some Asian food to go"
     },
     {
-      "claim": "carried warm boxes of food to the water",
-      "verdict": "INFERRED",
-      "quote": "enjoyed our dinner near the water"
-    },
-    {
       "claim": "ate dinner near the water",
       "verdict": "SUPPORTED",
       "quote": "enjoyed our dinner near the water"
     },
     {
-      "claim": "Danny was somewhere between their knees while eating",
-      "verdict": "UNSUPPORTED",
-      "quote": ""
+      "claim": "ate out of containers",
+      "verdict": "INFERRED",
+      "quote": "Asian food to go — takeaway containers are a reasonable inference"
     },
     {
-      "claim": "everyone loved little Danny",
-      "verdict": "SUPPORTED",
-      "quote": "Everyone loved little Danny"
+      "claim": "river was in front of them while eating",
+      "verdict": "INFERRED",
+      "quote": "enjoyed our dinner near the water"
     }
   ],
-  "notes": "The prose is warm and specific without being cloying; 'the light fell on the streets the way you hope it will' and 'that cold, clean April colour' feel genuinely personal. The arc moves cleanly from arrival → brunch → river walk → church → dinner, with each paragraph earning its place, though the church beat is slightly rushed. Russian translation reads naturally with good register matching ('сами собой заговорили шёпотом' is idiomatic); one mildly stiff phrase ('голодностью' in para 4) prevents a 5. Photo selection uses indices 0-5 which is exactly 6 frames — plausible in count — but since all indices cluster at the low end of the range with no visibility into total photo count, distribution cannot be confirmed, warranting a conservative 3.",
-  "faithfulness": 3.41
+  "notes": "The English prose is warm and specific, with good sensory texture (April light, sound of water, eating from containers), earning a high warmth score just short of 5 because 'shaped around a small child' is slightly writerly-generic. The arc is clean — arrival, brunch, walk, church, dinner — with each beat earning its place; minor dock for the church paragraph feeling slightly thin on Danny's reaction. Russian is natural and idiomatic throughout; 'становилось скорее жутко, чем благоговейно' is a particularly good register match; only very minor stiffness in 'Мне всё в этой прогулке было в радость'. Photo indices 0-5 are a sequential block of six, which is within count but gives no information about distribution across the arc; without knowing total photo count, sequential clustering is a mild concern.",
+  "faithfulness": 4.03
 }

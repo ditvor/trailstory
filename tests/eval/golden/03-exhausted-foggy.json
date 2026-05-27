@@ -1,166 +1,109 @@
 {
   "schema_version": 3,
   "title": {
-    "en": "A Morning in the Fog with Mia",
-    "ru": "Утро в тумане с Мией",
-    "de": "Ein Morgen im Nebel mit Mia"
+    "en": "Through the Fog with Mia",
+    "ru": "Сквозь туман с Мией",
+    "de": "Durch den Nebel mit Mia"
   },
   "subtitle": {
-    "en": "A spring climb in the Bavarian Alps, carried slowly home",
-    "ru": "Весеннее восхождение в Баварских Альпах, медленный путь домой",
-    "de": "Ein Frühlingsanstieg in den Bayerischen Alpen, langsam nach Hause getragen"
+    "en": "A spring morning in the Bavarian Alps",
+    "ru": "Весеннее утро в Баварских Альпах",
+    "de": "Ein Frühlingsmorgen in den Bayerischen Alpen"
   },
   "paragraphs": [
     [
       {
         "text": {
-          "en": "We set out into the Bavarian Alps on a April morning that refused to clear.",
-          "ru": "Мы отправились в Баварские Альпы апрельским утром, которое так и не прояснилось.",
-          "de": "Wir brachen an einem Aprilmorgen in die Bayerischen Alpen auf, der sich einfach nicht aufklären wollte."
+          "en": "We set out into the Bavarian Alps on a grey April morning, the fog so thick I couldn't see more than a few steps ahead.",
+          "ru": "Мы вышли в Баварские Альпы серым апрельским утром, туман был такой густой, что я не видела дальше нескольких шагов.",
+          "de": "Wir sind an einem grauen Aprilmorgen in die Bayerischen Alpen aufgebrochen, der Nebel war so dicht, dass ich kaum ein paar Schritte weit sehen konnte."
         },
         "provenance": {
           "source": "gpx",
-          "reference": "where + season + when"
+          "reference": "where, season, when"
         }
       },
       {
         "text": {
-          "en": "The fog settled into the trees and stayed there, patient and grey, the kind of weather that makes you wonder, quietly, whether you should have stayed in bed.",
-          "ru": "Туман осел между деревьями и остался, серый и терпеливый — такая погода, при которой тихо думаешь: а может, стоило остаться в постели.",
-          "de": "Der Nebel legte sich zwischen die Bäume und blieb dort, geduldig und grau, jenes Wetter, bei dem man sich leise fragt, ob man nicht besser im Bett geblieben wäre."
+          "en": "Mia was with me, and more than once I stopped and wondered whether we were even on the right path.",
+          "ru": "Мия шла со мной, и не раз я останавливалась и сомневалась, той ли тропой мы идём.",
+          "de": "Mia war bei mir, und mehr als einmal blieb ich stehen und fragte mich, ob wir überhaupt auf dem richtigen Weg waren."
         },
         "provenance": {
           "source": "seed",
-          "reference": "persistent fog, doubtful"
-        }
-      },
-      {
-        "text": {
-          "en": "Mia rode along with me, small and warm against the damp.",
-          "ru": "Мия ехала со мной, маленькая и тёплая на фоне сырости.",
-          "de": "Mia ritt mit, klein und warm gegen die Feuchtigkeit."
-        },
-        "provenance": {
-          "source": "seed",
-          "reference": "Mia, child"
+          "reference": "hiking in fog with Mia, doubting the route"
         }
       }
     ],
     [
       {
         "text": {
-          "en": "Somewhere on the climb, the day turned hard.",
-          "ru": "Где-то на подъёме день стал тяжёлым.",
-          "de": "Irgendwo am Anstieg wurde der Tag schwer."
+          "en": "For a solid hour Mia cried, and I kept climbing with her while my shoulders burned under the straps.",
+          "ru": "Целый час Мия плакала, а я всё шла вверх, и плечи горели под лямками.",
+          "de": "Eine ganze Stunde lang weinte Mia, und ich stieg weiter, während meine Schultern unter den Trägern brannten."
         },
         "provenance": {
-          "source": "inferred",
-          "reference": "transition into the strained beat"
+          "source": "seed",
+          "reference": "Mia crying for the last hour, shoulders burning"
         }
       },
       {
         "text": {
-          "en": "Mia began to cry, and at the same time my shoulder set in with a dull, insistent ache.",
-          "ru": "Мия заплакала, и в тот же момент в плече поселилась тупая, настойчивая боль.",
-          "de": "Mia fing an zu weinen, und im selben Moment setzte in meiner Schulter ein dumpfer, beharrlicher Schmerz ein."
+          "en": "I'm not going to pretend it wasn't discouraging — there were moments I didn't know if we should turn around.",
+          "ru": "Не буду делать вид, что не было тяжело — были минуты, когда я не знала, не повернуть ли назад.",
+          "de": "Ich tue nicht so, als wäre es nicht entmutigend gewesen — es gab Momente, da wusste ich nicht, ob wir umkehren sollten."
         },
         "provenance": {
           "source": "seed",
-          "reference": "Mia cried, shoulder pain"
-        }
-      },
-      {
-        "text": {
-          "en": "For a long stretch it was just the two of us inside the grey, both of us a little undone.",
-          "ru": "Долгое время мы были только вдвоём внутри этой серости, оба немного сломленные.",
-          "de": "Eine lange Strecke waren nur wir beide im Grau, beide ein wenig durcheinander."
-        },
-        "provenance": {
-          "source": "seed",
-          "reference": "strained emotion"
+          "reference": "strained, discouraged"
         }
       }
     ],
     [
       {
         "text": {
-          "en": "By afternoon we had turned downhill, and something in the day softened with us.",
-          "ru": "К полудню мы повернули вниз, и что-то в этом дне смягчилось вместе с нами.",
-          "de": "Am Nachmittag waren wir auf dem Abstieg, und etwas am Tag wurde mit uns weicher."
+          "en": "And then, somewhere on the way down, Mia fell asleep against me — just like that, quiet at last.",
+          "ru": "А потом, где-то уже на спуске, Мия уснула, прижавшись ко мне — вот так, наконец тихо.",
+          "de": "Und dann, irgendwo auf dem Abstieg, schlief Mia an mir ein — einfach so, endlich still."
         },
         "provenance": {
           "source": "seed",
-          "reference": "afternoon descent, reassured"
+          "reference": "Mia fell asleep on the descent"
         }
       },
       {
         "text": {
-          "en": "Mia fell asleep against me, finally quiet, her weight settling into a rhythm I could carry.",
-          "ru": "Мия уснула, прижавшись ко мне, наконец затихнув, её вес лёг в ритм, который я мог нести.",
-          "de": "Mia schlief an mir ein, endlich still, ihr Gewicht fand einen Rhythmus, den ich tragen konnte."
-        },
-        "provenance": {
-          "source": "seed",
-          "reference": "Mia fell asleep"
-        }
-      },
-      {
-        "text": {
-          "en": "I started noticing the ferns underfoot, brand-new and uncurling, the soft green proof that spring was already here even if we couldn't see far.",
-          "ru": "Я начал замечать папоротники под ногами — совсем молодые, ещё разворачивающиеся, мягкое зелёное доказательство, что весна уже здесь, даже если вдаль ничего не видно.",
-          "de": "Ich begann, die Farne unter unseren Füßen zu bemerken, ganz neu, gerade erst entrollt, der weiche grüne Beweis, dass der Frühling schon da war, auch wenn wir nicht weit sehen konnten."
+          "en": "I looked down and noticed ferns brushing at my boots, and somehow that was the moment I knew we were going to be fine.",
+          "ru": "Я посмотрела вниз, увидела папоротники, задевающие ботинки, и почему-то именно тогда поняла, что всё у нас будет хорошо.",
+          "de": "Ich schaute nach unten, sah Farne, die meine Stiefel streiften, und irgendwie war das der Moment, in dem ich wusste, dass alles gut werden würde."
         },
         "provenance": {
           "source": "photo",
           "reference": "ferns"
         }
-      }
-    ],
-    [
-      {
-        "text": {
-          "en": "We had only climbed a little over two kilometres, but the mountain had asked for six hundred metres of effort and a good hundred minutes of our quiet patience.",
-          "ru": "Мы прошли чуть больше двух километров, но гора попросила шестьсот метров подъёма и добрых сто минут нашего тихого терпения.",
-          "de": "Wir waren nur gut zwei Kilometer gestiegen, aber der Berg hatte sechshundert Höhenmeter und gute hundert Minuten unserer stillen Geduld verlangt."
-        },
-        "provenance": {
-          "source": "gpx",
-          "reference": "distance_km, elevation_gain_m, duration_min"
-        }
       },
       {
         "text": {
-          "en": "Somewhere above us, hidden in the cloud, the summit sat at around thirteen hundred metres, and I decided that was enough mountain for the two of us today.",
-          "ru": "Где-то над нами, спрятанная в облаке, вершина стояла на тысяче трёхстах метрах, и я решил, что на сегодня нам обоим этой горы достаточно.",
-          "de": "Irgendwo über uns, im Wolken verborgen, lag der Gipfel auf etwa dreizehnhundert Metern, und ich entschied, dass das für uns beide heute Berg genug war."
+          "en": "The fog was still there, but it didn't feel like being lost anymore.",
+          "ru": "Туман никуда не делся, но больше не казалось, что мы заблудились.",
+          "de": "Der Nebel war immer noch da, aber es fühlte sich nicht mehr an, als wären wir verloren."
         },
         "provenance": {
-          "source": "gpx",
-          "reference": "summit_elev_m"
-        }
-      },
-      {
-        "text": {
-          "en": "Coming down through the soft green with her asleep on my chest, I felt, for the first time that morning, that we had done exactly the right thing.",
-          "ru": "Спускаясь сквозь мягкую зелень, пока она спала у меня на груди, я впервые за это утро почувствовал, что мы поступили именно так, как нужно.",
-          "de": "Während ich durch das weiche Grün hinunterging, sie schlafend an meiner Brust, spürte ich zum ersten Mal an diesem Morgen, dass wir genau das Richtige getan hatten."
-        },
-        "provenance": {
-          "source": "seed",
-          "reference": "reassured"
+          "source": "inferred",
+          "reference": "shift from uncertainty to reassurance across beats"
         }
       }
     ]
   ],
   "pull_quote": {
-    "en": "Coming down through the soft green with her asleep on my chest, I felt, for the first time that morning, that we had done exactly the right thing.",
-    "ru": "Спускаясь сквозь мягкую зелень, пока она спала у меня на груди, я впервые за это утро почувствовал, что мы поступили именно так, как нужно.",
-    "de": "Während ich durch das weiche Grün hinunterging, sie schlafend an meiner Brust, spürte ich zum ersten Mal an diesem Morgen, dass wir genau das Richtige getan hatten."
+    "en": "Mia fell asleep against me, and the ferns at my boots told me we were going to be fine.",
+    "ru": "Мия уснула, прижавшись ко мне, и папоротники у ботинок сказали мне, что всё у нас будет хорошо.",
+    "de": "Mia schlief an mir ein, und die Farne an meinen Stiefeln sagten mir, dass alles gut werden würde."
   },
   "milestone": {
-    "en": "First foggy climb with Mia",
-    "ru": "Первый туманный подъём с Мией",
-    "de": "Erste Nebelwanderung mit Mia"
+    "en": "First hike with Mia",
+    "ru": "Первый поход с Мией",
+    "de": "Erste Wanderung mit Mia"
   },
   "selected_photo_indices": [
     0,

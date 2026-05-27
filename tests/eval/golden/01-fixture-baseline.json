@@ -1,144 +1,109 @@
 {
   "schema_version": 3,
   "title": {
-    "en": "The Morning the Fog Lifted",
-    "ru": "Утро, когда рассеялся туман",
-    "de": "Der Morgen, an dem der Nebel wich"
+    "en": "Up Into the Fog",
+    "ru": "Вверх, в туман",
+    "de": "Hinauf in den Nebel"
   },
   "subtitle": {
-    "en": "A spring climb in the Bavarian Alps",
-    "ru": "Весеннее восхождение в Баварских Альпах",
-    "de": "Ein Frühlingsaufstieg in den Bayerischen Alpen"
+    "en": "A spring morning ridge in the Bavarian Alps",
+    "ru": "Весеннее утро на хребте в Баварских Альпах",
+    "de": "Ein Frühlingsmorgen am Grat in den Bayerischen Alpen"
   },
   "paragraphs": [
     [
       {
         "text": {
-          "en": "It was an April morning in the Bavarian Alps, the kind of spring that still carries winter in its pockets.",
-          "ru": "Это было апрельское утро в Баварских Альпах — та весна, что ещё прячет зиму по карманам.",
-          "de": "Es war ein Aprilmorgen in den Bayerischen Alpen, jener Frühling, der den Winter noch in den Taschen trägt."
+          "en": "We set out into the Bavarian Alps on a cool April morning, the kind of damp spring air that settles into your sleeves before you've even warmed up.",
+          "ru": "Мы вышли в Баварские Альпы прохладным апрельским утром — в том самом сыром весеннем воздухе, что забирается в рукава ещё до того, как успеешь согреться.",
+          "de": "Wir brachen an einem kühlen Aprilmorgen in die Bayerischen Alpen auf, in dieser feuchten Frühlingsluft, die einem schon in die Ärmel kriecht, bevor man richtig warm geworden ist."
         },
         "provenance": {
           "source": "gpx",
-          "reference": "where + season"
+          "reference": "where, season, when"
         }
       },
       {
         "text": {
-          "en": "The hour was early, just past seven, and the world had not yet decided what kind of day it wanted to be.",
-          "ru": "Час был ранний, чуть за семь, и мир ещё не решил, каким именно днём ему хочется стать.",
-          "de": "Die Stunde war früh, kurz nach sieben, und die Welt hatte sich noch nicht entschieden, was für ein Tag sie werden wollte."
-        },
-        "provenance": {
-          "source": "gpx",
-          "reference": "when"
-        }
-      }
-    ],
-    [
-      {
-        "text": {
-          "en": "We began climbing inside the fog, which is to say we began climbing inside a hush.",
-          "ru": "Мы начали подъём внутри тумана — то есть внутри тишины.",
-          "de": "Wir begannen den Aufstieg im Nebel, was heißt: wir begannen ihn in einer Stille."
+          "en": "The fog was thick from the very first steps, soft and grey all around us.",
+          "ru": "Туман стоял густой с самых первых шагов — мягкий и серый со всех сторон.",
+          "de": "Der Nebel war schon von den ersten Schritten an dicht, weich und grau um uns herum."
         },
         "provenance": {
           "source": "seed",
-          "reference": "foggy, hiking"
-        }
-      },
-      {
-        "text": {
-          "en": "There was nothing to see beyond a few paces of damp stone and pale air, and so the body simply did what bodies do — leaned forward, found the next step, kept on.",
-          "ru": "Дальше нескольких шагов сырого камня и бледного воздуха не было видно ничего, и тело просто делало то, что делают тела, — наклонялось вперёд, нащупывало следующий шаг, шло дальше.",
-          "de": "Mehr als ein paar Schritte feuchten Steins und blasser Luft war nicht zu sehen, und so tat der Körper, was Körper eben tun — er lehnte sich vor, fand den nächsten Tritt, ging weiter."
-        },
-        "provenance": {
-          "source": "inferred",
-          "reference": "atmosphere of foggy climb"
-        }
-      },
-      {
-        "text": {
-          "en": "Just over a hundred minutes of walking, barely more than two kilometres on the map, and yet six hundred metres of patient, vertical effort under the cloud.",
-          "ru": "Чуть больше ста минут ходьбы, едва за два километра по карте, и при этом шестьсот метров терпеливого вертикального труда под облаком.",
-          "de": "Etwas mehr als hundert Minuten Gehen, kaum mehr als zwei Kilometer auf der Karte, und doch sechshundert Meter geduldiger, senkrechter Mühe unter der Wolke."
-        },
-        "provenance": {
-          "source": "gpx",
-          "reference": "duration_min, distance_km, elevation_gain_m"
+          "reference": "hiking toward the ridge in fog"
         }
       }
     ],
     [
       {
         "text": {
-          "en": "And then, at the ridge, the fog lifted.",
-          "ru": "А потом, на гребне, туман отступил.",
-          "de": "Und dann, am Grat, hob sich der Nebel."
+          "en": "We climbed toward the ridge through that quiet wall of mist, seeing only a few steps of path ahead at a time.",
+          "ru": "Мы поднимались к хребту сквозь эту тихую стену тумана, видя перед собой лишь несколько шагов тропы.",
+          "de": "Wir stiegen durch diese stille Nebelwand zum Grat hinauf und sahen jeweils nur ein paar Schritte des Weges vor uns."
         },
         "provenance": {
           "source": "seed",
-          "reference": "fog cleared at the ridge"
+          "reference": "hiking toward the ridge in fog"
         }
       },
       {
         "text": {
-          "en": "It did not tear or rush; it simply thinned, the way breath leaves a window, until the Alps were standing there as though they had been waiting all along.",
-          "ru": "Он не рвался и не убегал — он просто истончался, как дыхание сходит со стекла, пока Альпы не оказались здесь, словно ждали нас всё это время.",
-          "de": "Er riss nicht auf und floh nicht; er wurde einfach dünner, so wie Atem von einer Scheibe weicht, bis die Alpen dastanden, als hätten sie die ganze Zeit gewartet."
-        },
-        "provenance": {
-          "source": "inferred",
-          "reference": "literary rendering of clearing weather"
-        }
-      },
-      {
-        "text": {
-          "en": "Thirteen hundred and thirty metres of stone beneath our boots, and a whole spring sky opening above.",
-          "ru": "Тысяча триста тридцать метров камня под ботинками — и целое весеннее небо, раскрывающееся сверху.",
-          "de": "Dreizehnhundertdreißig Meter Stein unter den Stiefeln und ein ganzer Frühlingshimmel, der sich darüber öffnete."
+          "en": "It was a long, steady climb for such a short distance, the kind that makes your legs remember it.",
+          "ru": "Подъём был долгий и упорный для такого короткого расстояния — из тех, что ноги потом долго помнят.",
+          "de": "Es war ein langer, zäher Anstieg für so eine kurze Strecke, einer von denen, an die sich die Beine später erinnern."
         },
         "provenance": {
           "source": "gpx",
-          "reference": "summit_elev_m"
+          "reference": "distance_km, elevation_gain_m, duration_min"
         }
       }
     ],
     [
       {
         "text": {
-          "en": "Twelve photographs survive from that morning, which feels about right — enough to remember by, not so many that the ridge becomes ordinary.",
-          "ru": "С того утра осталось двенадцать снимков, и это, кажется, как раз столько, сколько нужно: достаточно, чтобы помнить, и не столько, чтобы гребень стал привычным.",
-          "de": "Zwölf Fotos sind von jenem Morgen geblieben, und das fühlt sich richtig an — genug, um sich zu erinnern, nicht so viele, dass der Grat gewöhnlich wird."
+          "en": "And then, just as we reached the ridge, the fog lifted.",
+          "ru": "А потом, как только мы вышли на хребет, туман рассеялся.",
+          "de": "Und dann, gerade als wir den Grat erreichten, lichtete sich der Nebel."
         },
         "provenance": {
-          "source": "gpx",
-          "reference": "n_photos"
+          "source": "seed",
+          "reference": "fog cleared as the group reached the ridge"
         }
       },
       {
         "text": {
-          "en": "Some climbs you remember for the company, some for the ache in your legs; this one I will remember for the moment the air decided to let us see.",
-          "ru": "Иные восхождения помнишь по спутникам, иные — по ноющим ногам; это я буду помнить за тот миг, когда воздух решил позволить нам видеть.",
-          "de": "Manche Aufstiege bleiben einem wegen der Gesellschaft, manche wegen der Beine; diesen werde ich für den Augenblick behalten, in dem die Luft beschloss, uns sehen zu lassen."
+          "en": "It felt like the mountains had been waiting up there the whole time, just for us.",
+          "ru": "Казалось, будто горы всё это время ждали нас наверху — именно нас.",
+          "de": "Es fühlte sich an, als hätten die Berge die ganze Zeit dort oben gewartet, nur auf uns."
         },
         "provenance": {
           "source": "inferred",
-          "reference": "closing reflection on cleared fog"
+          "reference": "mood of fog lifting at the ridge"
+        }
+      },
+      {
+        "text": {
+          "en": "We stood up above the fog line in clean spring light, and it was worth every step.",
+          "ru": "Мы стояли над линией тумана в чистом весеннем свете, и это стоило каждого шага.",
+          "de": "Wir standen über der Nebelgrenze im klaren Frühlingslicht, und es war jeden Schritt wert."
+        },
+        "provenance": {
+          "source": "seed",
+          "reference": "fog cleared at ridge; season"
         }
       }
     ]
   ],
   "pull_quote": {
-    "en": "And then, at the ridge, the fog lifted.",
-    "ru": "А потом, на гребне, туман отступил.",
-    "de": "Und dann, am Grat, hob sich der Nebel."
+    "en": "Just as we reached the ridge, the fog lifted.",
+    "ru": "Как только мы вышли на хребет, туман рассеялся.",
+    "de": "Gerade als wir den Grat erreichten, lichtete sich der Nebel."
   },
   "milestone": {
-    "en": "First spring ridge in the Bavarian Alps",
-    "ru": "Первый весенний гребень в Баварских Альпах",
-    "de": "Erster Frühlingsgrat in den Bayerischen Alpen"
+    "en": "Above the fog line",
+    "ru": "Над туманом",
+    "de": "Über dem Nebel"
   },
   "selected_photo_indices": [
     0,
