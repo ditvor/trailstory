@@ -39,7 +39,9 @@ def test_defaults_match_documented_values() -> None:
     assert settings.photo_max_edge == 1800
     assert settings.photo_quality == 90
     assert settings.instagram_quality == 90
-    assert settings.narrative_max_tokens == 4096
+    # ADR-015 bumped this from 4096 to 8192 to fit the new chapter
+    # envelope's longer JSON output.
+    assert settings.narrative_max_tokens == 8192
     assert settings.narrative_max_retries == 3
 
 

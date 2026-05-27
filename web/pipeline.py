@@ -8,9 +8,10 @@ keeps the *pipeline* logic in one place so the route handlers stay thin.
 
 Public surface:
 
-* :class:`Style` — three-value enum mirroring the form's radio buttons
-  (editorial / log / encyclopedia). Per ADR-006 the style chooses the
-  visual template only — the narrative text is identical across styles.
+* :class:`Style` — enum mirroring the form's radio buttons. Per ADR-006
+  the style chooses the visual template only — the narrative text is
+  identical across styles. v0 ships ``editorial`` only (ADR-015);
+  Zine / Sunday / Postcard / Album land in subsequent renderer PRs.
 * :func:`prepare_pipeline` — runs the deterministic prep phase (parse +
   load_photos) and persists the inputs as ``pending.json`` so the SSE
   endpoint can resume with a streaming LLM call.
@@ -63,12 +64,15 @@ class Style(StrEnum):
 
     The narrative is identical across styles (one prompt, one
     NarrativeOutput); only the rendering template differs. See
-    `docs/adr/006-three-visual-styles-share-one-narrative.md`.
+    `docs/adr/006-three-visual-styles-share-one-narrative.md` and
+    `docs/adr/015-chapter-based-narrative.md`.
+
+    v0 ships ``editorial`` only. The four Trailpath styles
+    (Zine / Sunday / Postcard / Album) land as separate renderer PRs
+    and add their enum values then.
     """
 
     editorial = "editorial"
-    log = "log"
-    encyclopedia = "encyclopedia"
 
     @classmethod
     def default(cls) -> Style:

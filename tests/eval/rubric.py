@@ -18,7 +18,7 @@ from dataclasses import dataclass
 
 from pydantic import ValidationError
 
-from trailstory.models import NarrativeOutput
+from trailstory.models import CHAPTER_COUNT, NarrativeOutput
 
 # Cyrillic block (U+0400-U+04FF) plus Cyrillic Supplement (U+0500-U+052F).
 # Spelled as Unicode escapes so the range is unambiguous in any terminal.
@@ -56,23 +56,63 @@ def schema_validates(narrative: NarrativeOutput) -> RubricResult:
     return RubricResult(name, True, "ok")
 
 
-def paragraph_count_3_to_5_each_lang(narrative: NarrativeOutput) -> RubricResult:
-    """EN, RU, and DE paragraph lists must each contain 3 to 5 entries.
+def chapter_count_is_six(narrative: NarrativeOutput) -> RubricResult:
+    """Narratives must contain exactly :data:`CHAPTER_COUNT` chapters.
 
-    ADR-014: paragraphs are now ``list[Paragraph]`` with sentence-level
-    provenance. We count via ``paragraphs_as_localized()`` so the same
-    rubric check works on the new shape; the count is the same across
-    languages by construction (one paragraph entry per language is one
-    paragraph object).
+    ADR-015: the Trailpath layouts assume six chapters per hike — the
+    Zine contents list, the Sunday STOP badges, the Postcard set count,
+    and the Album page rhythm all depend on it. Pydantic enforces the
+    range at model-validate time; this rubric row exists so the eval
+    table records the structural invariant alongside the rest.
+    """
+    name = "chapter_count_is_six"
+    n = len(narrative.chapters)
+    if n == CHAPTER_COUNT:
+        return RubricResult(name, True, f"{n} chapters")
+    return RubricResult(name, False, f"got {n} chapters; expected {CHAPTER_COUNT}")
+
+
+def chapter_photo_binding_valid(narrative: NarrativeOutput, n_photos: int) -> RubricResult:
+    """Every ``chapter.photo_index`` is in ``[0, n_photos)`` and unique.
+
+    The chapter-photo binding is one-to-one by design: no two chapters
+    bind the same photo, and every binding lands in the available
+    photo set. The carousel renderer and the Letter template both
+    walk this list to gather their photos, so a drift here breaks
+    rendering.
+    """
+    name = "chapter_photo_binding_valid"
+    indices = [c.photo_index for c in narrative.chapters]
+    out_of_range = [i for i in indices if not 0 <= i < n_photos]
+    if out_of_range:
+        return RubricResult(
+            name,
+            False,
+            f"out-of-range chapter photo_index {out_of_range} (n_photos={n_photos})",
+        )
+    if len(set(indices)) != len(indices):
+        return RubricResult(name, False, f"duplicate chapter photo_index in {indices}")
+    return RubricResult(name, True, f"{len(indices)} unique indices, all in range")
+
+
+def paragraph_count_3_to_5_each_lang(narrative: NarrativeOutput) -> RubricResult:
+    """EN, RU, and DE paragraph lists must each contain 3 to 6 entries.
+
+    ADR-015: chapter bodies become the paragraphs of the flat view via
+    ``paragraphs_as_localized()`` — six chapters yields six paragraphs.
+    The range loosened from 3-5 to 3-6 to accommodate the six-chapter
+    contract; tighter bounds belong on chapter count
+    (``chapter_count_is_six``), not on the flat view that's a derived
+    convenience for legacy consumers.
     """
     name = "paragraph_count_3_to_5_each_lang"
     flat = narrative.paragraphs_as_localized()
     en = len(flat.en)
     ru = len(flat.ru)
     de = len(flat.de)
-    if 3 <= en <= 5 and 3 <= ru <= 5 and 3 <= de <= 5:
+    if 3 <= en <= 6 and 3 <= ru <= 6 and 3 <= de <= 6:
         return RubricResult(name, True, f"en={en}, ru={ru}, de={de}")
-    return RubricResult(name, False, f"en={en}, ru={ru}, de={de} (expected 3-5 each)")
+    return RubricResult(name, False, f"en={en}, ru={ru}, de={de} (expected 3-6 each)")
 
 
 def russian_actually_cyrillic(narrative: NarrativeOutput) -> RubricResult:
@@ -165,25 +205,6 @@ def milestone_under_30_chars(narrative: NarrativeOutput) -> RubricResult:
     )
 
 
-def indices_valid(narrative: NarrativeOutput, n_photos: int) -> RubricResult:
-    """``selected_photo_indices``: 6-8 entries, all in ``[0, n_photos)``, no dupes."""
-    name = "indices_valid"
-    indices = narrative.selected_photo_indices
-    n = len(indices)
-    if not 6 <= n <= 8:
-        return RubricResult(name, False, f"got {n} indices; expected 6-8")
-    out_of_range = [i for i in indices if not 0 <= i < n_photos]
-    if out_of_range:
-        return RubricResult(
-            name,
-            False,
-            f"out-of-range indices {out_of_range} (n_photos={n_photos})",
-        )
-    if len(set(indices)) != n:
-        return RubricResult(name, False, f"duplicate indices in {indices}")
-    return RubricResult(name, True, f"{n} indices, all valid")
-
-
 def pull_quote_drawn_from_body(narrative: NarrativeOutput) -> RubricResult:
     """``pull_quote.en`` shares ≥60% of its words with at least one EN paragraph.
 
@@ -211,6 +232,8 @@ def apply_rubric(narrative: NarrativeOutput, n_photos: int) -> list[RubricResult
     """Run every rubric check and return the results in display order."""
     return [
         schema_validates(narrative),
+        chapter_count_is_six(narrative),
+        chapter_photo_binding_valid(narrative, n_photos),
         paragraph_count_3_to_5_each_lang(narrative),
         russian_actually_cyrillic(narrative),
         word_count_ratio_en_ru_in_0_7_to_1_4(narrative),
@@ -218,7 +241,6 @@ def apply_rubric(narrative: NarrativeOutput, n_photos: int) -> list[RubricResult
         title_under_60_chars(narrative),
         subtitle_under_90_chars(narrative),
         milestone_under_30_chars(narrative),
-        indices_valid(narrative, n_photos),
         pull_quote_drawn_from_body(narrative),
     ]
 

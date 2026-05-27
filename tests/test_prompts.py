@@ -223,17 +223,28 @@ def test_user_template_embedded_json_skeleton_is_valid_json(
     assert set(parsed.keys()) == set(NarrativeOutput.model_fields)
 
 
-def test_user_template_skeleton_lists_six_to_eight_photo_indices(
+def test_user_template_skeleton_documents_chapter_photo_index_field(
     sample_fields: dict[str, object],
 ) -> None:
-    """The example value for ``selected_photo_indices`` should fall inside the
-    6-8 range the prompt asks the model to produce — otherwise the example
-    contradicts the instruction."""
+    """ADR-015: each chapter binds one photo via ``photo_index``. The
+    skeleton's example chapter must demonstrate the field — otherwise
+    the model has no shape to copy."""
     rendered = USER_NARRATIVE_TEMPLATE.format(**sample_fields)
-    match = re.search(r'"selected_photo_indices"\s*:\s*\[([^\]]*)\]', rendered)
-    assert match is not None
-    items = [s for s in (p.strip() for p in match.group(1).split(",")) if s]
-    assert 6 <= len(items) <= 8
+    assert '"photo_index"' in rendered, (
+        '"photo_index" key missing from chapter skeleton; the model would not know to emit it'
+    )
+
+
+def test_user_template_demands_exactly_six_chapters(
+    sample_fields: dict[str, object],
+) -> None:
+    """ADR-015: the writer must produce exactly six chapter envelopes —
+    the Trailpath layouts depend on the count."""
+    rendered = USER_NARRATIVE_TEMPLATE.format(**sample_fields)
+    text = rendered.lower()
+    # Permissive substring check so the wording can evolve; "six chapters"
+    # is the load-bearing instruction phrase.
+    assert "six chapters" in text or "exactly 6 chapters" in text or "exactly six" in text
 
 
 def test_user_template_skeleton_carries_three_languages_per_field(
@@ -243,11 +254,12 @@ def test_user_template_skeleton_carries_three_languages_per_field(
     EN, RU, and DE — that's the structural contract the model is asked to
     follow on every generation."""
     rendered = USER_NARRATIVE_TEMPLATE.format(**sample_fields)
-    for field in ("title", "subtitle", "paragraphs", "pull_quote", "milestone"):
+    for field in ("title", "subtitle", "chapters", "pull_quote", "milestone"):
         block_start = rendered.index(f'"{field}"')
-        # Look at the next ~400 chars after the field name; the nested
-        # object/array containing en/ru/de keys lives there.
-        window = rendered[block_start : block_start + 400]
+        # Look at the next ~700 chars after the field name; the chapter
+        # object embeds nested title/place/body LocalizedString blocks, so
+        # we need a wider window for that one.
+        window = rendered[block_start : block_start + 700]
         assert '"en"' in window, f'{field}: no "en" key found near declaration'
         assert '"ru"' in window, f'{field}: no "ru" key found near declaration'
         assert '"de"' in window, f'{field}: no "de" key found near declaration'

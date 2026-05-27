@@ -26,13 +26,16 @@ REPO_ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(REPO_ROOT))
 
 from trailstory.models import (  # noqa: E402
+    Chapter,
     GpxStats,
     HikeInput,
-    LocalizedParagraphs,
     LocalizedString,
     Memory,
     NarrativeOutput,
     PhotoMeta,
+    Provenance,
+    ProvenanceSource,
+    Sentence,
     Style,
     Waypoint,
 )
@@ -136,7 +139,51 @@ def synthesize_gpx_stats() -> GpxStats:
     )
 
 
-def build_narrative() -> NarrativeOutput:
+_BAD_TOELZ_PLACE = LocalizedString(
+    en="Bad Tölz, Bavaria",
+    ru="Бад-Тёльц, Бавария",
+    de="Bad Tölz, Bayern",
+)
+
+
+def _sentence(en: str, ru: str, de: str) -> Sentence:
+    return Sentence(
+        text=LocalizedString(en=en, ru=ru, de=de),
+        provenance=Provenance(source=ProvenanceSource.SEED, reference="example fixture"),
+    )
+
+
+def _chapter(
+    *,
+    chapter_id: str,
+    time: str,
+    lat: float,
+    lon: float,
+    title_en: str,
+    title_ru: str,
+    title_de: str,
+    sentences: list[tuple[str, str, str]],
+    photo_index: int,
+) -> Chapter:
+    return Chapter(
+        id=chapter_id,
+        time=time,
+        place=_BAD_TOELZ_PLACE,
+        lat=lat,
+        lon=lon,
+        title=LocalizedString(en=title_en, ru=title_ru, de=title_de),
+        body=[_sentence(en, ru, de) for en, ru, de in sentences],
+        photo_index=photo_index,
+    )
+
+
+def build_narrative(n_photos: int) -> NarrativeOutput:
+    """Build a six-chapter narrative under ADR-015 from the example prose.
+
+    ``n_photos`` lets ``main()`` clamp the chapter→photo binding to
+    indices that actually exist after the extractor runs.
+    """
+    photo_indices = [min(i, max(0, n_photos - 1)) for i in range(6)]
     return NarrativeOutput(
         title=LocalizedString(
             en="Wax Saints & River Air",
@@ -144,30 +191,158 @@ def build_narrative() -> NarrativeOutput:
             de="Wachsheilige und Flussluft",
         ),
         subtitle=LocalizedString(
-            en="A warm April Saturday along the Isar — brunch, a creepy church, and dinner by the water.",
-            ru="Тёплая апрельская суббота вдоль Изара — бранч, жуткая церковь и ужин у воды.",
-            de="Ein warmer Aprilsamstag an der Isar — Brunch, eine schaurige Kirche und Abendessen am Wasser.",
+            en=(
+                "A warm April Saturday along the Isar — brunch, a creepy church, "
+                "and dinner by the water."
+            ),
+            ru=("Тёплая апрельская суббота вдоль Изара — бранч, жуткая церковь и ужин у воды."),
+            de=(
+                "Ein warmer Aprilsamstag an der Isar — Brunch, eine schaurige Kirche "
+                "und Abendessen am Wasser."
+            ),
         ),
-        paragraphs=LocalizedParagraphs(
-            en=[
-                "We pulled into the parking spot just around noon, the kind of warm April Saturday that makes you glad you didn't sleep in. Bad Tölz greeted us with blue skies and a city centre that felt unhurried and inviting. We found a spot for brunch, and little Danny promptly became the star of the room — strangers couldn't help but stop and say hello.",
-                "Fed and happy, we followed the Isar out of town. The river has a way of pulling you along, and for the next few hours the four of us — plus Danny in the carrier — let it do exactly that.",
-                "Eight kilometres and just over four hours later, we were tired in the best possible way. The highlight nobody had planned for was a small old church tucked along the route, its interior populated with wax figures of Jesus and his disciples lurking in unexpected corners. Genuinely eerie, genuinely unforgettable.",
-                "We capped the evening with Asian food to go, eaten on the riverbank as the light faded.",
-            ],
-            ru=[
-                "Мы припарковались около полудня — в один из тех тёплых апрельских субботних дней, когда радуешься, что не залежался в постели. Бад-Тёльц встретил нас голубым небом и неспешным, располагающим к прогулке центром города. Нашли место для бранча, и маленький Дэнни моментально стал звездой заведения — прохожие то и дело останавливались, чтобы с ним поздороваться.",
-                "Сытые и довольные, мы двинулись вдоль Изара за город. Река умеет увлекать за собой, и несколько ближайших часов мы просто шли туда, куда она вела, — все четверо, и Дэнни в слинг-рюкзаке.",
-                "8,3 километра и чуть больше четырёх часов спустя усталость была приятной. Незапланированным открытием стала маленькая старая церковь на маршруте: внутри нас поджидали восковые фигуры Иисуса и его учеников, расставленные в самых неожиданных местах. По-настоящему жутко — и по-настоящему незабываемо.",
-                "Вечер завершили едой навынос из азиатского кафе, которую съели прямо на берегу реки, пока гасло небо.",
-            ],
-            de=[
-                "Wir kamen gegen Mittag am Parkplatz an — an einem jener warmen Aprilsamstage, an denen man froh ist, nicht länger im Bett geblieben zu sein. Bad Tölz empfing uns mit blauem Himmel und einem Stadtzentrum, das einladend und entspannt wirkte. Wir fanden einen Platz für einen ausgedehnten Brunch, und der kleine Danny wurde prompt zum Mittelpunkt des Raumes — Fremde konnten einfach nicht widerstehen, ihn anzulächeln und Hallo zu sagen.",
-                "Gestärkt und gut gelaunt folgten wir der Isar aus der Stadt hinaus. Der Fluss hat eine Art, einen mitzuziehen, und genau das ließen wir die nächsten Stunden zu — alle vier, Danny im Tragerucksack.",
-                "8,3 Kilometer und gut vier Stunden später waren wir auf die schönste Art erschöpft. Das ungeplante Highlight war eine kleine alte Kirche am Wegesrand, in der Wachsfiguren von Jesus und seinen Jüngern an unverhofften Stellen auf uns warteten. Wirklich gruselig — und wirklich unvergesslich.",
-                "Den Abend ließen wir mit asiatischem Essen zum Mitnehmen ausklingen, gegessen am Flussufer, während das Licht langsam verblasste.",
-            ],
-        ),
+        chapters=[
+            _chapter(
+                chapter_id="arrival",
+                time="12:05",
+                lat=47.7613,
+                lon=11.5594,
+                title_en="Arrival",
+                title_ru="Приезд",
+                title_de="Ankunft",
+                sentences=[
+                    (
+                        "We pulled into the parking spot just around noon, a warm April Saturday.",
+                        "Мы припарковались около полудня — тёплая апрельская суббота.",
+                        ("Wir kamen gegen Mittag am Parkplatz an — ein warmer Aprilsamstag."),
+                    ),
+                    (
+                        "Bad Tölz greeted us with blue skies and an unhurried centre.",
+                        "Бад-Тёльц встретил нас голубым небом и неспешным центром.",
+                        ("Bad Tölz empfing uns mit blauem Himmel und einem ruhigen Zentrum."),
+                    ),
+                ],
+                photo_index=photo_indices[0],
+            ),
+            _chapter(
+                chapter_id="brunch",
+                time="12:45",
+                lat=47.7610,
+                lon=11.5602,
+                title_en="Brunch",
+                title_ru="Бранч",
+                title_de="Brunch",
+                sentences=[
+                    (
+                        "We found a spot for brunch and little Danny became the star of the room.",
+                        ("Нашли место для бранча, и маленький Дэнни стал звездой заведения."),
+                        (
+                            "Wir fanden einen Platz für einen Brunch, und der "
+                            "kleine Danny wurde zum Mittelpunkt des Raumes."
+                        ),
+                    ),
+                ],
+                photo_index=photo_indices[1],
+            ),
+            _chapter(
+                chapter_id="river",
+                time="14:00",
+                lat=47.7567,
+                lon=11.5552,
+                title_en="Along the Isar",
+                title_ru="Вдоль Изара",
+                title_de="An der Isar",
+                sentences=[
+                    (
+                        "Fed and happy, we followed the Isar out of town.",
+                        "Сытые и довольные, мы двинулись вдоль Изара за город.",
+                        "Gestärkt und gut gelaunt folgten wir der Isar.",
+                    ),
+                    (
+                        "The river has a way of pulling you along.",
+                        "Река умеет увлекать за собой.",
+                        "Der Fluss hat eine Art, einen mitzuziehen.",
+                    ),
+                ],
+                photo_index=photo_indices[2],
+            ),
+            _chapter(
+                chapter_id="church",
+                time="15:30",
+                lat=47.7551,
+                lon=11.5489,
+                title_en="The Wax Saints",
+                title_ru="Восковые святые",
+                title_de="Die Wachsheiligen",
+                sentences=[
+                    (
+                        "The highlight nobody planned was a small old church along the route.",
+                        ("Незапланированным открытием стала маленькая старая церковь на маршруте."),
+                        ("Das ungeplante Highlight war eine kleine alte Kirche am Wegesrand."),
+                    ),
+                    (
+                        "Wax figures of Jesus and his disciples lurked in unexpected corners.",
+                        (
+                            "Восковые фигуры Иисуса и его учеников поджидали "
+                            "в самых неожиданных местах."
+                        ),
+                        (
+                            "Wachsfiguren von Jesus und seinen Jüngern warteten "
+                            "an unverhofften Stellen."
+                        ),
+                    ),
+                ],
+                photo_index=photo_indices[3],
+            ),
+            _chapter(
+                chapter_id="return",
+                time="17:45",
+                lat=47.7589,
+                lon=11.5572,
+                title_en="Coming back",
+                title_ru="Возвращение",
+                title_de="Rückweg",
+                sentences=[
+                    (
+                        "Eight kilometres and just over four hours later, "
+                        "we were tired in the best possible way.",
+                        (
+                            "8,3 километра и чуть больше четырёх часов спустя "
+                            "усталость была приятной."
+                        ),
+                        (
+                            "8,3 Kilometer und gut vier Stunden später waren wir "
+                            "auf die schönste Art erschöpft."
+                        ),
+                    ),
+                ],
+                photo_index=photo_indices[4],
+            ),
+            _chapter(
+                chapter_id="dinner",
+                time="19:00",
+                lat=47.7606,
+                lon=11.5598,
+                title_en="Dinner by the water",
+                title_ru="Ужин у воды",
+                title_de="Abendessen am Wasser",
+                sentences=[
+                    (
+                        "We capped the evening with Asian food to go, "
+                        "eaten on the riverbank as the light faded.",
+                        (
+                            "Вечер завершили едой навынос из азиатского кафе, "
+                            "съеденной у реки, пока гасло небо."
+                        ),
+                        (
+                            "Den Abend ließen wir mit asiatischem Essen zum Mitnehmen "
+                            "am Flussufer ausklingen."
+                        ),
+                    ),
+                ],
+                photo_index=photo_indices[5],
+            ),
+        ],
         pull_quote=LocalizedString(
             en="Genuinely eerie, genuinely unforgettable.",
             ru="По-настоящему жутко — и по-настоящему незабываемо.",
@@ -178,8 +353,6 @@ def build_narrative() -> NarrativeOutput:
             ru="Первая суббота в Бад-Тёльце",
             de="Erster Samstag in Bad Tölz",
         ),
-        # Filled in by main() once we know how many uniques we extracted.
-        selected_photo_indices=[],
     )
 
 
@@ -199,19 +372,23 @@ def main() -> None:
         for i, p in enumerate(photo_paths)
     ]
 
-    narrative = build_narrative()
-    narrative.selected_photo_indices = list(range(len(photo_paths)))
+    narrative = build_narrative(len(photo_paths))
     stats = synthesize_gpx_stats()
+    # ADR-015: Memory.selected_photos is the chapter-bound list, in chapter order.
+    selected = [photo_metas[c.photo_index] for c in narrative.chapters]
     memory = Memory(
         hike_input=HikeInput(
             gpx_path=PHOTOS_DIR / "fake.gpx",
             photos_dir=PHOTOS_DIR,
-            seed_text="Bad Tölz on a warm April Saturday: river walk + brunch + that strange wax-figure church.",
+            seed_text=(
+                "Bad Tölz on a warm April Saturday: river walk + brunch + that "
+                "strange wax-figure church."
+            ),
             location_name="Bad Tölz, Bavaria",
         ),
         gpx_stats=stats,
         narrative=narrative,
-        selected_photos=photo_metas,
+        selected_photos=selected,
         style=Style.editorial,
     )
 

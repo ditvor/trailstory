@@ -14,7 +14,7 @@ from __future__ import annotations
 
 import pytest
 
-from tests.conftest import paragraphs_from_strings
+from tests.conftest import chapters_from_strings
 from tests.eval import rubric
 from tests.eval.rubric import RubricResult
 from trailstory.models import (
@@ -29,10 +29,11 @@ def _good_narrative() -> NarrativeOutput:
 
     Each test below derives negative fixtures from this baseline via
     ``model_copy(update=...)`` so a single failing field is the only
-    thing the assertion is responding to.
+    thing the assertion is responding to. ADR-015: six chapters,
+    one bound photo each.
     """
     return NarrativeOutput(
-        schema_version=3,
+        schema_version=4,
         title=LocalizedString(
             en="Above the fog line",
             ru="Над линией тумана",
@@ -43,24 +44,30 @@ def _good_narrative() -> NarrativeOutput:
             ru="Тихое утро над морем облаков",
             de="Ein stiller Morgen über dem Wolkenmeer",
         ),
-        paragraphs=paragraphs_from_strings(
+        chapters=chapters_from_strings(
             en=[
                 "We left the trailhead at first light, the air sharp with damp moss.",
+                "The forest closed in around us; pine needles softened every step.",
                 "By the saddle the cloud was thinning into a soft white scarf.",
                 "Mia slept the whole climb, her cheek warm against the carrier.",
                 "At the ridge the fog cleared and the valley opened beneath us.",
+                "We came down slowly, the light golden on the meadow grass.",
             ],
             ru=[
                 "Вышли на тропу с первыми лучами; воздух пах мхом и хвоей.",  # noqa: RUF001
+                "Лес сомкнулся вокруг нас; хвоя смягчала каждый шаг.",
                 "К седловине облака уже редели, превращаясь в белый шарф.",  # noqa: RUF001
                 "Мия проспала весь подъём, прижавшись щекой к переноске.",
                 "На хребте туман рассеялся, и долина раскинулась под нами.",  # noqa: RUF001
+                "Мы спускались медленно, свет золотил траву на лугу.",
             ],
             de=[
                 "Bei erstem Licht brachen wir auf, die Luft scharf von feuchtem Moos.",
+                "Der Wald schloss sich um uns; Kiefernnadeln dämpften jeden Schritt.",
                 "Am Sattel zog die Wolke sich zu einem weichen weißen Schal zusammen.",
                 "Mia schlief den ganzen Aufstieg, die Wange warm an der Trage.",
                 "Am Grat lichtete sich der Nebel und das Tal öffnete sich unter uns.",
+                "Wir stiegen langsam ab, das Licht golden auf dem Wiesengras.",
             ],
         ),
         pull_quote=LocalizedString(
@@ -73,7 +80,6 @@ def _good_narrative() -> NarrativeOutput:
             ru="Первый горный поход",
             de="Erste Bergwanderung",
         ),
-        selected_photo_indices=[0, 1, 2, 3, 4, 5],
     )
 
 
@@ -110,11 +116,60 @@ def test_schema_validates_fails_when_field_type_is_corrupted() -> None:
     # ``model_copy(update=...)`` does not re-validate — we use it here to
     # simulate the corrupted-state failure mode the check exists to detect.
     corrupted = _good_narrative().model_copy(
-        update={"paragraphs": "not a at all"},
+        update={"chapters": "not a list at all"},
     )
     result = rubric.schema_validates(corrupted)
     assert result.passed is False
     assert result.detail  # carries the validation-error message
+
+
+# ── chapter_count_is_six ────────────────────────────────────────────────────
+
+
+def test_chapter_count_is_six_passes_on_six_chapters() -> None:
+    result = rubric.chapter_count_is_six(_good_narrative())
+    assert result.passed is True
+    assert "6 chapters" in result.detail
+
+
+def test_chapter_count_is_six_fails_when_short() -> None:
+    """Pydantic enforces the count at validate time; the rubric check
+    surfaces the same invariant in the eval table. To exercise the
+    failure branch we slice the chapter list directly via
+    ``model_copy(update=...)`` (no re-validation)."""
+    base = _good_narrative()
+    narrative = base.model_copy(update={"chapters": list(base.chapters[:4])})
+    result = rubric.chapter_count_is_six(narrative)
+    assert result.passed is False
+    assert "got 4 chapters" in result.detail
+
+
+# ── chapter_photo_binding_valid ────────────────────────────────────────────
+
+
+def test_chapter_photo_binding_valid_passes_with_six_unique_in_range() -> None:
+    result = rubric.chapter_photo_binding_valid(_good_narrative(), n_photos=12)
+    assert result.passed is True
+
+
+def test_chapter_photo_binding_valid_fails_on_out_of_range_index() -> None:
+    base = _good_narrative()
+    chapters = list(base.chapters)
+    chapters[0] = chapters[0].model_copy(update={"photo_index": 99})
+    narrative = base.model_copy(update={"chapters": chapters})
+    result = rubric.chapter_photo_binding_valid(narrative, n_photos=10)
+    assert result.passed is False
+    assert "out-of-range" in result.detail
+
+
+def test_chapter_photo_binding_valid_fails_on_duplicate_index() -> None:
+    base = _good_narrative()
+    chapters = list(base.chapters)
+    chapters[1] = chapters[1].model_copy(update={"photo_index": chapters[0].photo_index})
+    narrative = base.model_copy(update={"chapters": chapters})
+    result = rubric.chapter_photo_binding_valid(narrative, n_photos=12)
+    assert result.passed is False
+    assert "duplicate" in result.detail
 
 
 # ── paragraph_count_3_to_5_each_lang ────────────────────────────────────────
@@ -126,12 +181,13 @@ def test_paragraph_count_passes_when_each_lang_in_range() -> None:
 
 
 def test_paragraph_count_fails_when_too_few() -> None:
-    """ADR-014: paragraphs is one list shared across languages, so the
-    EN-too-few / RU-too-many / DE-too-few failure modes collapse to one:
-    the paragraph list length is outside the 3-5 range. Tri-lingual
-    mismatch is now impossible by construction."""
+    """ADR-015: paragraphs is a computed view over chapter bodies — six
+    chapters yields six 'paragraphs'. To force this rubric below the 3-6
+    bound we slice the chapters list, simulating a corrupted state where
+    Pydantic's chapter-count validator was bypassed (``model_copy`` does
+    not re-validate)."""
     base = _good_narrative()
-    narrative = base.model_copy(update={"paragraphs": base.paragraphs[:2]})
+    narrative = base.model_copy(update={"chapters": list(base.chapters[:2])})
     result = rubric.paragraph_count_3_to_5_each_lang(narrative)
     assert result.passed is False
     assert "en=2" in result.detail and "ru=2" in result.detail and "de=2" in result.detail
@@ -139,10 +195,8 @@ def test_paragraph_count_fails_when_too_few() -> None:
 
 def test_paragraph_count_fails_when_too_many() -> None:
     base = _good_narrative()
-    # _good_narrative has 4 paragraphs; tripling gives 12.
-    narrative = base.model_copy(
-        update={"paragraphs": base.paragraphs + base.paragraphs + base.paragraphs}
-    )
+    # _good_narrative has 6 chapters; doubling gives 12, above the bound.
+    narrative = base.model_copy(update={"chapters": list(base.chapters) + list(base.chapters)})
     result = rubric.paragraph_count_3_to_5_each_lang(narrative)
     assert result.passed is False
     assert "en=12" in result.detail
@@ -157,19 +211,20 @@ def test_russian_actually_cyrillic_passes_on_pure_cyrillic() -> None:
 
 
 def _replace_ru_paragraph(narrative: NarrativeOutput, index: int, new_ru: str) -> NarrativeOutput:
-    """Helper for ADR-014 sentence-level structure: rewrite the RU text of
-    paragraph ``index`` to ``new_ru`` while keeping EN/DE intact. The
-    paragraph becomes a single sentence carrying the replacement text."""
-    paragraphs = list(narrative.paragraphs)
-    # Reuse the first sentence's EN + DE; replace RU with the test fixture.
-    first_sent = paragraphs[index][0]
-    paragraphs[index] = [
+    """ADR-015: rewrite the RU body text of chapter ``index`` to ``new_ru``
+    while keeping EN/DE intact. The chapter body becomes a single sentence
+    carrying the replacement text."""
+    chapters = list(narrative.chapters)
+    target = chapters[index]
+    first_sent = target.body[0]
+    new_body = [
         Sentence(
             text=LocalizedString(en=first_sent.text.en, ru=new_ru, de=first_sent.text.de),
             provenance=first_sent.provenance,
         )
     ]
-    return narrative.model_copy(update={"paragraphs": paragraphs})
+    chapters[index] = target.model_copy(update={"body": new_body})
+    return narrative.model_copy(update={"chapters": chapters})
 
 
 def test_russian_actually_cyrillic_fails_when_paragraph_has_no_cyrillic() -> None:
@@ -213,28 +268,27 @@ def _replace_paragraph_text(
     ru: list[str] | None = None,
     de: list[str] | None = None,
 ) -> NarrativeOutput:
-    """Replace per-language paragraph text while keeping the structure.
+    """Replace per-language body text of each chapter while keeping structure.
 
-    For each provided language, paragraph ``i`` becomes a single sentence
-    whose text in that language is ``[i]``. Languages not supplied keep
-    their original sentence joined-text.
+    For each provided language, chapter ``i``'s body becomes a single
+    sentence whose text in that language is ``[i]``. Languages not
+    supplied keep their original sentence text. ADR-015.
     """
-    new_paragraphs: list[list[Sentence]] = []
-    for i, paragraph in enumerate(narrative.paragraphs):
-        orig = paragraph[0]
-        new_paragraphs.append(
-            [
-                Sentence(
-                    text=LocalizedString(
-                        en=en[i] if en is not None and i < len(en) else orig.text.en,
-                        ru=ru[i] if ru is not None and i < len(ru) else orig.text.ru,
-                        de=de[i] if de is not None and i < len(de) else orig.text.de,
-                    ),
-                    provenance=orig.provenance,
-                )
-            ]
-        )
-    return narrative.model_copy(update={"paragraphs": new_paragraphs})
+    chapters: list[object] = []
+    for i, chapter in enumerate(narrative.chapters):
+        orig = chapter.body[0]
+        new_body = [
+            Sentence(
+                text=LocalizedString(
+                    en=en[i] if en is not None and i < len(en) else orig.text.en,
+                    ru=ru[i] if ru is not None and i < len(ru) else orig.text.ru,
+                    de=de[i] if de is not None and i < len(de) else orig.text.de,
+                ),
+                provenance=orig.provenance,
+            )
+        ]
+        chapters.append(chapter.model_copy(update={"body": new_body}))
+    return narrative.model_copy(update={"chapters": chapters})
 
 
 def test_word_count_ratio_fails_when_ru_far_shorter_than_en() -> None:
@@ -322,58 +376,6 @@ def test_milestone_under_30_chars_fails_when_too_long() -> None:
     assert result.passed is False
 
 
-# ── indices_valid ────────────────────────────────────────────────────────────
-
-
-def test_indices_valid_passes_with_six_unique_in_range() -> None:
-    result = rubric.indices_valid(_good_narrative(), n_photos=12)
-    assert result.passed is True
-
-
-def test_indices_valid_passes_at_upper_count_bound() -> None:
-    narrative = _good_narrative().model_copy(
-        update={"selected_photo_indices": [0, 1, 2, 3, 4, 5, 6, 7]},
-    )
-    result = rubric.indices_valid(narrative, n_photos=12)
-    assert result.passed is True
-
-
-def test_indices_valid_fails_with_too_few_indices() -> None:
-    narrative = _good_narrative().model_copy(
-        update={"selected_photo_indices": [0, 1, 2, 3, 4]},
-    )
-    result = rubric.indices_valid(narrative, n_photos=12)
-    assert result.passed is False
-    assert "5 indices" in result.detail
-
-
-def test_indices_valid_fails_with_too_many_indices() -> None:
-    narrative = _good_narrative().model_copy(
-        update={"selected_photo_indices": [0, 1, 2, 3, 4, 5, 6, 7, 8]},
-    )
-    result = rubric.indices_valid(narrative, n_photos=12)
-    assert result.passed is False
-    assert "9 indices" in result.detail
-
-
-def test_indices_valid_fails_with_out_of_range_index() -> None:
-    narrative = _good_narrative().model_copy(
-        update={"selected_photo_indices": [0, 1, 2, 3, 4, 99]},
-    )
-    result = rubric.indices_valid(narrative, n_photos=10)
-    assert result.passed is False
-    assert "out-of-range" in result.detail
-
-
-def test_indices_valid_fails_with_duplicate_index() -> None:
-    narrative = _good_narrative().model_copy(
-        update={"selected_photo_indices": [0, 0, 1, 2, 3, 4]},
-    )
-    result = rubric.indices_valid(narrative, n_photos=10)
-    assert result.passed is False
-    assert "duplicate" in result.detail
-
-
 # ── pull_quote_drawn_from_body ──────────────────────────────────────────────
 
 
@@ -408,6 +410,8 @@ def test_apply_rubric_returns_one_result_per_check_in_order() -> None:
     results = rubric.apply_rubric(_good_narrative(), n_photos=12)
     expected = [
         "schema_validates",
+        "chapter_count_is_six",
+        "chapter_photo_binding_valid",
         "paragraph_count_3_to_5_each_lang",
         "russian_actually_cyrillic",
         "word_count_ratio_en_ru_in_0_7_to_1_4",
@@ -415,7 +419,6 @@ def test_apply_rubric_returns_one_result_per_check_in_order() -> None:
         "title_under_60_chars",
         "subtitle_under_90_chars",
         "milestone_under_30_chars",
-        "indices_valid",
         "pull_quote_drawn_from_body",
     ]
     assert [r.name for r in results] == expected
@@ -441,23 +444,6 @@ def test_apply_rubric_surfaces_targeted_localized_failure(
     expected_failing_check: str,
 ) -> None:
     narrative = _replace(_good_narrative(), field=field, lang=lang, value=value)
-    results = rubric.apply_rubric(narrative, n_photos=12)
-    by_name = {r.name: r for r in results}
-    assert by_name[expected_failing_check].passed is False
-
-
-@pytest.mark.parametrize(
-    "field,value,expected_failing_check",
-    [
-        ("selected_photo_indices", [0, 1, 2], "indices_valid"),
-    ],
-)
-def test_apply_rubric_surfaces_top_level_failure(
-    field: str,
-    value: object,
-    expected_failing_check: str,
-) -> None:
-    narrative = _good_narrative().model_copy(update={field: value})
     results = rubric.apply_rubric(narrative, n_photos=12)
     by_name = {r.name: r for r in results}
     assert by_name[expected_failing_check].passed is False

@@ -11,13 +11,18 @@ class Style(StrEnum):
     """Visual treatment for the rendered memory page (see ADR-006).
 
     The same ``NarrativeOutput`` renders under any style — only the Jinja
-    template and CSS bundle differ. Adding a fourth style is a templates-
-    and-CSS PR plus one new enum value; no prompt or eval changes.
+    template and CSS bundle differ. Adding a new style is a templates-and-
+    CSS PR plus one new enum value; no prompt or eval changes.
+
+    v0 ships ``editorial`` (the Letter). ADR-015's roadmap adds Zine,
+    Sunday, Postcard, Album as separate template-only PRs; their enum
+    values land alongside their respective renderer PRs.
+    The legacy ``log`` and ``encyclopedia`` values were removed in
+    ADR-015 PR 1 — they were never surfaced in the picker and the v0
+    product decision is to ship the five Trailpath styles only.
     """
 
     editorial = "editorial"
-    log = "log"
-    encyclopedia = "encyclopedia"
 
 
 class Waypoint(BaseModel):
@@ -184,44 +189,110 @@ class Sentence(BaseModel):
 Paragraph = list[Sentence]
 
 
+# Exactly this many chapters per narrative under ADR-015. The Trailpath
+# layouts (Zine, Sunday, Postcard, Album) all assume a 6-chapter contract
+# — six "stops" per hike — so the writer is constrained to produce
+# exactly that count. A future ADR can relax this to a range if real
+# usage shows awkward bunching on short or all-day hikes.
+CHAPTER_COUNT: int = 6
+
+
+class Chapter(BaseModel):
+    """One stop in the hike — title, time, place, body, bound photo.
+
+    Introduced under ADR-015 as the data shape the Trailpath layouts
+    (Zine / Sunday / Postcard / Album) consume natively. Replaces the
+    flat ``paragraphs`` + ``selected_photo_indices`` pair on
+    ``NarrativeOutput``: a chapter envelope carries its own body
+    (sentence-level provenance preserved from ADR-014) plus the
+    metadata each layout needs (per-chapter time + place + a one-to-
+    one bound photo).
+    """
+
+    model_config = ConfigDict(frozen=True)
+
+    # Stable id ("arrival", "river", "dinner") used as DOM anchor and
+    # for chapter-rail nav. Slugged from ``title.en`` at writer time.
+    id: str
+    # GPX-derived. The writer is instructed to pick the timestamp of the
+    # photo bound to this chapter (its EXIF time, snapped to the nearest
+    # GPX waypoint). Format "HH:MM" 24-hour.
+    time: str
+    # Locality near ``coord`` — typically a coarse fallback to
+    # ``HikeInput.location_name`` until a reverse geocoder lands (see
+    # ADR-015 follow-ups).
+    place: LocalizedString
+    # Latitude / longitude of the bound photo (its GPS EXIF, or the
+    # nearest GPX waypoint when GPS is absent). Some layouts (the Zine
+    # route postmark, the Album rubber-stamp date+location) read these
+    # to anchor on-page decorative SVGs to a real point on the track.
+    lat: float
+    lon: float
+    # Short noun phrase. The writer is told to keep this concrete (a
+    # place-name, a beat-name); the rubric/judge layers gate it as part
+    # of the faithfulness axis.
+    title: LocalizedString
+    # 2-4 sentences, ~80-120 EN words. Same ``Sentence`` shape used for
+    # the per-sentence provenance UI (ADR-014).
+    body: Paragraph
+    # Index into the FULL ``PhotoMeta`` list the pipeline loaded. The
+    # orchestrator (CLI / web pipeline) builds ``Memory.selected_photos``
+    # by gathering these in chapter order, so by the time a renderer
+    # sees a ``Memory`` the chapter at position i binds to
+    # ``Memory.selected_photos[i]``.
+    photo_index: int = Field(ge=0)
+
+
 class NarrativeOutput(BaseModel):
     # Bump when the shape of NarrativeOutput changes in a way that would
     # invalidate cached entries (added/removed/renamed field, semantic
     # change to an existing one). The narrative cache (see
     # ``trailstory.llm.cache``) refuses to return entries whose
     # ``schema_version`` differs from the current value.
-    # v3 (ADR-014, Phase 4): paragraphs are now list[Paragraph] with
-    # sentence-level provenance. v2 entries (the old LocalizedParagraphs
-    # shape) cannot be loaded; cache misses on read.
-    schema_version: int = 3
+    # v4 (ADR-015): chapters replace flat paragraphs +
+    # selected_photo_indices. v3 entries (Phase 4 sentence-leveled flat
+    # paragraphs) cannot be loaded; cache misses on read.
+    schema_version: int = 4
     title: LocalizedString
     subtitle: LocalizedString
-    # Paragraphs are an ordered list of paragraphs; each paragraph is an
-    # ordered list of sentences; each sentence carries tri-lingual text +
-    # a single provenance tag. Joined per language for rendering via
-    # :meth:`paragraphs_as_localized` so existing flat-text consumers
-    # (rubric, instagram carousel) don't have to walk the structure.
-    paragraphs: list[Paragraph]
+    # Exactly :data:`CHAPTER_COUNT` chapters. Each is a self-contained
+    # envelope with its own body, bound photo, and per-chapter
+    # title/time/place metadata. The writer prompt enforces the count;
+    # this validator surfaces a clean Pydantic error if a malformed
+    # response sneaks through.
+    chapters: list[Chapter] = Field(min_length=CHAPTER_COUNT, max_length=CHAPTER_COUNT)
     pull_quote: LocalizedString
     milestone: LocalizedString
-    selected_photo_indices: list[int]
 
     def paragraphs_as_localized(self) -> LocalizedParagraphs:
-        """Flatten the sentence-leveled paragraphs into per-language text.
+        """Flatten chapter bodies into per-language paragraph text.
 
-        Joins sentences with a single space within each paragraph and
-        returns one ``LocalizedParagraphs`` whose ``en`` / ``ru`` / ``de``
-        lists have one string per paragraph. Used by code that does not
-        care about provenance (the carousel renderer, the rubric's
-        paragraph-count check, legacy templates) — code that DOES care
-        (the HTML renderer, the Phase 4.1 builder edit mode) walks
-        ``paragraphs`` directly.
+        Computed view over ``chapters[*].body``: one paragraph per
+        chapter, joined sentences per language. Used by code that does
+        not care about chapter envelope or per-sentence provenance —
+        the Instagram carousel, the eval rubric's paragraph-count and
+        word-ratio checks, the Letter template's flat-text fallback.
+        Code that DOES care (the chapter-aware Letter template, the new
+        Trailpath layouts) walks ``chapters`` directly.
         """
         return LocalizedParagraphs(
-            en=[" ".join(s.text.en for s in p) for p in self.paragraphs],
-            ru=[" ".join(s.text.ru for s in p) for p in self.paragraphs],
-            de=[" ".join(s.text.de for s in p) for p in self.paragraphs],
+            en=[" ".join(s.text.en for s in c.body) for c in self.chapters],
+            ru=[" ".join(s.text.ru for s in c.body) for c in self.chapters],
+            de=[" ".join(s.text.de for s in c.body) for c in self.chapters],
         )
+
+    @property
+    def selected_photo_indices(self) -> list[int]:
+        """Indices of every chapter's bound photo, in chapter order.
+
+        Computed view over ``chapters[*].photo_index``. Survives as a
+        read-only accessor so callers that orchestrate the photo
+        binding (the CLI, the web pipeline, the carousel renderer)
+        keep their old contract: walk this list, gather the photos,
+        pass them down. The list contains exactly ``CHAPTER_COUNT``
+        entries by construction.
+        """
+        return [c.photo_index for c in self.chapters]
 
 
 # ── FactLedger (ADR-009, Phase 2 of the faithfulness initiative) ─────────────

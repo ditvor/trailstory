@@ -32,23 +32,50 @@ from trailstory.llm.client import AnthropicClient
 logger = logging.getLogger(__name__)
 
 
-# 8 indices so any reasonable upload (the narrative prompt asks for
-# 6-8) finds room. The pipeline filters out indices past the actual
-# photo count, so a hike with 3 photos still gets a usable selection.
-# ADR-014 / Phase 4 paragraphs shape: list of paragraphs, each a list of
-# sentences with tri-lingual text + per-sentence provenance.
-def _fake_paragraph(en: str, ru: str, de: str, source: str = "seed") -> list[dict[str, object]]:
-    return [
-        {
-            "text": {"en": en, "ru": ru, "de": de},
-            "provenance": {"source": source, "reference": "fake-llm dev fixture"},
-        }
-    ]
+# ADR-015 chapters shape: six chapter envelopes, each binding one photo
+# (photo_index points into the original photo list). Sentence-level
+# provenance is preserved inside each chapter's body. Six photo_indices
+# in [0..5] match the typical 6+ photo fixture; the pipeline filters
+# out-of-range indices defensively so a hike with fewer photos still
+# clicks through end-to-end in dev mode.
+def _fake_chapter(
+    *,
+    idx: int,
+    chapter_id: str,
+    time: str,
+    title_en: str,
+    title_ru: str,
+    title_de: str,
+    body_en: str,
+    body_ru: str,
+    body_de: str,
+    photo_index: int,
+    source: str = "seed",
+) -> dict[str, object]:
+    return {
+        "id": chapter_id,
+        "time": time,
+        "place": {
+            "en": "Bavarian Alps",
+            "ru": "Баварские Альпы",
+            "de": "Bayerische Alpen",
+        },
+        "lat": 47.55 + idx * 0.001,
+        "lon": 11.78 + idx * 0.001,
+        "title": {"en": title_en, "ru": title_ru, "de": title_de},
+        "body": [
+            {
+                "text": {"en": body_en, "ru": body_ru, "de": body_de},
+                "provenance": {"source": source, "reference": "fake-llm dev fixture"},
+            }
+        ],
+        "photo_index": photo_index,
+    }
 
 
 _FAKE_NARRATIVE: Final[str] = json.dumps(
     {
-        "schema_version": 3,
+        "schema_version": 4,
         "title": {
             "en": "Above the fog line",
             "ru": "Над линией тумана",
@@ -59,21 +86,81 @@ _FAKE_NARRATIVE: Final[str] = json.dumps(
             "ru": "Утро над морем облаков",
             "de": "Ein Morgen über dem Wolkenmeer",
         },
-        "paragraphs": [
-            _fake_paragraph(
-                "We left the trailhead at first light, the air sharp with damp moss.",
-                "Вышли на тропу с первыми лучами; воздух пах мхом и хвоей.",  # noqa: RUF001
-                "Bei erstem Licht brachen wir auf, die Luft scharf von feuchtem Moos.",
+        "chapters": [
+            _fake_chapter(
+                idx=0,
+                chapter_id="trailhead",
+                time="07:00",
+                title_en="Trailhead",
+                title_ru="Тропа",
+                title_de="Wegbeginn",
+                body_en=("We left the trailhead at first light, the air sharp with damp moss."),
+                body_ru="Вышли на тропу с первыми лучами; воздух пах мхом и хвоей.",  # noqa: RUF001
+                body_de="Bei erstem Licht brachen wir auf, die Luft scharf von feuchtem Moos.",
+                photo_index=0,
             ),
-            _fake_paragraph(
-                "By the saddle the cloud was thinning into a soft white scarf.",
-                "К седловине облака уже редели, превращаясь в белый шарф.",  # noqa: RUF001
-                "Am Sattel zog die Wolke sich zu einem weichen weißen Schal zusammen.",
+            _fake_chapter(
+                idx=1,
+                chapter_id="forest",
+                time="08:00",
+                title_en="Forest",
+                title_ru="Лес",
+                title_de="Wald",
+                body_en="The pines closed in and the path softened beneath our boots.",
+                body_ru="Сосны сомкнулись, и тропа смягчилась под ботинками.",
+                body_de="Die Kiefern schlossen sich, der Pfad wurde weich unter den Stiefeln.",
+                photo_index=1,
             ),
-            _fake_paragraph(
-                "At the ridge the sun broke through and the valley vanished beneath us.",
-                "На хребте солнце пробилось сквозь туман — долина исчезла под нами.",  # noqa: RUF001
-                "Am Grat brach die Sonne durch — das Tal verschwand unter uns.",
+            _fake_chapter(
+                idx=2,
+                chapter_id="saddle",
+                time="09:30",
+                title_en="Saddle",
+                title_ru="Седловина",
+                title_de="Sattel",
+                body_en="By the saddle the cloud was thinning into a soft white scarf.",
+                body_ru="К седловине облака уже редели, превращаясь в белый шарф.",  # noqa: RUF001
+                body_de="Am Sattel zog die Wolke sich zu einem weichen weißen Schal zusammen.",
+                photo_index=2,
+            ),
+            _fake_chapter(
+                idx=3,
+                chapter_id="ridge",
+                time="11:00",
+                title_en="Ridge",
+                title_ru="Хребет",
+                title_de="Grat",
+                body_en="At the ridge the sun broke through and the valley vanished beneath us.",
+                body_ru="На хребте солнце пробилось сквозь туман — долина исчезла под нами.",  # noqa: RUF001
+                body_de="Am Grat brach die Sonne durch — das Tal verschwand unter uns.",
+                photo_index=3,
+            ),
+            _fake_chapter(
+                idx=4,
+                chapter_id="rest",
+                time="12:00",
+                title_en="Rest",
+                title_ru="Привал",
+                title_de="Rast",
+                body_en="We rested on a warm stone, listening to the wind in the pines.",
+                body_ru="Мы отдохнули на тёплом камне, слушая ветер в соснах.",
+                body_de="Wir rasteten auf einem warmen Stein, lauschten dem Wind in den Kiefern.",
+                photo_index=4,
+            ),
+            _fake_chapter(
+                idx=5,
+                chapter_id="descent",
+                time="13:30",
+                title_en="Descent",
+                title_ru="Спуск",
+                title_de="Abstieg",
+                body_en="The descent was kind on tired legs, and the meadow held the last gold.",
+                body_ru="Спуск был добрым к уставшим ногам, луг хранил последнее золото.",
+                body_de=(
+                    "Der Abstieg war freundlich zu müden Beinen, "
+                    "und die Wiese hielt das letzte Gold."
+                ),
+                photo_index=5,
             ),
         ],
         "pull_quote": {
@@ -86,7 +173,6 @@ _FAKE_NARRATIVE: Final[str] = json.dumps(
             "ru": "Впервые над туманом",
             "de": "Erstes Mal über dem Nebel",
         },
-        "selected_photo_indices": [0, 1, 2, 3, 4, 5, 6, 7],
     }
 )
 

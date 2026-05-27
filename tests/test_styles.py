@@ -1,9 +1,11 @@
-"""Tests for the visual-style switch (ADR-006).
+"""Tests for the visual-style switch (ADR-006 + ADR-015).
 
-The same ``Memory`` rendered under each :class:`trailstory.models.Style`
-must produce structurally distinct HTML — but the narrative text must be
-byte-identical across all three. These tests pin both halves of that
-contract.
+v0 ships ``Style.editorial`` only. The Letter template's rendered HTML
+must carry its body marker class and the design tokens that define the
+magazine treatment. ADR-006's "one prompt, many treatments" invariant
+returns when the next renderer PR (Zine, Postcard, Sunday, or Album)
+adds its enum value — at that point this file gains cross-style
+identity tests for the new style.
 """
 
 from __future__ import annotations
@@ -14,7 +16,7 @@ from pathlib import Path
 
 from PIL import Image
 
-from tests.conftest import paragraphs_from_strings
+from tests.conftest import chapters_from_strings
 from trailstory.models import (
     GpxStats,
     HikeInput,
@@ -27,7 +29,7 @@ from trailstory.models import (
 )
 from trailstory.renderers.html import render_html
 
-ALL_STYLES: tuple[Style, ...] = (Style.editorial, Style.log, Style.encyclopedia)
+ALL_STYLES: tuple[Style, ...] = (Style.editorial,)
 
 # ── fixtures ─────────────────────────────────────────────────────────────────
 
@@ -49,7 +51,7 @@ def _gpx_stats() -> GpxStats:
 
 def _narrative() -> NarrativeOutput:
     return NarrativeOutput(
-        schema_version=3,
+        schema_version=4,
         title=LocalizedString(
             en="Above the fog line",
             ru="Над линией тумана",
@@ -60,19 +62,32 @@ def _narrative() -> NarrativeOutput:
             ru="Утро над морем облаков",
             de="Ein Morgen über dem Wolkenmeer",
         ),
-        paragraphs=paragraphs_from_strings(
+        chapters=chapters_from_strings(
             en=[
                 "We left the trailhead at first light.",
+                "The forest closed in around us.",
                 "By the saddle the cloud was thinning.",
+                "Mia slept against the carrier, warm and steady.",
+                "At the ridge the fog cleared.",
+                "We came down slowly, the meadow gold.",
             ],
             ru=[
                 "Вышли на тропу с первыми лучами.",  # noqa: RUF001
+                "Лес сомкнулся вокруг нас.",
                 "К седловине облака начали редеть.",  # noqa: RUF001
+                "Мия спала у переноски, тёплая и спокойная.",  # noqa: RUF001
+                "На хребте туман рассеялся.",  # noqa: RUF001
+                "Мы спускались медленно, луг золотился.",
             ],
             de=[
                 "Bei erstem Licht brachen wir auf.",
+                "Der Wald schloss sich um uns.",
                 "Am Sattel begann die Wolke sich zu lichten.",
+                "Mia schlief an der Trage, warm und ruhig.",
+                "Am Grat klärte sich der Nebel.",
+                "Wir stiegen langsam ab, die Wiese golden.",
             ],
+            photo_indices=[0, 1, 2, 0, 1, 2],
         ),
         pull_quote=LocalizedString(
             en="The fog cleared just as we reached the ridge.",
@@ -84,7 +99,6 @@ def _narrative() -> NarrativeOutput:
             ru="Первый горный поход",
             de="Erste Bergwanderung",
         ),
-        selected_photo_indices=[0, 1, 2],
     )
 
 
@@ -129,50 +143,11 @@ def _render_all_styles(tmp_path: Path) -> dict[Style, str]:
 # ── style markers ────────────────────────────────────────────────────────────
 
 
-def test_each_style_emits_its_own_body_marker_class(tmp_path: Path) -> None:
-    """Each rendered output must carry a ``style-<name>`` body class so
-    downstream consumers (and these tests) can tell them apart."""
+def test_editorial_style_emits_its_body_marker_class(tmp_path: Path) -> None:
+    """The rendered output must carry a ``style-editorial`` body class so
+    downstream consumers (and these tests) can identify the treatment."""
     rendered = _render_all_styles(tmp_path)
-
     assert 'class="lang-en style-editorial"' in rendered[Style.editorial]
-    assert 'class="lang-en style-log"' in rendered[Style.log]
-    assert 'class="lang-en style-encyclopedia"' in rendered[Style.encyclopedia]
-
-
-def test_no_style_class_leaks_into_other_styles(tmp_path: Path) -> None:
-    """A render under one style must not contain another style's marker —
-    otherwise tests above would pass even if the include path was wrong."""
-    rendered = _render_all_styles(tmp_path)
-    for style, html in rendered.items():
-        for other in ALL_STYLES:
-            if other is style:
-                continue
-            assert f"style-{other.value}" not in html, (
-                f"{style.value} render leaked the {other.value} body class"
-            )
-
-
-def test_log_style_is_list_driven_with_figcaptions(tmp_path: Path) -> None:
-    """Log style ships photos as ``<figure>`` entries with captions and uses
-    a ``<ul class="stats">`` rather than a CSS grid."""
-    html = _render_all_styles(tmp_path)[Style.log]
-
-    assert "<figcaption>" in html
-    assert '<ul class="stats"' in html
-    assert "Log entry" in html
-
-
-def test_encyclopedia_style_uses_two_column_body_with_drop_cap(
-    tmp_path: Path,
-) -> None:
-    """Encyclopedia style sets up the kunstbuch register: two-column flow,
-    figure captions, and a labelled plate frontispiece."""
-    html = _render_all_styles(tmp_path)[Style.encyclopedia]
-
-    assert "column-count: 2" in html
-    assert "::first-letter" in html
-    assert "Plate" in html  # frontispiece label
-    assert "<figcaption>" in html
 
 
 def test_editorial_style_keeps_magazine_visual_identity(tmp_path: Path) -> None:
@@ -197,21 +172,19 @@ def test_editorial_style_keeps_magazine_visual_identity(tmp_path: Path) -> None:
     assert 'class="quote' in html  # the pull-quote callout (may carry extra classes)
     assert 'class="elevation"' in html
 
-    # Three discrete language buttons (replaces the older single EN·RU·DE label).
+    # Three discrete language buttons.
     assert 'data-lang="en"' in html
     assert 'data-lang="ru"' in html
     assert 'data-lang="de"' in html
-
-    # Editorial does NOT use figcaptions; that is a log/encyclopedia marker.
-    assert "<figcaption>" not in html
 
 
 # ── shared narrative invariants ─────────────────────────────────────────────
 
 
-def test_narrative_text_is_identical_across_all_styles(tmp_path: Path) -> None:
-    """ADR-006: one prompt, three visual treatments. Every user-facing
-    narrative string must appear verbatim in each of the three renders."""
+def test_editorial_narrative_text_appears_in_every_language(tmp_path: Path) -> None:
+    """Every user-facing narrative string must appear verbatim in the
+    rendered HTML across all three languages — the language toggle is a
+    CSS swap, not a content swap."""
     rendered = _render_all_styles(tmp_path)
     narrative = _narrative()
 
@@ -228,9 +201,9 @@ def test_narrative_text_is_identical_across_all_styles(tmp_path: Path) -> None:
         narrative.milestone.en,
         narrative.milestone.ru,
         narrative.milestone.de,
-        # ADR-014: paragraphs is now list[Paragraph]; flatten via the
-        # helper to get back the per-language strings each style template
-        # actually renders.
+        # ADR-015 chapter bodies flatten through paragraphs_as_localized()
+        # for legacy consumers; the template still emits each chapter's
+        # body sentences directly.
         *narrative.paragraphs_as_localized().en,
         *narrative.paragraphs_as_localized().ru,
         *narrative.paragraphs_as_localized().de,
@@ -240,11 +213,10 @@ def test_narrative_text_is_identical_across_all_styles(tmp_path: Path) -> None:
             assert s in html, f"missing {s!r} in {style.value} render"
 
 
-def test_every_style_is_self_contained_no_external_resources(
+def test_editorial_style_is_self_contained_no_external_resources(
     tmp_path: Path,
 ) -> None:
-    """The base64-embedding contract (ADR-001) must hold across all styles —
-    not just the original editorial one."""
+    """The base64-embedding contract (ADR-001) must hold for every style."""
     rendered = _render_all_styles(tmp_path)
     for style, html in rendered.items():
         assert not re.search(r"<script\s+[^>]*src=", html, flags=re.IGNORECASE), style
@@ -254,17 +226,19 @@ def test_every_style_is_self_contained_no_external_resources(
         assert all(src.startswith("data:image/") for src in img_srcs), style
 
 
-def test_every_style_embeds_every_selected_photo(tmp_path: Path) -> None:
-    """The photo block is structurally different per style, but the count
-    must always match ``len(selected_photos)``."""
+def test_editorial_style_embeds_every_selected_photo(tmp_path: Path) -> None:
+    """``memory.selected_photos`` has 3 photos in this fixture; the Letter
+    template emits the hero plus an inline interleave per chapter body up
+    to the available extras — so all three photos appear at least once
+    each in the rendered HTML."""
     rendered = _render_all_styles(tmp_path)
     for style, html in rendered.items():
-        assert html.count("data:image/jpeg;base64,") == 3, style
+        assert html.count("data:image/jpeg;base64,") >= 3, style
 
 
-def test_every_style_includes_gpx_stats(tmp_path: Path) -> None:
-    """Stats land in different markup per style (grid vs list), but every
-    headline number must show up somewhere in the body."""
+def test_editorial_style_includes_gpx_stats(tmp_path: Path) -> None:
+    """Stats land in the marginalia of the Letter; every headline number
+    must show up somewhere in the body."""
     rendered = _render_all_styles(tmp_path)
     for style, html in rendered.items():
         assert "6.2" in html, style  # distance_km
@@ -273,7 +247,7 @@ def test_every_style_includes_gpx_stats(tmp_path: Path) -> None:
         assert "1330" in html, style  # summit_elev_m
 
 
-def test_every_style_emits_inline_elevation_svg(tmp_path: Path) -> None:
+def test_editorial_style_emits_inline_elevation_svg(tmp_path: Path) -> None:
     rendered = _render_all_styles(tmp_path)
     for style, html in rendered.items():
         assert '<svg class="elevation"' in html, style

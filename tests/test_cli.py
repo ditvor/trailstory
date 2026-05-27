@@ -15,7 +15,7 @@ from unittest.mock import MagicMock
 import pytest
 from click.testing import CliRunner
 
-from tests.conftest import paragraphs_dict_from_strings
+from tests.conftest import chapters_dict_from_strings
 from trailstory.cli import _derive_hike_date, _derive_slug, _slugify, cli
 from trailstory.llm.client import AnthropicClient
 from trailstory.models import GpxStats, PhotoMeta, Waypoint
@@ -97,10 +97,17 @@ def _make_fake_client() -> MagicMock:
     return fake
 
 
-def _valid_response_json(n_photos: int = 5) -> str:
+def _valid_response_json(n_photos: int = 6) -> str:
+    """Build a fake writer response under ADR-015 chapter shape.
+
+    Photo indices wrap to ``min(5, n_photos - 1)`` so any test using
+    fewer than 6 fixtures still passes the chapter-binding-in-range
+    Pydantic check.
+    """
+    photo_indices = [min(i, max(0, n_photos - 1)) for i in range(6)]
     return json.dumps(
         {
-            "schema_version": 3,
+            "schema_version": 4,
             "title": {
                 "en": "Above the fog line",
                 "ru": "Над линией тумана",
@@ -111,19 +118,32 @@ def _valid_response_json(n_photos: int = 5) -> str:
                 "ru": "Утро над морем облаков",
                 "de": "Ein Morgen über dem Wolkenmeer",
             },
-            "paragraphs": paragraphs_dict_from_strings(
+            "chapters": chapters_dict_from_strings(
                 en=[
                     "We left the trailhead at first light.",
+                    "The pines closed around the path.",
                     "By the saddle the cloud was thinning.",
+                    "Mia slept against the carrier on the climb.",
+                    "At the ridge the fog opened.",
+                    "We came down with golden light on the meadow.",
                 ],
                 ru=[
                     "Вышли на тропу с первыми лучами.",  # noqa: RUF001
+                    "Сосны сомкнулись над тропой.",
                     "К седловине облака начали редеть.",  # noqa: RUF001
+                    "Мия спала у переноски на подъёме.",  # noqa: RUF001
+                    "На хребте туман раскрылся.",  # noqa: RUF001
+                    "Мы спускались, золотой свет на лугу.",
                 ],
                 de=[
                     "Bei erstem Licht brachen wir auf.",
+                    "Die Kiefern schlossen sich über dem Pfad.",
                     "Am Sattel begann die Wolke sich zu lichten.",
+                    "Mia schlief an der Trage am Aufstieg.",
+                    "Am Grat öffnete sich der Nebel.",
+                    "Wir stiegen ab, goldenes Licht auf der Wiese.",
                 ],
+                photo_indices=photo_indices,
             ),
             "pull_quote": {
                 "en": "The fog cleared just as we reached the ridge.",
@@ -135,7 +155,6 @@ def _valid_response_json(n_photos: int = 5) -> str:
                 "ru": "Первый горный поход",
                 "de": "Erste Bergwanderung",
             },
-            "selected_photo_indices": list(range(n_photos)),
         }
     )
 
@@ -256,8 +275,9 @@ def test_generate_with_instagram_flag_writes_carousel(
     carousel_dirs = list(out_dir.glob("*/carousel"))
     assert len(carousel_dirs) == 1
     slides = sorted(carousel_dirs[0].glob("*.jpg"))
-    # 1 title + 5 fixture photos + 1 quote
-    assert len(slides) == 7
+    # ADR-015: 6 chapters → 6 selected photos. Carousel = 1 title + 6
+    # photos + 1 quote = 8 slides.
+    assert len(slides) == 8
     assert slides[0].name == "00_title.jpg"
     assert slides[-1].name.endswith("_quote.jpg")
 

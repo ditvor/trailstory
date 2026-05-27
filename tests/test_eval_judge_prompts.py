@@ -44,20 +44,34 @@ def _placeholders(template: str) -> set[str]:
 
 @pytest.fixture
 def sample_fields() -> dict[str, object]:
-    """Plausible values for every documented placeholder."""
+    """Plausible values for every documented placeholder.
+
+    ADR-015 chapter shape — the narrative JSON is what
+    :func:`tests.eval.judge.judge_narrative` emits via
+    :meth:`NarrativeOutput.model_dump`; the judge prompt just embeds it
+    verbatim.
+    """
     return {
         "seed_text": "The fog cleared just as we reached the ridge.",
         "narrative_json": json.dumps(
             {
                 "title": {"en": "Above the fog line", "ru": "x", "de": "y"},
-                # ADR-014 sentence-level paragraphs shape, abbreviated.
-                "paragraphs": [
-                    [
-                        {
-                            "text": {"en": "short stub paragraph", "ru": "x", "de": "y"},
-                            "provenance": {"source": "seed", "reference": "fixture"},
-                        }
-                    ]
+                "chapters": [
+                    {
+                        "id": "stub",
+                        "time": "10:00",
+                        "place": {"en": "x", "ru": "x", "de": "x"},
+                        "lat": 47.5,
+                        "lon": 11.7,
+                        "title": {"en": "Chapter", "ru": "x", "de": "y"},
+                        "body": [
+                            {
+                                "text": {"en": "short stub sentence", "ru": "x", "de": "y"},
+                                "provenance": {"source": "seed", "reference": "fixture"},
+                            }
+                        ],
+                        "photo_index": 0,
+                    }
                 ],
             },
             ensure_ascii=False,

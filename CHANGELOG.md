@@ -10,6 +10,59 @@ Versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 ## [Unreleased]
 
 ### Changed
+- **Chapter-based narrative — `NarrativeOutput.chapters` replaces flat
+  `paragraphs` + `selected_photo_indices` (ADR-015, BREAKING).** The
+  writer pass now produces exactly six `Chapter` envelopes per
+  narrative; each chapter carries its own `id` + `time` + `place` +
+  `lat`/`lon` + tri-lingual `title` + sentence-leveled `body` +
+  one-to-one bound `photo_index`. `NarrativeOutput.paragraphs_as_localized()`
+  becomes a computed view over `chapters[*].body` for legacy
+  consumers (Instagram carousel, eval rubric paragraph-count check);
+  `selected_photo_indices` is preserved as a read-only `@property`
+  derived from `chapters[*].photo_index`. `schema_version` bumps
+  from `3` to `4`, invalidating every prior cache entry. Pydantic
+  enforces the six-chapter count; the new rubric checks
+  `chapter_count_is_six` and `chapter_photo_binding_valid` gate it
+  in the eval suite. The four upcoming Trailpath layouts (Zine /
+  Sunday / Postcard / Album) consume this shape natively;
+  ``templates/styles/editorial.html.j2`` walks the chapter bodies
+  with no visible-output change vs the PR-57 baseline.
+- **`Style.log` and `Style.encyclopedia` removed.** Both were ADR-006
+  templates that never shipped to users (never surfaced in the
+  builder picker, never invoked from production); the v0 product
+  decision is to ship the five Trailpath styles only — The Letter
+  in this PR and Zine / Sunday / Postcard / Album in subsequent
+  renderer PRs. `templates/styles/log.html.j2` and
+  `templates/styles/encyclopedia.html.j2` are deleted; the
+  `web.pipeline.Style` and `trailstory.models.Style` enums collapse
+  to `editorial` only; the CLI's `--style` choice list, the rendered
+  tests, and the Makefile `test-render` / `golden-update` loops
+  follow.
+- **Writer prompt rewritten for the chapter envelope.** The JSON
+  skeleton in `trailstory/llm/prompts.py` now teaches the model the
+  six-chapter contract: stable id, photo-bound time, place, lat/lon,
+  short noun-phrase title, 2-4-sentence body with sentence-level
+  provenance, one unique `photo_index` per chapter from the
+  available range. Previous (Phase 4) skeleton kept as a dated
+  comment per the project's prompt-versioning rule.
+- **`narrative_max_tokens` default raised from 4096 to 8192.** The
+  new chapter envelope's JSON (six chapters × three languages ×
+  per-sentence provenance + chapter metadata) crosses 4k output
+  tokens on a longer hike. Pilot showed case 04 (`bad-tolz-family`,
+  the longest seed) failing both JSON-parse attempts at 4096 because
+  the response was truncated mid-array. Output tokens are billed,
+  not reserved, so the higher ceiling costs nothing on shorter
+  hikes.
+- **Eval rubric refit + paid golden refresh.** The rubric drops
+  `indices_valid` (the chapter-binding rubric replaces it),
+  loosens `paragraph_count_3_to_5_each_lang` to a 3-6 range so the
+  computed-view paragraph count from six chapter bodies still
+  passes, and adds `chapter_count_is_six` +
+  `chapter_photo_binding_valid`. All four eval cases (`01-fixture`,
+  `02-joyful-summit`, `03-exhausted-foggy`, `04-bad-tolz-family`)
+  refreshed under the new shape via `make eval-update-golden`;
+  follow-up `make eval-live` confirms judge non-regression
+  (threshold 1.0) on every axis across every case.
 - **Editorial photo layout: consistent aspect ratio + interleaved
   through paragraphs.** `templates/styles/editorial.html.j2` now locks
   every `.figure img` to a `3 / 2` aspect ratio with

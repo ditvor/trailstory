@@ -1,117 +1,304 @@
 {
-  "schema_version": 3,
+  "schema_version": 4,
   "title": {
-    "en": "Up Into the Fog",
-    "ru": "Вверх, в туман",
-    "de": "Hinauf in den Nebel"
+    "en": "A morning above the fog",
+    "ru": "Утро над туманом",
+    "de": "Ein Morgen über dem Nebel"
   },
   "subtitle": {
-    "en": "A spring morning ridge in the Bavarian Alps",
-    "ru": "Весеннее утро на хребте в Баварских Альпах",
-    "de": "Ein Frühlingsmorgen am Grat in den Bayerischen Alpen"
+    "en": "A spring climb in the Bavarian Alps",
+    "ru": "Весенний подъём в Баварских Альпах",
+    "de": "Ein Frühlingsaufstieg in den Bayerischen Alpen"
   },
-  "paragraphs": [
-    [
-      {
-        "text": {
-          "en": "We set out into the Bavarian Alps on a cool April morning, the kind of damp spring air that settles into your sleeves before you've even warmed up.",
-          "ru": "Мы вышли в Баварские Альпы прохладным апрельским утром — в том самом сыром весеннем воздухе, что забирается в рукава ещё до того, как успеешь согреться.",
-          "de": "Wir brachen an einem kühlen Aprilmorgen in die Bayerischen Alpen auf, in dieser feuchten Frühlingsluft, die einem schon in die Ärmel kriecht, bevor man richtig warm geworden ist."
-        },
-        "provenance": {
-          "source": "gpx",
-          "reference": "where, season, when"
-        }
+  "chapters": [
+    {
+      "id": "into-the-fog",
+      "time": "07:00",
+      "place": {
+        "en": "Bavarian Alps",
+        "ru": "Баварские Альпы",
+        "de": "Bayerische Alpen"
       },
-      {
-        "text": {
-          "en": "The fog was thick from the very first steps, soft and grey all around us.",
-          "ru": "Туман стоял густой с самых первых шагов — мягкий и серый со всех сторон.",
-          "de": "Der Nebel war schon von den ersten Schritten an dicht, weich und grau um uns herum."
-        },
-        "provenance": {
-          "source": "seed",
-          "reference": "hiking toward the ridge in fog"
-        }
-      }
-    ],
-    [
-      {
-        "text": {
-          "en": "We climbed toward the ridge through that quiet wall of mist, seeing only a few steps of path ahead at a time.",
-          "ru": "Мы поднимались к хребту сквозь эту тихую стену тумана, видя перед собой лишь несколько шагов тропы.",
-          "de": "Wir stiegen durch diese stille Nebelwand zum Grat hinauf und sahen jeweils nur ein paar Schritte des Weges vor uns."
-        },
-        "provenance": {
-          "source": "seed",
-          "reference": "hiking toward the ridge in fog"
-        }
+      "lat": 0.0,
+      "lon": 0.0,
+      "title": {
+        "en": "Into the fog",
+        "ru": "В тумане",
+        "de": "Hinein in den Nebel"
       },
-      {
-        "text": {
-          "en": "It was a long, steady climb for such a short distance, the kind that makes your legs remember it.",
-          "ru": "Подъём был долгий и упорный для такого короткого расстояния — из тех, что ноги потом долго помнят.",
-          "de": "Es war ein langer, zäher Anstieg für so eine kurze Strecke, einer von denen, an die sich die Beine später erinnern."
+      "body": [
+        {
+          "text": {
+            "en": "We set off early, the whole valley wrapped in grey.",
+            "ru": "Мы вышли рано, вся долина была укутана в серое.",
+            "de": "Wir sind früh los, das ganze Tal in Grau gehüllt."
+          },
+          "provenance": {
+            "source": "seed",
+            "reference": "foggy weather, early start"
+          }
         },
-        "provenance": {
-          "source": "gpx",
-          "reference": "distance_km, elevation_gain_m, duration_min"
+        {
+          "text": {
+            "en": "You could only see a few steps of path ahead before it vanished.",
+            "ru": "Впереди было видно лишь несколько шагов тропы, и дальше всё исчезало.",
+            "de": "Man sah nur ein paar Schritte Weg, dann verschwand er."
+          },
+          "provenance": {
+            "source": "inferred",
+            "reference": "atmosphere of being inside fog"
+          }
         }
-      }
-    ],
-    [
-      {
-        "text": {
-          "en": "And then, just as we reached the ridge, the fog lifted.",
-          "ru": "А потом, как только мы вышли на хребет, туман рассеялся.",
-          "de": "Und dann, gerade als wir den Grat erreichten, lichtete sich der Nebel."
-        },
-        "provenance": {
-          "source": "seed",
-          "reference": "fog cleared as the group reached the ridge"
-        }
+      ],
+      "photo_index": 0
+    },
+    {
+      "id": "first-climb",
+      "time": "07:25",
+      "place": {
+        "en": "Bavarian Alps",
+        "ru": "Баварские Альпы",
+        "de": "Bayerische Alpen"
       },
-      {
-        "text": {
-          "en": "It felt like the mountains had been waiting up there the whole time, just for us.",
-          "ru": "Казалось, будто горы всё это время ждали нас наверху — именно нас.",
-          "de": "Es fühlte sich an, als hätten die Berge die ganze Zeit dort oben gewartet, nur auf uns."
-        },
-        "provenance": {
-          "source": "inferred",
-          "reference": "mood of fog lifting at the ridge"
-        }
+      "lat": 0.0,
+      "lon": 0.0,
+      "title": {
+        "en": "The first climb",
+        "ru": "Первый подъём",
+        "de": "Der erste Anstieg"
       },
-      {
-        "text": {
-          "en": "We stood up above the fog line in clean spring light, and it was worth every step.",
-          "ru": "Мы стояли над линией тумана в чистом весеннем свете, и это стоило каждого шага.",
-          "de": "Wir standen über der Nebelgrenze im klaren Frühlingslicht, und es war jeden Schritt wert."
+      "body": [
+        {
+          "text": {
+            "en": "The path tilted up almost straight away.",
+            "ru": "Тропа почти сразу пошла вверх.",
+            "de": "Der Weg ging fast sofort bergauf."
+          },
+          "provenance": {
+            "source": "gpx",
+            "reference": "elevation_gain_m"
+          }
         },
-        "provenance": {
-          "source": "seed",
-          "reference": "fog cleared at ridge; season"
+        {
+          "text": {
+            "en": "Spring had only just reached this slope — the ground still cold, the air sharper than at home.",
+            "ru": "Весна только-только добралась до этого склона — земля ещё холодная, воздух резче, чем дома.",
+            "de": "Der Frühling hatte diesen Hang gerade erst erreicht — der Boden noch kalt, die Luft schärfer als zu Hause."
+          },
+          "provenance": {
+            "source": "gpx",
+            "reference": "season"
+          }
+        },
+        {
+          "text": {
+            "en": "I kept my hands warm in my pockets between steps.",
+            "ru": "Я грел руки в карманах между шагами.",
+            "de": "Ich habe die Hände zwischen den Schritten in den Taschen gewärmt."
+          },
+          "provenance": {
+            "source": "inferred",
+            "reference": "cold spring morning"
+          }
         }
-      }
-    ]
+      ],
+      "photo_index": 2
+    },
+    {
+      "id": "fog-lifting",
+      "time": "07:50",
+      "place": {
+        "en": "Bavarian Alps",
+        "ru": "Баварские Альпы",
+        "de": "Bayerische Alpen"
+      },
+      "lat": 0.0,
+      "lon": 0.0,
+      "title": {
+        "en": "The fog begins to lift",
+        "ru": "Туман начинает расходиться",
+        "de": "Der Nebel hebt sich"
+      },
+      "body": [
+        {
+          "text": {
+            "en": "Somewhere around the middle of the climb, the grey began to thin.",
+            "ru": "Где-то посередине подъёма серое начало редеть.",
+            "de": "Irgendwo auf halber Höhe wurde das Grau dünner."
+          },
+          "provenance": {
+            "source": "seed",
+            "reference": "fog clearing"
+          }
+        },
+        {
+          "text": {
+            "en": "Light came through in patches, the way it does when weather is about to change its mind.",
+            "ru": "Свет пробивался пятнами — так бывает, когда погода вот-вот передумает.",
+            "de": "Licht kam in Flecken durch, so wie es ist, wenn das Wetter gleich umschlägt."
+          },
+          "provenance": {
+            "source": "seed",
+            "reference": "foggy then clearing"
+          }
+        }
+      ],
+      "photo_index": 4
+    },
+    {
+      "id": "towards-the-ridge",
+      "time": "08:15",
+      "place": {
+        "en": "Bavarian Alps",
+        "ru": "Баварские Альпы",
+        "de": "Bayerische Alpen"
+      },
+      "lat": 0.0,
+      "lon": 0.0,
+      "title": {
+        "en": "Towards the ridge",
+        "ru": "К гребню",
+        "de": "Zum Grat hinauf"
+      },
+      "body": [
+        {
+          "text": {
+            "en": "The ridge came into view ahead of us, a long clean line against what was left of the cloud.",
+            "ru": "Впереди показался гребень — длинная чистая линия на фоне остатков облаков.",
+            "de": "Vor uns tauchte der Grat auf, eine lange klare Linie vor dem, was vom Nebel noch übrig war."
+          },
+          "provenance": {
+            "source": "seed",
+            "reference": "hiking towards the ridge"
+          }
+        },
+        {
+          "text": {
+            "en": "From here it was just a matter of keeping going.",
+            "ru": "Отсюда оставалось просто идти дальше.",
+            "de": "Von hier aus hieß es nur noch: weitergehen."
+          },
+          "provenance": {
+            "source": "inferred",
+            "reference": "rhythm of the climb"
+          }
+        }
+      ],
+      "photo_index": 6
+    },
+    {
+      "id": "above-the-fog",
+      "time": "08:35",
+      "place": {
+        "en": "Bavarian Alps",
+        "ru": "Баварские Альпы",
+        "de": "Bayerische Alpen"
+      },
+      "lat": 0.0,
+      "lon": 0.0,
+      "title": {
+        "en": "Above the fog line",
+        "ru": "Над линией тумана",
+        "de": "Über der Nebelgrenze"
+      },
+      "body": [
+        {
+          "text": {
+            "en": "And then, all at once, we were above it.",
+            "ru": "И вдруг мы оказались выше него.",
+            "de": "Und dann waren wir mit einem Mal darüber."
+          },
+          "provenance": {
+            "source": "seed",
+            "reference": "fog cleared during climb"
+          }
+        },
+        {
+          "text": {
+            "en": "Below, the valley was still hidden under a soft white floor; above, only sky.",
+            "ru": "Внизу долина по-прежнему пряталась под мягким белым полом; над нами — только небо.",
+            "de": "Unten lag das Tal noch unter einem weichen weißen Boden; oben nur Himmel."
+          },
+          "provenance": {
+            "source": "inferred",
+            "reference": "view above fog line"
+          }
+        },
+        {
+          "text": {
+            "en": "I stopped a moment just to look.",
+            "ru": "Я остановился на минуту просто чтобы посмотреть.",
+            "de": "Ich blieb einen Moment stehen, einfach um zu schauen."
+          },
+          "provenance": {
+            "source": "inferred",
+            "reference": "quiet pause beat"
+          }
+        }
+      ],
+      "photo_index": 8
+    },
+    {
+      "id": "on-the-ridge",
+      "time": "08:40",
+      "place": {
+        "en": "Bavarian Alps",
+        "ru": "Баварские Альпы",
+        "de": "Bayerische Alpen"
+      },
+      "lat": 0.0,
+      "lon": 0.0,
+      "title": {
+        "en": "On the ridge",
+        "ru": "На гребне",
+        "de": "Auf dem Grat"
+      },
+      "body": [
+        {
+          "text": {
+            "en": "We reached the ridge a little before the morning had fully made up its mind.",
+            "ru": "Мы вышли на гребень чуть раньше, чем утро окончательно решилось на ясную погоду.",
+            "de": "Wir erreichten den Grat kurz bevor der Morgen sich endgültig entschieden hatte."
+          },
+          "provenance": {
+            "source": "seed",
+            "reference": "arriving at ridge as fog cleared"
+          }
+        },
+        {
+          "text": {
+            "en": "It had been a steep, short morning of climbing, and the top felt earned.",
+            "ru": "Это было крутое, короткое утро подъёма, и вершина чувствовалась заслуженной.",
+            "de": "Es war ein steiler, kurzer Morgen voller Anstieg, und oben fühlte es sich verdient an."
+          },
+          "provenance": {
+            "source": "gpx",
+            "reference": "duration_min and elevation_gain_m"
+          }
+        },
+        {
+          "text": {
+            "en": "I wish you could have stood there with me.",
+            "ru": "Жаль, что ты не мог стоять там рядом со мной.",
+            "de": "Ich wünschte, du hättest dort neben mir stehen können."
+          },
+          "provenance": {
+            "source": "inferred",
+            "reference": "letter-home register"
+          }
+        }
+      ],
+      "photo_index": 10
+    }
   ],
   "pull_quote": {
-    "en": "Just as we reached the ridge, the fog lifted.",
-    "ru": "Как только мы вышли на хребет, туман рассеялся.",
-    "de": "Gerade als wir den Grat erreichten, lichtete sich der Nebel."
+    "en": "And then, all at once, we were above it.",
+    "ru": "И вдруг мы оказались выше него.",
+    "de": "Und dann waren wir mit einem Mal darüber."
   },
   "milestone": {
     "en": "Above the fog line",
     "ru": "Над туманом",
     "de": "Über dem Nebel"
-  },
-  "selected_photo_indices": [
-    0,
-    2,
-    4,
-    6,
-    8,
-    10,
-    11
-  ]
+  }
 }

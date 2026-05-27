@@ -1,85 +1,85 @@
 {
   "warmth": 4.5,
-  "narrative_arc": 4.0,
+  "narrative_arc": 4.5,
   "russian_fidelity": 4.5,
-  "photo_selection_plausibility": 4.0,
+  "photo_selection_plausibility": 3.5,
   "claim_verdicts": [
     {
-      "claim": "hike took place in the Bavarian Alps",
-      "verdict": "UNSUPPORTED",
-      "quote": ""
-    },
-    {
-      "claim": "hike took place on an April morning",
-      "verdict": "UNSUPPORTED",
-      "quote": ""
-    },
-    {
-      "claim": "the sky was clear and blue",
-      "verdict": "SUPPORTED",
-      "quote": "wide blue"
-    },
-    {
-      "claim": "the air was cool and spring-sharp",
+      "claim": "Mia and the narrator set off early",
       "verdict": "INFERRED",
-      "quote": "inferred from seed context implying a lively, fresh outdoor setting"
+      "quote": "joyful morning beat; seed implies a full day's hike"
     },
     {
-      "claim": "birds were singing throughout the ascent",
+      "claim": "the sky was a clean, untroubled blue",
+      "verdict": "SUPPORTED",
+      "quote": "clapped her hands at the wide blue"
+    },
+    {
+      "claim": "they watched a bird wheeling slowly above the slope",
       "verdict": "SUPPORTED",
       "quote": "every bird"
     },
     {
-      "claim": "they crossed a stream on the way up",
+      "claim": "Mia laughed at how long they stood with heads tipped back watching the bird",
+      "verdict": "INFERRED",
+      "quote": "Mia laughed the whole way up — every bird"
+    },
+    {
+      "claim": "the air was cool but kind in April",
+      "verdict": "INFERRED",
+      "quote": "spring morning; seed implies seasonal context"
+    },
+    {
+      "claim": "a small stream crossed the path, full and quick in spring",
       "verdict": "SUPPORTED",
       "quote": "every stream"
     },
     {
-      "claim": "Mia laughed during the ascent",
-      "verdict": "SUPPORTED",
-      "quote": "Mia laughed the whole way up"
-    },
-    {
-      "claim": "wind was present during the climb",
-      "verdict": "SUPPORTED",
-      "quote": "every gust of wind"
-    },
-    {
-      "claim": "they reached the summit in the afternoon",
+      "claim": "they crouched by the stream to listen to the water",
       "verdict": "UNSUPPORTED",
       "quote": ""
     },
     {
-      "claim": "Mia packed apples for the hike",
+      "claim": "the wind was steady against their faces higher up",
       "verdict": "SUPPORTED",
-      "quote": "sitting at the summit eating apples"
+      "quote": "every gust of wind"
     },
     {
-      "claim": "apples were eaten at the summit",
-      "verdict": "SUPPORTED",
-      "quote": "We sat at the summit eating apples"
+      "claim": "Mia was ahead of the narrator on the climb",
+      "verdict": "UNSUPPORTED",
+      "quote": ""
     },
     {
-      "claim": "Mia clapped her hands at the view",
+      "claim": "they sat down at the summit",
       "verdict": "SUPPORTED",
+      "quote": "We sat at the summit"
+    },
+    {
+      "claim": "they ate apples at the summit",
+      "verdict": "SUPPORTED",
+      "quote": "eating apples"
+    },
+    {
+      "claim": "Mia said how lucky they were with the sky",
+      "verdict": "UNSUPPORTED",
+      "quote": ""
+    },
+    {
+      "claim": "they stayed a long time at the summit looking out over the mountains",
+      "verdict": "INFERRED",
       "quote": "she clapped her hands at the wide blue"
     },
     {
-      "claim": "they sat at the summit for a while in silence",
+      "claim": "nobody felt like getting up for a while",
       "verdict": "INFERRED",
-      "quote": "We sat at the summit eating apples and she clapped her hands at the wide blue"
+      "quote": "lingering mood inferred from summit delight"
     },
     {
-      "claim": "the stream water ran fast and bright",
+      "claim": "the narrator addressed the narrative to an absent person ('I wanted you to be sitting there with us')",
       "verdict": "UNSUPPORTED",
       "quote": ""
-    },
-    {
-      "claim": "the wind came and went in open patches",
-      "verdict": "INFERRED",
-      "quote": "every gust of wind"
     }
   ],
-  "notes": "The English prose is warm and specific, capturing Mia's joy and the sensory texture of the day without feeling generic; the apple detail and the silence beat are especially strong. The arc is solid — opening, ascent, summit — though the human-detail beat (Mia clapping) is slightly underplayed given how central it is in the seed. Russian reads naturally with good register and idiomatic phrasing; 'под этим бескрайним небом' is a slight expansion of 'all that sky' but fits the spirit well. The Bavarian Alps setting and April date are fabricated (not in the seed), which is the main faithfulness concern; the afternoon summit timing is also invented.",
-  "faithfulness": 3.17
+  "notes": "The English prose is warm and restrained, with specific sensory touches ('boots on the path', 'full and quick the way they are in spring') that feel personal rather than generic; a 5 is withheld only because a couple of sentences ('nobody felt like getting up') edge toward filler. The arc is strong — opening, bird pause, stream pause, ridge wind, summit apples, lingering view — each chapter earns its place, though the final address-to-reader beat is a slight tonal shift. The Russian is natural and idiomatic throughout; 'спокойно-синим', 'мягко подталкивал нас выше', and 'запрокинув головы' are all native-sounding; a half-point is docked for 'бьющий в лицо' (slightly abrupt compared to the English 'steady against our faces'). Photo indices (0, 2, 4, 6, 8, 10) are evenly distributed across six chapters covering the full arc, which is coherent, but the count is six rather than the preferred 6-8 and all are even-numbered, suggesting mechanical selection rather than organic choice.",
+  "faithfulness": 2.83
 }

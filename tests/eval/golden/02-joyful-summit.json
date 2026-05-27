@@ -1,128 +1,304 @@
 {
-  "schema_version": 3,
+  "schema_version": 4,
   "title": {
-    "en": "A Spring Morning with Mia",
+    "en": "A spring morning with Mia",
     "ru": "Весеннее утро с Мией",
     "de": "Ein Frühlingsmorgen mit Mia"
   },
   "subtitle": {
-    "en": "Up into the Bavarian Alps under a clear blue sky",
-    "ru": "Подъём в Баварские Альпы под ясным голубым небом",
-    "de": "Hinauf in die Bayerischen Alpen unter klarblauem Himmel"
+    "en": "Up into the Bavarian Alps under a clear sky",
+    "ru": "Вверх в Баварские Альпы под чистым небом",
+    "de": "Hinauf in die Bayerischen Alpen unter klarem Himmel"
   },
-  "paragraphs": [
-    [
-      {
-        "text": {
-          "en": "We set out into the Bavarian Alps on an April morning, Mia and I, with the kind of clear blue sky you almost don't trust at first.",
-          "ru": "Мы с Мией вышли в Баварские Альпы апрельским утром — под таким ясным голубым небом, которому поначалу даже не веришь.",
-          "de": "Mia und ich brachen an einem Apriltag in die Bayerischen Alpen auf, unter einem klarblauen Himmel, dem man anfangs kaum traut."
-        },
-        "provenance": {
-          "source": "gpx",
-          "reference": "where, season, when"
-        }
+  "chapters": [
+    {
+      "id": "first-steps",
+      "time": "07:10",
+      "place": {
+        "en": "Bavarian Alps",
+        "ru": "Баварские Альпы",
+        "de": "Bayerische Alpen"
       },
-      {
-        "text": {
-          "en": "The air still had that spring sharpness to it, cool on the face but warming with every step.",
-          "ru": "В воздухе ещё чувствовалась весенняя резкость — прохладная на лице, но теплеющая с каждым шагом.",
-          "de": "Die Luft hatte noch diese frühlingshafte Schärfe, kühl im Gesicht, aber mit jedem Schritt wärmer."
-        },
-        "provenance": {
-          "source": "inferred",
-          "reference": "spring season mood"
-        }
-      }
-    ],
-    [
-      {
-        "text": {
-          "en": "The climb was steady, and the whole way up the birds wouldn't stop — somewhere off in the trees, a small stubborn chorus that kept pace with us.",
-          "ru": "Подъём был ровный, и всю дорогу птицы не умолкали — где-то в деревьях, упрямый маленький хор, который не отставал от нас.",
-          "de": "Der Aufstieg war gleichmäßig, und den ganzen Weg hinauf hörten die Vögel nicht auf — irgendwo in den Bäumen, ein kleiner, hartnäckiger Chor, der mit uns Schritt hielt."
-        },
-        "provenance": {
-          "source": "seed",
-          "reference": "ascent with birds"
-        }
+      "lat": 0.0,
+      "lon": 0.0,
+      "title": {
+        "en": "First steps with Mia",
+        "ru": "Первые шаги с Мией",
+        "de": "Die ersten Schritte mit Mia"
       },
-      {
-        "text": {
-          "en": "We crossed a stream where the water ran fast and bright, and stood there a moment just to listen.",
-          "ru": "Мы перешли ручей, где вода бежала быстро и светло, и постояли минуту просто чтобы послушать.",
-          "de": "Wir überquerten einen Bach, in dem das Wasser schnell und hell floss, und blieben einen Moment stehen, nur um zu lauschen."
+      "body": [
+        {
+          "text": {
+            "en": "Mia and I set off early, with the sky already a clean, untroubled blue above us.",
+            "ru": "Мы с Мией вышли рано, а небо над нами уже было ясным и спокойно-синим.",
+            "de": "Mia und ich brachen früh auf, und der Himmel über uns war schon ein klares, ruhiges Blau."
+          },
+          "provenance": {
+            "source": "seed",
+            "reference": "Mia as companion; clear blue sky"
+          }
         },
-        "provenance": {
-          "source": "seed",
-          "reference": "stream on ascent"
+        {
+          "text": {
+            "en": "It felt good just to be walking together again, no rush, just our boots on the path.",
+            "ru": "Было так хорошо снова идти вместе — никакой спешки, только наши ботинки на тропе.",
+            "de": "Es tat einfach gut, wieder zusammen zu gehen — ohne Eile, nur unsere Schuhe auf dem Weg."
+          },
+          "provenance": {
+            "source": "inferred",
+            "reference": "warm tone inferred from joyful morning beat"
+          }
         }
+      ],
+      "photo_index": 0
+    },
+    {
+      "id": "birdsong",
+      "time": "08:30",
+      "place": {
+        "en": "Bavarian Alps",
+        "ru": "Баварские Альпы",
+        "de": "Bayerische Alpen"
       },
-      {
-        "text": {
-          "en": "The wind came and went in the open patches, and Mia laughed — it was one of those mornings where everything felt easy.",
-          "ru": "На открытых участках ветер то приходил, то стихал, и Мия смеялась — это было одно из тех утр, когда всё даётся легко.",
-          "de": "Auf den offenen Stellen kam der Wind und ging wieder, und Mia lachte — es war einer dieser Morgen, an denen alles leicht fällt."
-        },
-        "provenance": {
-          "source": "seed",
-          "reference": "joyful ascent, wind, companion Mia"
-        }
-      }
-    ],
-    [
-      {
-        "text": {
-          "en": "By afternoon we'd made the top, and we sat down properly, the way you do when you've earned it.",
-          "ru": "К полудню мы добрались до вершины и сели как следует — так, как садишься, когда заслужил.",
-          "de": "Am Nachmittag waren wir oben, und wir setzten uns richtig hin, so wie man es tut, wenn man es sich verdient hat."
-        },
-        "provenance": {
-          "source": "seed",
-          "reference": "summit rest in afternoon"
-        }
+      "lat": 0.0,
+      "lon": 0.0,
+      "title": {
+        "en": "A bird overhead",
+        "ru": "Птица над головой",
+        "de": "Ein Vogel über uns"
       },
-      {
-        "text": {
-          "en": "Mia had packed apples, and I don't think an apple has ever tasted that good — cold, crisp, eaten while staring up at all that sky.",
-          "ru": "Мия взяла с собой яблоки, и, кажется, никогда яблоко не было таким вкусным — холодное, хрустящее, съеденное под этим бескрайним небом.",
-          "de": "Mia hatte Äpfel eingepackt, und ich glaube, ein Apfel hat noch nie so gut geschmeckt — kalt, knackig, gegessen mit Blick in diesen ganzen Himmel."
+      "body": [
+        {
+          "text": {
+            "en": "A little way up, we stopped to watch a bird wheel slowly above the slope.",
+            "ru": "Чуть выше мы остановились, чтобы посмотреть, как над склоном медленно кружит птица.",
+            "de": "Ein Stück weiter oben blieben wir stehen und sahen einem Vogel zu, der langsam über dem Hang kreiste."
+          },
+          "provenance": {
+            "source": "photo",
+            "reference": "bird"
+          }
         },
-        "provenance": {
-          "source": "seed",
-          "reference": "apples at summit, sky observation"
+        {
+          "text": {
+            "en": "Mia laughed at how long we just stood there with our heads tipped back.",
+            "ru": "Мия смеялась, что мы так долго стояли, запрокинув головы.",
+            "de": "Mia lachte darüber, wie lange wir einfach mit zurückgelegten Köpfen dastanden."
+          },
+          "provenance": {
+            "source": "seed",
+            "reference": "joyful, laughing"
+          }
+        },
+        {
+          "text": {
+            "en": "The April air was still cool but kind, and it pushed us gently on uphill.",
+            "ru": "Апрельский воздух был ещё прохладным, но ласковым, и он мягко подталкивал нас выше.",
+            "de": "Die Aprilluft war noch kühl, aber freundlich, und schob uns sanft weiter bergauf."
+          },
+          "provenance": {
+            "source": "gpx",
+            "reference": "season"
+          }
         }
+      ],
+      "photo_index": 2
+    },
+    {
+      "id": "stream",
+      "time": "09:20",
+      "place": {
+        "en": "Bavarian Alps",
+        "ru": "Баварские Альпы",
+        "de": "Bayerische Alpen"
       },
-      {
-        "text": {
-          "en": "We didn't say much for a while; we didn't need to.",
-          "ru": "Какое-то время мы почти не говорили — да и не нужно было.",
-          "de": "Eine Weile sagten wir kaum etwas; wir mussten auch nicht."
+      "lat": 0.0,
+      "lon": 0.0,
+      "title": {
+        "en": "By the stream",
+        "ru": "У ручья",
+        "de": "Am Bach"
+      },
+      "body": [
+        {
+          "text": {
+            "en": "A small stream crossed the path, full and quick the way they are in spring.",
+            "ru": "Тропу пересекал маленький ручей — полный и быстрый, какими они бывают весной.",
+            "de": "Ein kleiner Bach kreuzte den Weg, voll und schnell, wie sie es im Frühling sind."
+          },
+          "provenance": {
+            "source": "photo",
+            "reference": "stream"
+          }
         },
-        "provenance": {
-          "source": "inferred",
-          "reference": "delighted summit mood"
+        {
+          "text": {
+            "en": "We crouched by it for a minute just to listen to the sound of the water.",
+            "ru": "Мы присели у него на минутку, просто чтобы послушать, как шумит вода.",
+            "de": "Wir hockten uns kurz daran und hörten einfach dem Wasser zu."
+          },
+          "provenance": {
+            "source": "inferred",
+            "reference": "small grounded pause around the stream"
+          }
         }
-      }
-    ]
+      ],
+      "photo_index": 4
+    },
+    {
+      "id": "wind-on-the-ridge",
+      "time": "11:00",
+      "place": {
+        "en": "Bavarian Alps",
+        "ru": "Баварские Альпы",
+        "de": "Bayerische Alpen"
+      },
+      "lat": 0.0,
+      "lon": 0.0,
+      "title": {
+        "en": "Wind on the ridge",
+        "ru": "Ветер на хребте",
+        "de": "Wind auf dem Grat"
+      },
+      "body": [
+        {
+          "text": {
+            "en": "Higher up the wind found us — not cold, just steady against our faces.",
+            "ru": "Выше нас нагнал ветер — не холодный, просто ровный, бьющий в лицо.",
+            "de": "Weiter oben holte uns der Wind ein — nicht kalt, einfach beständig im Gesicht."
+          },
+          "provenance": {
+            "source": "seed",
+            "reference": "wind during the climb"
+          }
+        },
+        {
+          "text": {
+            "en": "Mia was ahead of me by then, and I remember being so happy just watching her climb.",
+            "ru": "Мия к тому моменту шла впереди, и я помню, как был рад, просто глядя, как она поднимается.",
+            "de": "Mia war zu dem Zeitpunkt schon vor mir, und ich war einfach glücklich, ihr beim Hinaufsteigen zuzusehen."
+          },
+          "provenance": {
+            "source": "seed",
+            "reference": "Mia as companion; joyful mood"
+          }
+        }
+      ],
+      "photo_index": 6
+    },
+    {
+      "id": "summit-apples",
+      "time": "12:40",
+      "place": {
+        "en": "Bavarian Alps",
+        "ru": "Баварские Альпы",
+        "de": "Bayerische Alpen"
+      },
+      "lat": 0.0,
+      "lon": 0.0,
+      "title": {
+        "en": "Apples at the top",
+        "ru": "Яблоки на вершине",
+        "de": "Äpfel am Gipfel"
+      },
+      "body": [
+        {
+          "text": {
+            "en": "We sat down at the summit and pulled out the apples we'd carried up.",
+            "ru": "Мы сели на вершине и достали яблоки, которые тащили наверх.",
+            "de": "Wir setzten uns auf dem Gipfel hin und holten die Äpfel hervor, die wir hochgetragen hatten."
+          },
+          "provenance": {
+            "source": "seed",
+            "reference": "summit, eating apples"
+          }
+        },
+        {
+          "text": {
+            "en": "Honestly, I don't think an apple has ever tasted that good before.",
+            "ru": "Честно говоря, кажется, ни одно яблоко раньше не было таким вкусным.",
+            "de": "Ehrlich gesagt, hat ein Apfel vorher nie so gut geschmeckt."
+          },
+          "provenance": {
+            "source": "seed",
+            "reference": "delighted, appreciative"
+          }
+        },
+        {
+          "text": {
+            "en": "Mia just kept saying how lucky we were with the sky.",
+            "ru": "Мия всё повторяла, как нам повезло с небом.",
+            "de": "Mia sagte immer wieder, wie viel Glück wir mit dem Himmel hatten."
+          },
+          "provenance": {
+            "source": "seed",
+            "reference": "clear blue sky; Mia"
+          }
+        }
+      ],
+      "photo_index": 8
+    },
+    {
+      "id": "the-view",
+      "time": "13:20",
+      "place": {
+        "en": "Bavarian Alps",
+        "ru": "Баварские Альпы",
+        "de": "Bayerische Alpen"
+      },
+      "lat": 0.0,
+      "lon": 0.0,
+      "title": {
+        "en": "Sitting with the view",
+        "ru": "Сидя перед видом",
+        "de": "Mit Blick in die Weite"
+      },
+      "body": [
+        {
+          "text": {
+            "en": "We stayed up there a long time, just looking out over the mountains.",
+            "ru": "Мы долго сидели наверху, просто глядя на горы.",
+            "de": "Wir blieben lange dort oben und schauten einfach über die Berge."
+          },
+          "provenance": {
+            "source": "seed",
+            "reference": "enjoying the view at summit"
+          }
+        },
+        {
+          "text": {
+            "en": "Nobody felt like getting up, so we didn't, not for a while.",
+            "ru": "Никому не хотелось вставать, и мы не вставали — какое-то время.",
+            "de": "Keiner hatte Lust aufzustehen, also blieben wir noch eine Weile sitzen."
+          },
+          "provenance": {
+            "source": "inferred",
+            "reference": "lingering mood after climb"
+          }
+        },
+        {
+          "text": {
+            "en": "I wanted you to be sitting there with us.",
+            "ru": "Мне хотелось, чтобы ты сидел там с нами.",
+            "de": "Ich hätte mir gewünscht, dass du dort mit uns gesessen hättest."
+          },
+          "provenance": {
+            "source": "inferred",
+            "reference": "letter-home address"
+          }
+        }
+      ],
+      "photo_index": 10
+    }
   ],
   "pull_quote": {
-    "en": "I don't think an apple has ever tasted that good — cold, crisp, eaten while staring up at all that sky.",
-    "ru": "Кажется, никогда яблоко не было таким вкусным — холодное, хрустящее, съеденное под этим бескрайним небом.",
-    "de": "Ein Apfel hat noch nie so gut geschmeckt — kalt, knackig, gegessen mit Blick in diesen ganzen Himmel."
+    "en": "Honestly, I don't think an apple has ever tasted that good before.",
+    "ru": "Честно говоря, кажется, ни одно яблоко раньше не было таким вкусным.",
+    "de": "Ehrlich gesagt, hat ein Apfel vorher nie so gut geschmeckt."
   },
   "milestone": {
-    "en": "Spring hike with Mia",
-    "ru": "Весенний поход с Мией",
+    "en": "Spring climb with Mia",
+    "ru": "Весна в горах с Мией",
     "de": "Frühlingstour mit Mia"
-  },
-  "selected_photo_indices": [
-    0,
-    2,
-    4,
-    6,
-    8,
-    10,
-    11
-  ]
+  }
 }
