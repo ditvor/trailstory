@@ -10,6 +10,67 @@ Versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 ## [Unreleased]
 
 ### Changed
+- **Editorial photo layout: consistent aspect ratio + interleaved
+  through paragraphs.** `templates/styles/editorial.html.j2` now locks
+  every `.figure img` to a `3 / 2` aspect ratio with
+  `object-fit: cover`, so portrait and landscape originals render as
+  the same rectangle instead of a ragged mixed-height stack. Photos
+  past the hero are interleaved one-per-paragraph through the body
+  (full-column variants `v-b` / `v-c` / `v-d`) instead of the previous
+  "one in the middle, all the rest stacked after the pull quote"
+  pattern; any overflow falls after the quote with the original
+  rotation. Pilot users on 6–8-photo hikes were reading the old layout
+  as a top half of prose followed by a bottom half of photo dump;
+  interleaving keeps the visual rhythm matched to the prose rhythm.
+- **Per-sentence provenance UI hidden by default; `Notes` audit toggle
+  added (editorial style).** The ADR-014 INFERRED tint and the
+  per-sentence `title=` tooltip used to be on for every reader; pilot
+  users read the amber background as random highlighting and the
+  resulting `cursor: help` as a broken affordance (the native browser
+  tooltip is slow, low-contrast, and absent on touch). The audit UI
+  now lives behind a `Notes` toggle in the editorial template's top
+  bar, which flips `body.audit` and reveals a richer treatment than
+  before: per-source colour cues (INFERRED amber background; PHOTO /
+  SEED / GPX underline tints) plus a custom `::after` tooltip reading
+  `data-tip` so it actually renders quickly on hover with readable
+  contrast. The `<span class="sent">` carries `data-prov` + `data-tip`
+  on every sentence regardless, so the data is still available; the
+  default rendering just stays clean for the page's actual audience
+  (a family member, not the author). Author preference is persisted
+  in `localStorage` under `trailstory.notes`. Log and encyclopedia
+  styles already used the flat fallback and are unaffected.
+- **Writer prompt rebalanced for warmth + faithfulness.**
+  `SYSTEM_NARRATIVE` and `USER_NARRATIVE_TEMPLATE` in
+  `trailstory/llm/prompts.py` no longer ask for an "intimate, literary"
+  voice / "Bourdain on a quiet afternoon" framing — pilot output
+  drifted into ornate atmospheric prose detached from the hiker's
+  seed text. The prompt now frames the task as "a letter home to
+  people who love them — warm, intimate, direct", with explicit
+  instructions to name the people from the ledger when they appear
+  in a beat, surface the sensory specifics (light, sound, smell,
+  texture) and emotions the ledger records, and avoid the magazine
+  essay register. Grounded-sentence aim raised from ≥ 60% to ≥ 70%
+  of `seed` / `photo` / `gpx` provenance. New hard rule: do not
+  quote GPX numbers (distance, elevation, duration, summit height)
+  verbatim in the prose — those live in the stats block, qualitative
+  reference only. Milestone JSON skeleton now states the
+  "under 30 characters in every language" rubric ceiling explicitly
+  so the model stops blowing the cap on RU/DE. Paragraph count
+  remains 3–5 (a first iteration shortening it to 2–3 was rejected
+  by the eval). Previous prompt versions preserved as dated comments
+  for revertability. CLI narrative cache is not invalidated by
+  prompt-only changes — clear `~/.cache/trailstory/narratives/` to
+  regenerate old hikes with the new register; the web builder
+  streaming path bypasses cache and is unaffected.
+
+  **Eval status (paid LLM-as-judge, run on PR branch before merge,
+  threshold 1.00):** all 4 cases pass judge regression after two
+  prompt iterations. Cases 01/02/03/04 warmth Δ = -0.5, +0.5, 0.0,
+  -0.5; narrative_arc Δ = -0.5, +0.5, 0.0, -0.5; russian_fidelity
+  Δ = -0.5, 0.0, 0.0, 0.0; faithfulness Δ = +0.12, -0.24, +0.38,
+  +0.90 (faithfulness improved in three cases, dipped marginally on
+  case 02 within threshold). Goldens refreshed via
+  `make eval-update-golden` and committed alongside the prompt.
 - **Two-pass narrative pipeline with a structured `FactLedger` (Phase 2 of
   the narrative-faithfulness initiative;
   [ADR-009](docs/adr/009-two-pass-narrative-with-fact-ledger.md)).** Narrative
