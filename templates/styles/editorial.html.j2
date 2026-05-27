@@ -566,10 +566,16 @@
         <span class="de">{{ narrative.subtitle.de }}</span>
       </p>
       {% if meta.location or meta.date %}
+      {# Byline + dateline. The byline reads as a small editorial note
+         clarifying provenance — that the prose is reconstructed from
+         the seed text, the GPX track, and the photos — not a real-time
+         diary. Conditional on at least one of location/date so the
+         no-meta render stays clean. #}
       <div class="meta">
-        {% if meta.location %}{{ meta.location | upper }}{% endif %}
-        {% if meta.location and meta.date %} &middot; {% endif %}
-        {% if meta.date %}{{ meta.date }}{% endif %}
+        <span class="en">Written from notes, photographs, and a recorded path.</span>
+        <span class="ru">Написано по заметкам, фотографиям и записанному треку.</span>
+        <span class="de">Aus Notizen, Fotos und einem aufgezeichneten Pfad geschrieben.</span>
+        <span aria-hidden="true"> &middot; </span>{% if meta.location %}{{ meta.location | upper }}{% endif %}{% if meta.location and meta.date %} &middot; {% endif %}{% if meta.date %}{{ meta.date }}{% endif %}
       </div>
       {% endif %}
       <hr class="rule">

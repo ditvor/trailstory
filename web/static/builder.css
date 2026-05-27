@@ -1,47 +1,69 @@
-/* Trailstory builder — editorial design system.
-   Cream paper, near-black ink, one serif + one mono. Mirrors the output
-   page tokens (templates/styles/editorial.html.j2) so the builder and the
-   rendered memory feel like one product. */
+/* Trailstory builder — THE NOTEBOOK.
+   A workshop, not a publication. Distinct from every output style.
+   Soft dot-grid background, fountain-pen ink blue accent, Onest variable
+   for both display and body (one file, two roles via weight), JetBrains
+   Mono for section numbers and stats, Caveat in only two places — the
+   "your day" doodle in the hero and the "composed by you" signature in
+   the footer. */
 
 /* ── fonts ──────────────────────────────────────────────────────────────
-   Self-hosted under /static/fonts. Same variable Source Serif 4 + JetBrains
-   Mono pair the output renderer uses. Latin and Cyrillic are separate
-   subsets; the browser activates only what it needs. Unicode-range
-   block-list matches templates/styles/editorial.html.j2.            */
+   Self-hosted under /static/fonts. Onest substitutes for both Bricolage
+   (display) and Hanken (body) from the design brief: it is the only
+   variable family in the same visual register that ships full Cyrillic on
+   Google Fonts. Caveat is the script accent. JetBrains Mono is shared
+   with the editorial output renderer. Subsets split into latin / cyrillic
+   / latin-ext so the browser activates only what each glyph needs.
+   See web/static/fonts/LICENSE.md for substitution notes. */
 @font-face {
-  font-family: 'Editorial Serif';
-  font-style: italic;
-  font-weight: 300 600;
+  font-family: 'Notebook Display';
+  font-style: normal;
+  font-weight: 300 900;
   font-display: swap;
-  src: url('/static/fonts/SourceSerif4-Italic-VF.latin.woff2') format('woff2');
+  src: url('/static/fonts/Onest-VF.latin.woff2') format('woff2');
   unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
 }
 @font-face {
-  font-family: 'Editorial Serif';
-  font-style: italic;
-  font-weight: 300 600;
+  font-family: 'Notebook Display';
+  font-style: normal;
+  font-weight: 300 900;
   font-display: swap;
-  src: url('/static/fonts/SourceSerif4-Italic-VF.cyrillic.woff2') format('woff2');
+  src: url('/static/fonts/Onest-VF.latin-ext.woff2') format('woff2');
+  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+@font-face {
+  font-family: 'Notebook Display';
+  font-style: normal;
+  font-weight: 300 900;
+  font-display: swap;
+  src: url('/static/fonts/Onest-VF.cyrillic.woff2') format('woff2');
   unicode-range: U+0301, U+0400-045F, U+0490-0491, U+04B0-04B1, U+2116;
 }
 @font-face {
-  font-family: 'Editorial Serif';
+  font-family: 'Notebook Script';
   font-style: normal;
-  font-weight: 300 600;
+  font-weight: 400 700;
   font-display: swap;
-  src: url('/static/fonts/SourceSerif4-Roman-VF.latin.woff2') format('woff2');
+  src: url('/static/fonts/Caveat-VF.latin.woff2') format('woff2');
   unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
 }
 @font-face {
-  font-family: 'Editorial Serif';
+  font-family: 'Notebook Script';
   font-style: normal;
-  font-weight: 300 600;
+  font-weight: 400 700;
   font-display: swap;
-  src: url('/static/fonts/SourceSerif4-Roman-VF.cyrillic.woff2') format('woff2');
+  src: url('/static/fonts/Caveat-VF.latin-ext.woff2') format('woff2');
+  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+@font-face {
+  font-family: 'Notebook Script';
+  font-style: normal;
+  font-weight: 400 700;
+  font-display: swap;
+  src: url('/static/fonts/Caveat-VF.cyrillic.woff2') format('woff2');
   unicode-range: U+0301, U+0400-045F, U+0490-0491, U+04B0-04B1, U+2116;
 }
 @font-face {
-  font-family: 'Editorial Mono';
+  font-family: 'Notebook Mono';
   font-style: normal;
   font-weight: 400 500;
   font-display: swap;
@@ -49,7 +71,7 @@
   unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
 }
 @font-face {
-  font-family: 'Editorial Mono';
+  font-family: 'Notebook Mono';
   font-style: normal;
   font-weight: 400 500;
   font-display: swap;
@@ -59,48 +81,76 @@
 
 /* ── design tokens ─────────────────────────────────────────────────── */
 :root {
-  --paper: oklch(0.972 0.008 80);
-  --paper-2: oklch(0.945 0.012 80);
-  --ink: oklch(0.18 0.01 80);
-  --ink-2: oklch(0.32 0.01 80);
-  --ink-3: oklch(0.55 0.01 80);
-  --rule: oklch(0.18 0.01 80 / 0.18);
-  --hairline: oklch(0.18 0.01 80 / 0.10);
+  /* Notebook palette — workshop, not publication. Cooler, slightly
+     bluer cream than the Letter paper; fountain-pen blue is the load-
+     bearing accent. */
+  --nb-bg:           oklch(0.965 0.005 90);
+  --nb-surface:      oklch(0.988 0.003 90);
+  --nb-grid:         oklch(0.20 0.02 250 / 0.045);
+  --nb-grid-strong:  oklch(0.20 0.02 250 / 0.085);
+  --nb-ink:          oklch(0.22 0.02 250);
+  --nb-ink-2:        oklch(0.42 0.02 250);
+  --nb-ink-3:        oklch(0.62 0.02 250);
+  --nb-rule:         oklch(0.22 0.02 250 / 0.16);
+  --nb-hairline:     oklch(0.22 0.02 250 / 0.08);
+  --nb-pen:          oklch(0.32 0.10 252);
+  --nb-pen-2:        oklch(0.42 0.13 252);
+  --nb-pen-tint:     oklch(0.32 0.10 252 / 0.08);
+  --nb-pen-tint-2:   oklch(0.32 0.10 252 / 0.14);
+  --nb-marker:       oklch(0.74 0.16 92);
+  --nb-saved:        oklch(0.66 0.16 145);
+  --nb-saved-glow:   oklch(0.66 0.16 145 / 0.18);
 
-  --serif: 'Editorial Serif', 'Times New Roman', Georgia, serif;
-  --mono: 'Editorial Mono', ui-monospace, Menlo, monospace;
-  --sans: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  --nb-display: 'Notebook Display', system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+  --nb-sans:    'Notebook Display', system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+  --nb-mono:    'Notebook Mono', ui-monospace, Menlo, monospace;
+  --nb-script:  'Notebook Script', 'Brush Script MT', cursive;
+
+  /* Legacy editorial aliases — kept so any third-party CSS or future
+     pages that opt into the editorial palette can still resolve them.
+     The builder itself uses --nb-* exclusively. */
+  --paper:    var(--nb-bg);
+  --paper-2:  var(--nb-surface);
+  --ink:      var(--nb-ink);
+  --ink-2:    var(--nb-ink-2);
+  --ink-3:    var(--nb-ink-3);
+  --rule:     var(--nb-rule);
+  --hairline: var(--nb-hairline);
+  --serif:    var(--nb-display);
+  --mono:     var(--nb-mono);
+  --sans:     var(--nb-sans);
 
   --tap: 44px;
 
-  /* Style-thumbnail palettes — used only by the style-picker thumbs.
-     When the real renderers for these styles ship, each one will define
-     its own bundle; these tokens stand in for the preview. */
-  --zine-paper: oklch(0.948 0.022 86);
-  --zine-ink: oklch(0.14 0.01 70);
-  --zine-spot: oklch(0.62 0.19 35);
+  /* Style-thumbnail palettes — used only by the style-picker thumbs
+     under web/templates/style_thumbs/. When the real renderers for
+     these styles ship, each one will define its own bundle; these
+     tokens stand in for the preview. */
+  --zine-paper:   oklch(0.948 0.022 86);
+  --zine-ink:     oklch(0.14 0.01 70);
+  --zine-spot:    oklch(0.62 0.19 35);
   --zine-display: 'Impact', 'Haettenschweiler', 'Arial Narrow Bold', sans-serif;
 
-  --sunday-paper: oklch(0.965 0.038 95);
-  --sunday-sun: oklch(0.88 0.17 92);
-  --sunday-coral: oklch(0.71 0.17 30);
-  --sunday-ink: oklch(0.22 0.04 55);
-  --sunday-display: var(--serif);
+  --sunday-paper:   oklch(0.965 0.038 95);
+  --sunday-sun:     oklch(0.88 0.17 92);
+  --sunday-coral:   oklch(0.71 0.17 30);
+  --sunday-ink:     oklch(0.22 0.04 55);
+  --sunday-display: var(--nb-display);
 
   --pc-paper: oklch(0.948 0.024 80);
-  --pc-card: oklch(0.975 0.02 82);
-  --pc-red: oklch(0.58 0.20 28);
-  --pc-blue: oklch(0.60 0.10 230);
-  --pc-ink: oklch(0.20 0.02 50);
+  --pc-card:  oklch(0.975 0.02 82);
+  --pc-red:   oklch(0.58 0.20 28);
+  --pc-blue:  oklch(0.60 0.10 230);
+  --pc-ink:   oklch(0.20 0.02 50);
 
-  --album-paper: oklch(0.94 0.025 88);
-  --album-paper-2: oklch(0.91 0.03 86);
-  --album-photo: oklch(0.985 0.005 80);
-  --album-ink: oklch(0.20 0.01 60);
-  --album-pen: oklch(0.32 0.10 260);
+  --album-paper:     oklch(0.94 0.025 88);
+  --album-paper-2:   oklch(0.91 0.03 86);
+  --album-photo:     oklch(0.985 0.005 80);
+  --album-ink:       oklch(0.20 0.01 60);
+  --album-pen:       oklch(0.32 0.10 260);
   --album-tape-pink: oklch(0.78 0.10 350 / 0.78);
-  --album-warm: oklch(0.88 0.17 92);
-  --album-coral: oklch(0.71 0.17 30);
+  --album-warm:      oklch(0.88 0.17 92);
+  --album-coral:     oklch(0.71 0.17 30);
 }
 
 *,
@@ -113,17 +163,27 @@ html,
 body {
   margin: 0;
   padding: 0;
-  background: var(--paper);
-  color: var(--ink);
+  background: var(--nb-bg);
+  color: var(--nb-ink);
 }
 
 body {
-  font-family: var(--sans);
+  font-family: var(--nb-sans);
+  font-weight: 400;
+  font-size: 16px;
+  line-height: 1.55;
   -webkit-font-smoothing: antialiased;
   text-rendering: optimizeLegibility;
   min-height: 100vh;
   display: flex;
   flex-direction: column;
+  /* Dot-grid notebook surface. Lays a soft ink dot at every 18px so the
+     page reads as graph paper. Disable on print so the rendered PDF
+     stays white. */
+  background-image:
+    radial-gradient(circle at center, var(--nb-grid) 1px, transparent 1.4px);
+  background-size: 18px 18px;
+  background-position: 0 0;
 }
 
 [x-cloak] {
@@ -146,8 +206,10 @@ html[data-lang="de"] :is(.lang-en, .lang-ru) {
   position: sticky;
   top: 0;
   z-index: 50;
-  background: var(--paper);
-  border-bottom: 1px solid var(--hairline);
+  background: color-mix(in oklab, var(--nb-bg) 92%, transparent);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border-bottom: 1px solid var(--nb-hairline);
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -157,41 +219,68 @@ html[data-lang="de"] :is(.lang-en, .lang-ru) {
 .bp-logo {
   display: inline-flex;
   align-items: center;
-  gap: 10px;
+  gap: 12px;
   text-decoration: none;
-  color: var(--ink);
+  color: var(--nb-ink);
+}
+
+.bp-logo svg {
+  color: var(--nb-pen);
 }
 
 .bp-logo-word {
-  font-family: var(--mono);
-  font-size: 12px;
-  letter-spacing: 0.14em;
-  font-weight: 600;
+  font-family: var(--nb-display);
+  font-size: 18px;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  color: var(--nb-ink);
+}
+
+/* Hand-noted "builder" tag next to the logo. Inserted by builder_base. */
+.bp-logo-tag {
+  font-family: var(--nb-mono);
+  font-size: 10px;
+  letter-spacing: 0.12em;
+  color: var(--nb-pen);
+  font-style: italic;
+  padding: 2px 8px;
+  border: 1px solid var(--nb-pen);
+  transform: rotate(-2deg);
+  display: inline-block;
+  text-transform: lowercase;
 }
 
 .bp-langnav {
   display: inline-flex;
-  border: 1px solid var(--ink);
+  border: 1px solid var(--nb-ink);
+  background: var(--nb-surface);
 }
 
 .bp-lang-btn {
-  font-family: var(--mono);
-  font-size: 10px;
+  font-family: var(--nb-mono);
+  font-size: 11px;
   letter-spacing: 0.18em;
   font-weight: 500;
   border: 0;
   background: transparent;
-  color: var(--ink);
+  color: var(--nb-ink);
   padding: 6px 12px;
   cursor: pointer;
   min-height: 32px;
   text-decoration: none;
   display: inline-flex;
   align-items: center;
+  transition:
+    background 0.12s,
+    color 0.12s;
+}
+.bp-lang-btn:hover {
+  background: var(--nb-pen-tint);
+  color: var(--nb-pen);
 }
 .bp-lang-btn[aria-pressed="true"] {
-  background: var(--ink);
-  color: var(--paper);
+  background: var(--nb-ink);
+  color: var(--nb-bg);
 }
 
 /* ── main column ────────────────────────────────────────────────────── */
@@ -199,50 +288,132 @@ html[data-lang="de"] :is(.lang-en, .lang-ru) {
   max-width: 760px;
   width: 100%;
   margin: 0 auto;
-  padding: 48px 28px 96px;
+  padding: 56px 28px 96px;
   flex: 1;
+  position: relative;
 }
 
 /* ── hero ───────────────────────────────────────────────────────────── */
 .bp-hero {
   margin-bottom: 56px;
+  position: relative;
+}
+
+/* Hand-sketched "your day" route loop in pen-ink blue. Sits in the
+   top-right of the hero. Inserted via inline SVG in landing.html.j2 so
+   we can apply the #bp-hand turbulence filter for the rough feel. */
+.bp-hero-doodle {
+  position: absolute;
+  top: -10px;
+  right: -10px;
+  width: 140px;
+  height: 100px;
+  opacity: 0.95;
+  pointer-events: none;
+  overflow: visible;
+}
+.bp-hero-doodle text {
+  font-family: var(--nb-script);
+  font-size: 18px;
+  fill: var(--nb-pen);
+  opacity: 0.7;
 }
 
 .bp-eyebrow {
-  font-family: var(--mono);
+  font-family: var(--nb-mono);
   font-size: 11px;
-  letter-spacing: 0.22em;
+  letter-spacing: 0.20em;
   font-weight: 500;
-  color: var(--ink-2);
+  color: var(--nb-pen);
   text-transform: uppercase;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+.bp-eyebrow::before {
+  content: "";
+  width: 16px;
+  height: 1.5px;
+  background: var(--nb-pen);
+  display: inline-block;
 }
 
 .bp-h1 {
-  font-family: var(--serif);
-  font-weight: 600;
-  font-variation-settings: "opsz" 60;
-  font-size: 64px;
+  font-family: var(--nb-display);
+  font-weight: 700;
+  font-size: 54px;
   line-height: 1.02;
   letter-spacing: -0.025em;
-  color: var(--ink);
-  margin: 14px 0 24px;
+  color: var(--nb-ink);
+  margin: 14px 0 18px;
   white-space: pre-line;
+  max-width: 580px;
 }
 
 .bp-dek {
-  font-family: var(--serif);
-  font-size: 19px;
-  line-height: 1.5;
-  color: var(--ink-2);
+  font-family: var(--nb-sans);
+  font-weight: 400;
+  font-size: 17px;
+  line-height: 1.55;
+  color: var(--nb-ink-2);
   margin: 0;
-  max-width: 560px;
+  max-width: 540px;
+}
+
+/* Draft badge + saved indicator under the dek. Optional decorative
+   row in the hero — populated by landing.html.j2 if at all. */
+.bp-hero-meta {
+  margin-top: 22px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.bp-draft-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-family: var(--nb-mono);
+  font-size: 10px;
+  letter-spacing: 0.16em;
+  font-weight: 600;
+  padding: 4px 10px;
+  border: 1.5px solid var(--nb-pen);
+  color: var(--nb-pen);
+  background: var(--nb-surface);
+  transform: rotate(-1.2deg);
+  text-transform: uppercase;
+}
+
+.bp-saved {
+  font-family: var(--nb-mono);
+  font-size: 10px;
+  letter-spacing: 0.06em;
+  color: var(--nb-ink-3);
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+.bp-saved-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--nb-saved);
+  box-shadow: 0 0 0 3px var(--nb-saved-glow);
+  animation: bp-pulse 2s infinite;
+}
+@keyframes bp-pulse {
+  0%, 100% { box-shadow: 0 0 0 3px var(--nb-saved-glow); }
+  50%      { box-shadow: 0 0 0 5px color-mix(in oklab, var(--nb-saved) 8%, transparent); }
 }
 
 /* ── sections (numbered cards) ──────────────────────────────────────── */
 .bp-section {
   margin: 0 0 36px;
   padding-top: 28px;
-  border-top: 1px solid var(--rule);
+  border-top: 1px solid var(--nb-rule);
+  position: relative;
 }
 
 .bp-section-head {
@@ -253,27 +424,30 @@ html[data-lang="de"] :is(.lang-en, .lang-ru) {
 }
 
 .bp-section-num {
-  font-family: var(--mono);
-  font-size: 11px;
-  color: var(--ink-3);
-  letter-spacing: 0.14em;
+  font-family: var(--nb-mono);
+  font-style: italic;
+  font-size: 12px;
+  color: var(--nb-pen);
+  letter-spacing: 0.04em;
+  border-bottom: 1.5px dotted var(--nb-pen);
+  padding-bottom: 1px;
 }
 
 .bp-section-title {
   margin: 0;
   flex: 1;
-  font-family: var(--serif);
+  font-family: var(--nb-display);
   font-weight: 600;
-  font-size: 30px;
-  font-variation-settings: "opsz" 28;
+  font-size: 26px;
   letter-spacing: -0.015em;
   line-height: 1.05;
+  color: var(--nb-ink);
 }
 
 .bp-section-hint {
-  font-family: var(--mono);
+  font-family: var(--nb-mono);
   font-size: 11px;
-  color: var(--ink-3);
+  color: var(--nb-ink-3);
   letter-spacing: 0.06em;
 }
 
@@ -287,38 +461,40 @@ html[data-lang="de"] :is(.lang-en, .lang-ru) {
   flex-direction: column;
   align-items: center;
   gap: 8px;
-  padding: 32px 24px;
-  border: 1.5px dashed var(--ink-3);
-  background: var(--paper-2);
-  color: var(--ink-2);
+  padding: 36px 24px;
+  border: 1.5px dashed var(--nb-pen);
+  background: var(--nb-pen-tint);
+  color: var(--nb-pen);
   cursor: pointer;
   transition:
-    border-color 0.15s,
-    background 0.15s;
+    background 0.15s,
+    transform 0.15s,
+    border-color 0.15s;
 }
 .bp-dropzone:hover,
 .bp-dropzone:focus-within {
-  border-color: var(--ink);
-  background: var(--paper);
+  background: var(--nb-pen-tint-2);
+  transform: translateY(-1px);
 }
 
 .bp-dropzone-icon {
-  color: var(--ink);
+  color: var(--nb-pen);
   display: flex;
 }
 
 .bp-dropzone-title {
-  font-family: var(--serif);
+  font-family: var(--nb-display);
+  font-weight: 600;
   font-size: 19px;
-  color: var(--ink);
+  color: var(--nb-ink);
   margin-top: 4px;
   text-align: center;
 }
 
 .bp-dropzone-hint {
-  font-family: var(--mono);
+  font-family: var(--nb-mono);
   font-size: 11px;
-  color: var(--ink-3);
+  color: var(--nb-ink-3);
   letter-spacing: 0.04em;
   text-align: center;
 }
@@ -339,63 +515,82 @@ html[data-lang="de"] :is(.lang-en, .lang-ru) {
 
 .bp-dropzone-filename {
   margin-top: 6px;
-  font-family: var(--mono);
+  font-family: var(--nb-mono);
   font-size: 11px;
-  color: var(--ink);
+  color: var(--nb-ink);
   letter-spacing: 0.04em;
   word-break: break-all;
 }
 
-/* ── textarea ───────────────────────────────────────────────────────── */
+/* ── textarea — notebook-ruled paper feel ───────────────────────────── */
 .bp-textarea {
   width: 100%;
-  border: 1px solid var(--ink);
-  background: var(--paper);
-  padding: 16px 18px;
-  font-family: var(--serif);
-  font-size: 16px;
-  line-height: 1.55;
-  color: var(--ink);
+  border: 1px solid var(--nb-rule);
+  background: var(--nb-surface);
+  /* Faux notebook ruled lines: a faint horizontal line every 24px. The
+     padding-top + line-height keep the typing baseline on the rules. */
+  background-image: repeating-linear-gradient(
+    to bottom,
+    transparent,
+    transparent 23px,
+    var(--nb-grid) 23px,
+    var(--nb-grid) 24px
+  );
+  background-attachment: local;
+  padding: 18px 20px;
+  font-family: var(--nb-sans);
+  font-size: 15px;
+  line-height: 24px;
+  color: var(--nb-ink);
   resize: vertical;
   outline: none;
   border-radius: 0;
-  min-height: 180px;
+  min-height: 192px;
+  transition:
+    border-color 0.12s,
+    box-shadow 0.12s;
 }
 .bp-textarea:focus {
-  box-shadow: inset 3px 0 0 var(--ink);
+  border-color: var(--nb-pen);
+  box-shadow: inset 4px 0 0 var(--nb-pen);
+}
+.bp-textarea::placeholder {
+  color: var(--nb-ink-3);
+  font-style: italic;
 }
 
 .bp-textarea-foot {
   display: flex;
   justify-content: space-between;
-  margin-top: 6px;
-  font-family: var(--mono);
+  margin-top: 8px;
+  font-family: var(--nb-mono);
   font-size: 10px;
-  color: var(--ink-3);
+  color: var(--nb-ink-3);
   letter-spacing: 0.04em;
 }
 
-/* ── optional location field ────────────────────────────────────────── */
+/* ── optional location field (legacy) ───────────────────────────────── */
 .bp-input {
   width: 100%;
-  border: 1px solid var(--hairline);
-  background: var(--paper);
+  border: 1px solid var(--nb-rule);
+  background: var(--nb-surface);
   padding: 12px 14px;
-  font-family: var(--serif);
+  font-family: var(--nb-sans);
   font-size: 16px;
-  color: var(--ink);
+  color: var(--nb-ink);
   outline: none;
   border-radius: 0;
 }
 .bp-input:focus {
-  border-color: var(--ink);
-  box-shadow: inset 3px 0 0 var(--ink);
+  border-color: var(--nb-pen);
+  box-shadow: inset 3px 0 0 var(--nb-pen);
 }
 
 /* ── track card (populated state after GPX upload) ──────────────────── */
 .bp-track-card {
-  border: 1px solid var(--hairline);
-  background: var(--paper-2);
+  border: 1px solid var(--nb-hairline);
+  background: var(--nb-surface);
+  box-shadow: 0 1px 0 var(--nb-hairline);
 }
 
 .bp-track-row {
@@ -406,7 +601,7 @@ html[data-lang="de"] :is(.lang-en, .lang-ru) {
 }
 
 .bp-track-icon {
-  color: var(--ink);
+  color: var(--nb-pen);
   display: flex;
 }
 
@@ -416,40 +611,41 @@ html[data-lang="de"] :is(.lang-en, .lang-ru) {
 }
 
 .bp-track-filename {
-  font-family: var(--mono);
+  font-family: var(--nb-mono);
   font-size: 13px;
   font-weight: 500;
-  color: var(--ink);
+  color: var(--nb-ink);
   word-break: break-all;
 }
 
 .bp-track-parsed {
-  font-family: var(--mono);
+  font-family: var(--nb-mono);
   font-size: 10px;
-  color: var(--ink-3);
+  color: var(--nb-ink-3);
   letter-spacing: 0.04em;
   margin-top: 2px;
 }
 
 .bp-track-replace {
-  font-family: var(--mono);
+  font-family: var(--nb-mono);
   font-size: 10px;
   letter-spacing: 0.12em;
   padding: 6px 10px;
   background: transparent;
-  color: var(--ink-2);
-  border: 1px solid var(--hairline);
+  color: var(--nb-ink-2);
+  border: 1px solid var(--nb-rule);
   cursor: pointer;
+  font-weight: 500;
 }
 .bp-track-replace:hover {
-  background: var(--paper);
-  border-color: var(--ink-2);
-  color: var(--ink);
+  background: var(--nb-pen-tint);
+  border-color: var(--nb-pen);
+  color: var(--nb-pen);
 }
 
 .bp-track-divider {
   height: 1px;
-  background: var(--hairline);
+  background: var(--nb-hairline);
   border: 0;
   margin: 0;
 }
@@ -474,22 +670,23 @@ html[data-lang="de"] :is(.lang-en, .lang-ru) {
 }
 
 .bp-stat-k {
-  font-family: var(--mono);
+  font-family: var(--nb-mono);
   font-size: 9px;
-  color: var(--ink-3);
-  letter-spacing: 0.12em;
+  color: var(--nb-ink-3);
+  letter-spacing: 0.14em;
 }
 
 .bp-stat-v {
-  font-family: var(--serif);
+  font-family: var(--nb-display);
+  font-weight: 500;
   font-size: 18px;
-  color: var(--ink);
+  color: var(--nb-ink);
   margin-top: 2px;
 }
 
 .bp-track-mini {
-  background: var(--paper);
-  border: 1px solid var(--hairline);
+  background: var(--nb-bg);
+  border: 1px solid var(--nb-hairline);
   padding: 8px;
 }
 
@@ -498,8 +695,11 @@ html[data-lang="de"] :is(.lang-en, .lang-ru) {
   width: 100%;
   height: auto;
 }
+/* The track-mini SVG uses `var(--ink)` / `var(--paper)` because it's
+   inline in landing.html.j2. The legacy aliases in :root keep those
+   resolving to the Notebook palette. */
 
-/* ── photo grid (read-only in phase 2) ──────────────────────────────── */
+/* ── photo grid ──────────────────────────────────────────────────────── */
 .bp-photogrid {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
@@ -510,8 +710,8 @@ html[data-lang="de"] :is(.lang-en, .lang-ru) {
   position: relative;
   aspect-ratio: 1 / 1;
   overflow: hidden;
-  border: 1px solid var(--hairline);
-  background: var(--paper-2);
+  border: 1px solid var(--nb-hairline);
+  background: var(--nb-surface);
 }
 
 .bp-phototile img {
@@ -526,25 +726,26 @@ html[data-lang="de"] :is(.lang-en, .lang-ru) {
   position: absolute;
   top: 6px;
   left: 6px;
-  background: var(--paper);
-  font-family: var(--mono);
+  background: var(--nb-surface);
+  font-family: var(--nb-mono);
   font-size: 10px;
   padding: 2px 6px;
   letter-spacing: 0.08em;
   font-weight: 600;
+  color: var(--nb-ink);
 }
 
 .bp-mini {
-  margin-top: 8px;
-  font-family: var(--mono);
+  margin-top: 10px;
+  font-family: var(--nb-mono);
   font-size: 10px;
   letter-spacing: 0.04em;
-  color: var(--ink-3);
+  color: var(--nb-ink-3);
 }
 
 /* ── chips (auto-extracted location / date) ─────────────────────────── */
 .bp-chips {
-  margin-top: 20px;
+  margin-top: 22px;
   display: flex;
   flex-wrap: wrap;
   gap: 8px;
@@ -552,32 +753,36 @@ html[data-lang="de"] :is(.lang-en, .lang-ru) {
 }
 
 .bp-chip-label {
-  font-family: var(--mono);
+  font-family: var(--nb-mono);
   font-size: 10px;
   letter-spacing: 0.18em;
-  color: var(--ink-3);
+  font-weight: 600;
+  color: var(--nb-pen);
   margin-right: 4px;
+  text-transform: uppercase;
 }
 
 .bp-chip {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
-  background: var(--paper-2);
+  gap: 7px;
+  background: var(--nb-surface);
   padding: 7px 12px;
-  font-family: var(--serif);
+  font-family: var(--nb-sans);
   font-size: 14px;
-  color: var(--ink);
-  border: 1px solid var(--hairline);
+  font-weight: 500;
+  color: var(--nb-ink);
+  border: 1px solid var(--nb-rule);
   cursor: pointer;
   transition:
     border-color 0.12s,
+    color 0.12s,
     background 0.12s;
 }
 .bp-chip:hover,
 .bp-chip:focus {
-  border-color: var(--ink);
-  background: var(--paper);
+  border-color: var(--nb-pen);
+  color: var(--nb-pen);
   outline: none;
 }
 
@@ -586,17 +791,20 @@ html[data-lang="de"] :is(.lang-en, .lang-ru) {
   opacity: 0.85;
 }
 .bp-chip--static:hover {
-  border-color: var(--hairline);
-  background: var(--paper-2);
+  border-color: var(--nb-rule);
+  color: var(--nb-ink);
+  background: var(--nb-surface);
 }
 
 .bp-chip--editing {
-  background: var(--paper);
-  border-color: var(--ink);
+  background: var(--nb-surface);
+  border-color: var(--nb-pen);
+  box-shadow: 0 0 0 3px var(--nb-pen-tint);
 }
 
 .bp-chip-icon {
   font-size: 13px;
+  color: var(--nb-pen);
 }
 
 .bp-chip-val {
@@ -604,16 +812,17 @@ html[data-lang="de"] :is(.lang-en, .lang-ru) {
 }
 
 .bp-chip-src {
-  font-family: var(--mono);
+  font-family: var(--nb-mono);
   font-size: 10px;
-  color: var(--ink-3);
+  color: var(--nb-ink-3);
   letter-spacing: 0.04em;
+  font-weight: 400;
 }
 
 .bp-chip-edit {
   margin-left: 2px;
   font-size: 11px;
-  color: var(--ink-3);
+  color: var(--nb-ink-3);
   opacity: 0;
   transition: opacity 0.12s;
 }
@@ -626,9 +835,10 @@ html[data-lang="de"] :is(.lang-en, .lang-ru) {
   border: 0;
   background: transparent;
   outline: none;
-  font-family: var(--serif);
+  font-family: var(--nb-sans);
   font-size: 14px;
-  color: var(--ink);
+  font-weight: 500;
+  color: var(--nb-ink);
   width: 220px;
   max-width: 100%;
 }
@@ -639,32 +849,34 @@ html[data-lang="de"] :is(.lang-en, .lang-ru) {
   cursor: pointer;
   padding: 2px 6px;
   font-size: 14px;
-  color: var(--ink);
+  color: var(--nb-pen);
 }
 .bp-chip-act--cancel {
-  color: var(--ink-3);
+  color: var(--nb-ink-3);
 }
 
 /* ── style picker (radio cards) ─────────────────────────────────────── */
 .bp-stylegrid {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 12px;
+  gap: 14px;
 }
 
 .bp-stylecard {
   display: block;
   cursor: pointer;
-  background: var(--paper);
-  border: 1px solid var(--hairline);
+  background: var(--nb-surface);
+  border: 1px solid var(--nb-rule);
   transition:
     border-color 0.15s,
     transform 0.15s,
     box-shadow 0.15s;
+  position: relative;
 }
 .bp-stylecard:hover {
-  border-color: var(--ink-3);
-  transform: translateY(-1px);
+  border-color: var(--nb-pen);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 14px -8px color-mix(in oklab, var(--nb-pen) 32%, transparent);
 }
 .bp-stylecard input[type="radio"] {
   position: absolute;
@@ -676,15 +888,34 @@ html[data-lang="de"] :is(.lang-en, .lang-ru) {
   clip: rect(0, 0, 0, 0);
 }
 .bp-stylecard:has(input[type="radio"]:checked) {
-  border-color: var(--ink);
+  border-color: var(--nb-pen);
   box-shadow:
-    0 0 0 1px var(--ink),
-    0 8px 20px -8px rgba(0, 0, 0, 0.1);
+    0 0 0 1px var(--nb-pen),
+    0 8px 22px -10px color-mix(in oklab, var(--nb-pen) 38%, transparent);
+}
+.bp-stylecard:has(input[type="radio"]:checked)::before {
+  content: "✓";
+  position: absolute;
+  top: -10px;
+  left: -10px;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: var(--nb-pen);
+  color: var(--nb-bg);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--nb-mono);
+  font-size: 12px;
+  font-weight: 700;
+  z-index: 2;
+  box-shadow: 0 2px 6px color-mix(in oklab, var(--nb-pen) 40%, transparent);
 }
 
 .bp-stylecard-thumb {
   height: 130px;
-  border-bottom: 1px solid var(--hairline);
+  border-bottom: 1px solid var(--nb-hairline);
   overflow: hidden;
   position: relative;
 }
@@ -700,35 +931,36 @@ html[data-lang="de"] :is(.lang-en, .lang-ru) {
 }
 
 .bp-stylecard-name {
-  font-family: var(--serif);
-  font-weight: 500;
+  font-family: var(--nb-display);
+  font-weight: 600;
   font-size: 19px;
-  color: var(--ink);
+  letter-spacing: -0.01em;
+  color: var(--nb-ink);
 }
 
 .bp-stylecard-sub {
-  font-family: var(--mono);
+  font-family: var(--nb-mono);
   font-size: 10px;
   letter-spacing: 0.04em;
-  color: var(--ink-3);
+  color: var(--nb-ink-3);
   margin-top: 2px;
 }
 
 .bp-stylecard-desc {
-  font-family: var(--serif);
+  font-family: var(--nb-sans);
   font-size: 13.5px;
   line-height: 1.5;
-  color: var(--ink-2);
-  margin: 8px 0 0;
+  color: var(--nb-ink-2);
+  margin: 10px 0 0;
 }
 
 .bp-stylecard-tag {
-  font-family: var(--mono);
+  font-family: var(--nb-mono);
   font-size: 9px;
   letter-spacing: 0.14em;
   font-weight: 600;
-  background: var(--ink-3);
-  color: var(--paper);
+  background: var(--nb-marker);
+  color: var(--nb-ink);
   padding: 2px 6px;
 }
 
@@ -738,73 +970,95 @@ html[data-lang="de"] :is(.lang-en, .lang-ru) {
 }
 .bp-stylecard--soon:hover {
   transform: none;
-  border-color: var(--hairline);
+  border-color: var(--nb-rule);
+  box-shadow: none;
 }
 
 /* ── generate CTA + meta line ───────────────────────────────────────── */
 .bp-generate {
   margin-top: 56px;
   padding-top: 28px;
-  border-top: 1px solid var(--rule);
+  border-top: 1px solid var(--nb-rule);
   display: flex;
   flex-direction: column;
   align-items: center;
+  position: relative;
+}
+/* Hand-drawn "↓" mark hovering above the button. Pure decoration —
+   uses Caveat to keep the workshop note feeling. */
+.bp-generate::before {
+  content: "↓";
+  position: absolute;
+  top: 4px;
+  right: 50%;
+  transform: translateX(70px) rotate(8deg);
+  font-family: var(--nb-script);
+  font-weight: 600;
+  font-size: 30px;
+  color: var(--nb-pen);
+  opacity: 0.55;
+  line-height: 1;
+  pointer-events: none;
 }
 
 .bp-cta {
-  font-family: var(--serif);
-  font-weight: 500;
-  font-size: 19px;
-  padding: 16px 28px;
-  background: var(--ink);
-  color: var(--paper);
+  font-family: var(--nb-display);
+  font-weight: 600;
+  font-size: 18px;
+  padding: 16px 30px;
+  background: var(--nb-pen);
+  color: var(--nb-bg);
   border: 0;
   cursor: pointer;
   display: inline-flex;
   align-items: center;
-  gap: 10px;
+  gap: 12px;
   min-height: var(--tap);
+  box-shadow: 0 6px 18px -6px color-mix(in oklab, var(--nb-pen) 45%, transparent);
   transition:
-    opacity 0.15s,
+    background 0.15s,
+    box-shadow 0.15s,
     transform 0.15s;
 }
 .bp-cta:hover {
-  opacity: 0.9;
+  background: var(--nb-pen-2);
+  box-shadow: 0 8px 22px -6px color-mix(in oklab, var(--nb-pen) 55%, transparent);
 }
 .bp-cta:active {
   transform: translateY(1px);
 }
 .bp-cta:disabled {
-  opacity: 0.6;
+  opacity: 0.65;
   cursor: progress;
+  box-shadow: none;
 }
 
 .bp-cta-arrow {
-  font-family: var(--mono);
-  font-weight: 400;
+  font-family: var(--nb-mono);
+  font-weight: 500;
 }
 
 .bp-generate-meta {
-  margin-top: 12px;
+  margin-top: 14px;
   display: flex;
   gap: 8px;
   flex-wrap: wrap;
   justify-content: center;
-  font-family: var(--mono);
+  font-family: var(--nb-mono);
   font-size: 10px;
   letter-spacing: 0.06em;
-  color: var(--ink-3);
+  color: var(--nb-ink-3);
   text-align: center;
   text-transform: uppercase;
 }
 .bp-generate-meta a {
   color: inherit;
   text-decoration: underline;
-  text-decoration-color: var(--hairline);
+  text-decoration-color: var(--nb-hairline);
   text-underline-offset: 2px;
 }
 .bp-generate-meta a:hover {
-  color: var(--ink);
+  color: var(--nb-pen);
   text-decoration-color: currentColor;
 }
 
@@ -815,13 +1069,13 @@ html[data-lang="de"] :is(.lang-en, .lang-ru) {
 /* ── live SSE draft block (generating page) ─────────────────────────── */
 .bp-livedraft {
   min-height: 12rem;
-  border: 1px solid var(--hairline);
-  background: var(--paper);
+  border: 1px solid var(--nb-hairline);
+  background: var(--nb-surface);
   padding: 16px 18px;
-  font-family: var(--mono);
+  font-family: var(--nb-mono);
   font-size: 13px;
   line-height: 1.5;
-  color: var(--ink);
+  color: var(--nb-ink);
   white-space: pre-wrap;
   word-break: break-word;
 }
@@ -833,7 +1087,7 @@ html[data-lang="de"] :is(.lang-en, .lang-ru) {
   border: 1px solid oklch(0.55 0.15 25);
   background: oklch(0.96 0.04 25);
   color: oklch(0.32 0.12 25);
-  font-family: var(--serif);
+  font-family: var(--nb-sans);
   font-size: 15px;
   line-height: 1.5;
 }
@@ -841,26 +1095,40 @@ html[data-lang="de"] :is(.lang-en, .lang-ru) {
 /* ── footer ─────────────────────────────────────────────────────────── */
 .bp-footer {
   margin-top: 64px;
-  padding: 24px 28px 32px;
-  border-top: 1px solid var(--hairline);
+  padding: 28px 28px 36px;
+  border-top: 1px solid var(--nb-hairline);
   display: flex;
   justify-content: space-between;
   align-items: center;
-  font-family: var(--mono);
+  font-family: var(--nb-mono);
   font-size: 10px;
   letter-spacing: 0.12em;
-  color: var(--ink-3);
+  color: var(--nb-ink-3);
   text-transform: uppercase;
   flex-wrap: wrap;
-  gap: 8px;
+  gap: 16px;
 }
 
 .bp-footer a {
-  color: var(--ink-3);
+  color: var(--nb-ink-3);
   text-decoration: none;
 }
 .bp-footer a:hover {
-  color: var(--ink);
+  color: var(--nb-pen);
+}
+
+/* The "— composed by you" signature in the footer. Caveat, rotated
+   slightly, blue ink. The only other use of Caveat besides the hero
+   doodle. */
+.bp-footer-sig {
+  font-family: var(--nb-script);
+  font-weight: 600;
+  font-size: 22px;
+  color: var(--nb-pen);
+  text-transform: none;
+  letter-spacing: 0;
+  transform: rotate(-2deg);
+  display: inline-block;
 }
 
 /* ── responsive ─────────────────────────────────────────────────────── */
@@ -872,7 +1140,12 @@ html[data-lang="de"] :is(.lang-en, .lang-ru) {
     padding: 32px 18px 64px;
   }
   .bp-h1 {
-    font-size: 44px;
+    font-size: 38px;
+  }
+  .bp-hero-doodle {
+    width: 90px;
+    height: 70px;
+    opacity: 0.7;
   }
   .bp-track-summary {
     grid-template-columns: 1fr;
@@ -887,5 +1160,24 @@ html[data-lang="de"] :is(.lang-en, .lang-ru) {
     padding: 24px 18px 32px;
     flex-direction: column;
     align-items: flex-start;
+  }
+}
+
+/* ── print: drop the dot-grid and the decorative blue accents ──────── */
+@media print {
+  body {
+    background-image: none;
+  }
+  .bp-header,
+  .bp-footer,
+  .bp-hero-doodle,
+  .bp-generate::before {
+    display: none;
+  }
+  .bp-cta {
+    background: transparent;
+    color: var(--nb-ink);
+    border: 1px solid var(--nb-ink);
+    box-shadow: none;
   }
 }

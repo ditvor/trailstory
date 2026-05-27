@@ -79,6 +79,84 @@
   body.lang-ru .en, body.lang-ru .de { display: none; }
   body.lang-de .en, body.lang-de .ru { display: none; }
 
+  /* ADR-014 / Phase 4: sentence-level provenance.
+     The log register can't carry editorial's always-on treatment
+     without looking busy, so provenance is opt-in here via a "Notes"
+     toggle next to the language switcher. The vocabulary (body.audit,
+     #notesBtn, data-tip, localStorage key) mirrors editorial.html.j2
+     so a creator who turns notes on in one style sees the same audit
+     UI everywhere.
+
+     When body.audit is set:
+       - INFERRED sentences gain a faint highlighter background
+       - Per-source bottom-edge underline colors mark photo / seed /
+         gpx provenance (matches editorial)
+       - Hovering any sentence surfaces a custom ::after tooltip
+         reading data-tip (the native title attribute is slow,
+         low-contrast, and absent on touch — same fix as editorial)
+     When unset, the sentence spans render as plain text. */
+  .sent {
+    transition: background-color 120ms ease, box-shadow 120ms ease;
+  }
+  body.audit .sent { position: relative; }
+  body.audit .sent[data-prov="inferred"] {
+    background: #fff8d4;
+    border-radius: 2px;
+    padding: 0 2px;
+  }
+  body.audit .sent[data-prov="photo"]  { box-shadow: inset 0 -2px 0 oklch(0.78 0.10 220 / 0.55); }
+  body.audit .sent[data-prov="seed"]   { box-shadow: inset 0 -2px 0 oklch(0.78 0.10 150 / 0.55); }
+  body.audit .sent[data-prov="gpx"]    { box-shadow: inset 0 -2px 0 oklch(0.78 0.06 60  / 0.55); }
+  body.audit .sent:hover {
+    background: #ffeb9c;
+    cursor: help;
+  }
+  body.audit .sent:hover::after {
+    content: attr(data-tip);
+    position: absolute;
+    bottom: calc(100% + 4px); left: 0;
+    background: #1f2328; color: #f4f5f7;
+    padding: 6px 8px;
+    font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+    font-size: 11px;
+    letter-spacing: 0.02em; line-height: 1.35;
+    max-width: 280px; white-space: normal;
+    border-radius: 2px;
+    z-index: 30; pointer-events: none;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.18);
+  }
+  @media print {
+    body.audit .sent[data-prov] { background: transparent; box-shadow: none; }
+  }
+
+  /* ── notes (audit) toggle ──────────────────────────────────────── */
+  .article-tools {
+    display: flex;
+    justify-content: flex-end;
+    margin: 0 0 0.5rem;
+  }
+  .article-tools button {
+    font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+    font-size: 0.7rem;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    background: transparent;
+    color: #57606a;
+    border: 1px solid #d0d7de;
+    padding: 0.25rem 0.6rem;
+    cursor: pointer;
+    border-radius: 3px;
+  }
+  .article-tools button:hover {
+    border-color: #1f2328;
+    color: #1f2328;
+  }
+  .article-tools button[aria-pressed="true"] {
+    background: #1f2328;
+    color: #f4f5f7;
+    border-color: #1f2328;
+  }
+
   /* stats — list, not a grid; aligned key/value pairs */
   .stats {
     list-style: none;
@@ -232,13 +310,40 @@
       <path d="M 0,30 L 0.0,30.0 L 2.56,29.59 L 5.13,29.19 L 7.69,28.78 L 10.26,28.38 L 12.82,27.89 L 15.38,27.41 L 17.95,26.92 L 20.51,26.43 L 23.08,25.95 L 25.64,25.35 L 28.21,24.75 L 30.77,24.14 L 33.33,23.54 L 35.9,22.93 L 38.46,22.31 L 41.03,21.61 L 43.59,20.91 L 46.15,20.21 L 48.72,19.51 L 51.28,18.81 L 53.85,18.1 L 56.41,17.35 L 58.97,16.6 L 61.54,15.85 L 64.1,15.1 L 66.67,14.35 L 69.23,13.6 L 71.79,12.75 L 74.36,11.89 L 76.92,11.04 L 79.49,10.19 L 82.05,9.33 L 84.62,8.48 L 87.18,7.9 L 89.74,7.32 L 92.31,6.74 L 94.87,6.16 L 97.44,5.58 L 100.0,5.0L 100,30"/>
     </svg>
 
+    <div class="article-tools" role="group" aria-label="Show writing notes">
+      <button
+        type="button"
+        id="notesBtn"
+        aria-pressed="false"
+        aria-label="Show or hide per-sentence writing notes"
+      >Notes</button>
+    </div>
+
     <article>
       <div class="en">
-<p>We left the trailhead at first light, the air sharp with damp moss.</p><p>By the saddle the cloud was thinning into a soft white scarf.</p><p>Mia slept the whole climb, her cheek warm against the carrier.</p>      </div>
+          <p>
+<span class="sent" data-prov="seed" data-tip="seed: test fixture">We left the trailhead at first light, the air sharp with damp moss.</span>          </p>
+          <p>
+<span class="sent" data-prov="seed" data-tip="seed: test fixture">By the saddle the cloud was thinning into a soft white scarf.</span>          </p>
+          <p>
+<span class="sent" data-prov="seed" data-tip="seed: test fixture">Mia slept the whole climb, her cheek warm against the carrier.</span>          </p>
+      </div>
       <div class="ru">
-<p>Вышли на тропу с первыми лучами; воздух пах мхом и хвоей.</p><p>К седловине облака уже редели, превращаясь в белый шарф.</p><p>Мия проспала весь подъём, прижавшись щекой к переноске.</p>      </div>
+          <p>
+<span class="sent" data-prov="seed" data-tip="seed: test fixture">Вышли на тропу с первыми лучами; воздух пах мхом и хвоей.</span>          </p>
+          <p>
+<span class="sent" data-prov="seed" data-tip="seed: test fixture">К седловине облака уже редели, превращаясь в белый шарф.</span>          </p>
+          <p>
+<span class="sent" data-prov="seed" data-tip="seed: test fixture">Мия проспала весь подъём, прижавшись щекой к переноске.</span>          </p>
+      </div>
       <div class="de">
-<p>Bei erstem Licht brachen wir auf, die Luft scharf von feuchtem Moos.</p><p>Am Sattel zog die Wolke sich zu einem weichen weißen Schal zusammen.</p><p>Mia schlief den ganzen Aufstieg, die Wange warm an der Trage.</p>      </div>
+          <p>
+<span class="sent" data-prov="seed" data-tip="seed: test fixture">Bei erstem Licht brachen wir auf, die Luft scharf von feuchtem Moos.</span>          </p>
+          <p>
+<span class="sent" data-prov="seed" data-tip="seed: test fixture">Am Sattel zog die Wolke sich zu einem weichen weißen Schal zusammen.</span>          </p>
+          <p>
+<span class="sent" data-prov="seed" data-tip="seed: test fixture">Mia schlief den ganzen Aufstieg, die Wange warm an der Trage.</span>          </p>
+      </div>
 
       <blockquote>
         <span class="en">The fog cleared just as we reached the ridge.</span>
@@ -358,6 +463,26 @@
         var idx = langs.indexOf(currentLang());
         setLang(langs[(idx + 1) % langs.length]);
       });
+
+      // ── Notes (audit) toggle (ADR-014 sentence-level provenance) ──
+      // Mirrors the editorial template's toggle vocabulary so a creator
+      // who flips notes on in one style sees the audit UI everywhere.
+      // Preference persists in localStorage.
+      var NOTES_KEY = 'trailstory.notes';
+      var notesBtn = document.getElementById('notesBtn');
+      function setNotes(on) {
+        document.body.classList.toggle('audit', !!on);
+        if (notesBtn) notesBtn.setAttribute('aria-pressed', on ? 'true' : 'false');
+        try { localStorage.setItem(NOTES_KEY, on ? '1' : '0'); } catch (e) {}
+      }
+      if (notesBtn) {
+        var notesStored = null;
+        try { notesStored = localStorage.getItem(NOTES_KEY); } catch (e) {}
+        if (notesStored === '1') setNotes(true);
+        notesBtn.addEventListener('click', function () {
+          setNotes(!document.body.classList.contains('audit'));
+        });
+      }
 
       var titleEn = "Above the fog line";
       var quoteEn = "The fog cleared just as we reached the ridge.";
