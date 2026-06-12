@@ -79,7 +79,7 @@ def _photos(n: int = 12) -> list[PhotoMeta]:
 
 def _valid_response_dict(indices: list[int] | None = None) -> dict[str, object]:
     return {
-        "schema_version": 3,
+        "schema_version": 4,
         "title": {
             "en": "Above the fog line",
             "ru": "Над линией тумана",

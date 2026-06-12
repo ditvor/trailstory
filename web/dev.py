@@ -48,7 +48,7 @@ def _fake_paragraph(en: str, ru: str, de: str, source: str = "seed") -> list[dic
 
 _FAKE_NARRATIVE: Final[str] = json.dumps(
     {
-        "schema_version": 3,
+        "schema_version": 4,
         "title": {
             "en": "Above the fog line",
             "ru": "Над линией тумана",

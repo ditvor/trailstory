@@ -225,6 +225,104 @@ def test_load_photos_rejects_pixel_bomb(tmp_path: Path, monkeypatch: pytest.Monk
         load_photos(src, tmp_path / "out")
 
 
+def test_load_photos_extracts_gps_into_photo_meta(tmp_path: Path) -> None:
+    """ADR-015: per-photo GPS is read from EXIF into PhotoMeta.gps_lat /
+    gps_lon BEFORE the strip-on-save step. The output JPEG still has GPS
+    stripped (privacy contract from the strip test below), but the
+    coordinates survive into Python for the ledger's photo↔track
+    correlation.
+    """
+    src = tmp_path / "src"
+    src.mkdir()
+    p = src / "iphone.jpg"
+
+    img = Image.new("RGB", (100, 100), (50, 80, 120))
+    exif = img.getexif()
+    sub_ifd = exif.get_ifd(EXIF_SUB_IFD)
+    sub_ifd[EXIF_DATETIME_ORIGINAL] = "2025:08:15 10:30:00"
+    gps_ifd = exif.get_ifd(EXIF_GPS_IFD)
+    # 47° 33' 0" N, 11° 47' 0" E — Munich-ish.
+    gps_ifd[1] = "N"
+    gps_ifd[2] = (IFDRational(47, 1), IFDRational(33, 1), IFDRational(0, 1))
+    gps_ifd[3] = "E"
+    gps_ifd[4] = (IFDRational(11, 1), IFDRational(47, 1), IFDRational(0, 1))
+    img.save(p, format="JPEG", quality=85, exif=exif.tobytes())
+
+    [photo] = load_photos(src, tmp_path / "out")
+
+    assert photo.gps_lat == pytest.approx(47.55, abs=0.001)
+    assert photo.gps_lon == pytest.approx(11.7833, abs=0.001)
+    # The output JPEG still has GPS stripped — the existing privacy
+    # contract is intact, the coordinates only live in PhotoMeta.
+    with Image.open(photo.path) as out:
+        assert out.getexif().get_ifd(EXIF_GPS_IFD) == {}
+
+
+def test_load_photos_gps_none_when_absent(tmp_path: Path) -> None:
+    """Photos without an EXIF GPS sub-IFD get ``gps_lat=None`` and
+    ``gps_lon=None``. No error — GPS is a soft signal.
+    """
+    src = tmp_path / "src"
+    src.mkdir()
+    _make_jpeg(src / "no_gps.jpg", exif_datetime="2025:08:15 10:30:00")
+
+    [photo] = load_photos(src, tmp_path / "out")
+
+    assert photo.gps_lat is None
+    assert photo.gps_lon is None
+
+
+def test_load_photos_gps_negative_for_south_and_west(tmp_path: Path) -> None:
+    """S latitude and W longitude must produce negative decimal values."""
+    src = tmp_path / "src"
+    src.mkdir()
+    p = src / "patagonia.jpg"
+
+    img = Image.new("RGB", (100, 100), (50, 80, 120))
+    exif = img.getexif()
+    sub_ifd = exif.get_ifd(EXIF_SUB_IFD)
+    sub_ifd[EXIF_DATETIME_ORIGINAL] = "2025:08:15 10:30:00"
+    gps_ifd = exif.get_ifd(EXIF_GPS_IFD)
+    # 41° 12' 0" S, 71° 18' 0" W — Bariloche-ish.
+    gps_ifd[1] = "S"
+    gps_ifd[2] = (IFDRational(41, 1), IFDRational(12, 1), IFDRational(0, 1))
+    gps_ifd[3] = "W"
+    gps_ifd[4] = (IFDRational(71, 1), IFDRational(18, 1), IFDRational(0, 1))
+    img.save(p, format="JPEG", quality=85, exif=exif.tobytes())
+
+    [photo] = load_photos(src, tmp_path / "out")
+
+    assert photo.gps_lat == pytest.approx(-41.2, abs=0.001)
+    assert photo.gps_lon == pytest.approx(-71.3, abs=0.001)
+
+
+def test_load_photos_gps_zero_zero_treated_as_no_fix(tmp_path: Path) -> None:
+    """A ``(0, 0)`` coordinate is the EXIF sentinel for "no fix"; treating
+    it as a real position off the African coast is worse than treating
+    it as None. The latter degrades to seed-only chronology grounding for
+    that photo, which is the right fallback.
+    """
+    src = tmp_path / "src"
+    src.mkdir()
+    p = src / "zero.jpg"
+
+    img = Image.new("RGB", (100, 100), (50, 80, 120))
+    exif = img.getexif()
+    sub_ifd = exif.get_ifd(EXIF_SUB_IFD)
+    sub_ifd[EXIF_DATETIME_ORIGINAL] = "2025:08:15 10:30:00"
+    gps_ifd = exif.get_ifd(EXIF_GPS_IFD)
+    gps_ifd[1] = "N"
+    gps_ifd[2] = (IFDRational(0, 1), IFDRational(0, 1), IFDRational(0, 1))
+    gps_ifd[3] = "E"
+    gps_ifd[4] = (IFDRational(0, 1), IFDRational(0, 1), IFDRational(0, 1))
+    img.save(p, format="JPEG", quality=85, exif=exif.tobytes())
+
+    [photo] = load_photos(src, tmp_path / "out")
+
+    assert photo.gps_lat is None
+    assert photo.gps_lon is None
+
+
 def test_load_photos_strips_gps_and_applies_exif_transpose(tmp_path: Path) -> None:
     """A photo with GPS coordinates and a non-default orientation tag must be
     written out with no GPS IFD (privacy) and with orientation baked into the

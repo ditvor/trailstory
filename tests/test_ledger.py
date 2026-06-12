@@ -30,8 +30,10 @@ from trailstory.models import (
     FactLedger,
     GpxStats,
     HikeInput,
+    Pause,
     Person,
     PhotoMeta,
+    TrackShape,
     Waypoint,
 )
 
@@ -202,6 +204,62 @@ def test_extract_ledger_merges_llm_subset_with_deterministic_fields() -> None:
     assert ledger.distance_km == pytest.approx(6.2)
     assert ledger.summit_elev_m == pytest.approx(1330)
     assert ledger.n_photos == 6
+
+
+def test_extract_ledger_merges_adr015_deterministic_fields() -> None:
+    """ADR-015: the seven new deterministic fields must flow from GpxStats
+    (and the photo↔track correlation) into the returned FactLedger.
+
+    All seven have model defaults, so a typo in the merge block — or
+    deleting it outright — validates silently. This test pins the wiring;
+    a mutation run during PR review proved the whole suite passed with the
+    merge block removed, which is exactly the gap this closes.
+    """
+    stats = _gpx_stats().model_copy(
+        update={
+            "track_name": "Wallberg via Setzberg",
+            "track_shape": TrackShape.loop,
+            "elevation_loss_m": 480.0,
+            "pauses": [Pause(at_km=3.5, duration_min=23, lat=47.55, lon=11.78, ele_m=900.0)],
+        }
+    )
+    client = _client(_valid_extractor_json())
+    # One photo timestamped on the waypoint so the timestamp fallback
+    # matches inside the 30-min guard (photos carry no GPS here).
+    photos = [
+        PhotoMeta(
+            path=Path("/tmp/photos/00.jpg"),
+            timestamp=datetime(2026, 4, 18, 10, 25, 0, tzinfo=UTC),
+            index=0,
+        )
+    ]
+
+    ledger = extract_ledger(_hike_input(), stats, photos, client=client)
+
+    assert ledger.track_name == "Wallberg via Setzberg"
+    assert ledger.track_shape == TrackShape.loop
+    assert ledger.elevation_loss_m == pytest.approx(480.0)
+    # 2026-04-18 really is a Saturday.
+    assert ledger.day_of_week == "Saturday"
+    # Bavaria, 10:25 UTC in April — astral resolves; never "unknown".
+    assert ledger.daylight_context != "unknown"
+    assert ledger.pauses == stats.pauses
+    assert len(ledger.photo_positions) == 1
+    assert ledger.photo_positions[0].photo_index == 0
+
+
+def test_extract_ledger_adr015_fields_fall_back_cleanly_without_timestamps() -> None:
+    """A GPX without timestamps cannot anchor day_of_week or daylight —
+    both must surface 'unknown' (matching the season fallback), and the
+    photo positions must be empty rather than guessed."""
+    client = _client(_valid_extractor_json())
+    stats = _gpx_stats(waypoint_time=None)
+
+    ledger = extract_ledger(_hike_input(), stats, _photos(), client=client)
+
+    assert ledger.day_of_week == "unknown"
+    assert ledger.daylight_context == "unknown"
+    assert ledger.photo_positions == []
 
 
 def test_extract_ledger_uses_default_location_when_unset() -> None:
