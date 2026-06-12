@@ -9,7 +9,35 @@ Versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+### Added
+- **Richer deterministic ledger (ADR-015).** The `FactLedger` the
+  writer consumes now carries seven new Python-computed fields:
+  `track_name` (from the GPX `<name>` tag), `track_shape`
+  (loop / out-and-back / point-to-point), `elevation_loss_m`,
+  `day_of_week`, `daylight_context` (sunrise/sunset buckets via the
+  new `astral` dependency — local computation, no external API),
+  `pauses` (rest stops ≥ 5 min detected from waypoint velocity
+  clustering), and `photo_positions` (each photo's km-along-track via
+  EXIF GPS or clock-calibrated timestamp matching). Denser ledger →
+  less room for the writer to invent specifics. Photo EXIF GPS is
+  read into `PhotoMeta` *before* the strip-on-save step; the output
+  JPEG still has GPS stripped, so the privacy contract for the
+  shareable HTML file is unchanged.
+- **Style metrics in the eval rubric.** Banned-substring gates per
+  language (EN list seeded with the PR56 "travel-essay" tics; RU/DE
+  to be populated from eval observation), an average-sentence-length
+  band (6–24 words), and an inferred-ratio ceiling (0.6) — the
+  measurement layer for the upcoming writer-voice tightening. A free
+  CI test scans committed goldens for banned phrases; it arms
+  automatically once goldens are refreshed to schema v4.
+
 ### Changed
+- **`NarrativeOutput.schema_version` bumped 3 → 4.** The output shape
+  is unchanged, but the writer prompt now references the ADR-015
+  ledger fields, so cached v3 narratives no longer reflect what the
+  current pipeline produces. All existing narrative-cache entries
+  invalidate on first read; goldens require a refresh
+  (`make eval-update-golden`).
 - **Editorial photo layout: consistent aspect ratio + interleaved
   through paragraphs.** `templates/styles/editorial.html.j2` now locks
   every `.figure img` to a `3 / 2` aspect ratio with
