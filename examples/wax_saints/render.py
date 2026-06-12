@@ -28,11 +28,14 @@ sys.path.insert(0, str(REPO_ROOT))
 from trailstory.models import (  # noqa: E402
     GpxStats,
     HikeInput,
-    LocalizedParagraphs,
     LocalizedString,
     Memory,
     NarrativeOutput,
+    Paragraph,
     PhotoMeta,
+    Provenance,
+    ProvenanceSource,
+    Sentence,
     Style,
     Waypoint,
 )
@@ -136,6 +139,95 @@ def synthesize_gpx_stats() -> GpxStats:
     )
 
 
+def _sent(en: str, ru: str, de: str, source: ProvenanceSource, reference: str) -> Sentence:
+    return Sentence(
+        text=LocalizedString(en=en, ru=ru, de=de),
+        provenance=Provenance(source=source, reference=reference),
+    )
+
+
+def build_paragraphs() -> list[Paragraph]:
+    """ADR-014 sentence-level paragraphs with per-sentence provenance.
+
+    The provenance tags are hand-assigned to mirror what the writer would
+    self-report, so the rendered page demonstrates the editorial template's
+    hover tooltip and INFERRED tint.
+    """
+    return [
+        [
+            _sent(
+                "We pulled into the parking spot just around noon, the kind of warm April Saturday that makes you glad you didn't sleep in.",
+                "Мы припарковались около полудня — в один из тех тёплых апрельских субботних дней, когда радуешься, что не залежался в постели.",
+                "Wir kamen gegen Mittag am Parkplatz an — an einem jener warmen Aprilsamstage, an denen man froh ist, nicht länger im Bett geblieben zu sein.",
+                ProvenanceSource.GPX,
+                "track start 12:05, 18 April",
+            ),
+            _sent(
+                "Bad Tölz greeted us with blue skies and a city centre that felt unhurried and inviting.",
+                "Бад-Тёльц встретил нас голубым небом и неспешным, располагающим к прогулке центром города.",
+                "Bad Tölz empfing uns mit blauem Himmel und einem Stadtzentrum, das einladend und entspannt wirkte.",
+                ProvenanceSource.PHOTO,
+                "photo 1 — town centre under blue sky",
+            ),
+            _sent(
+                "We found a spot for brunch, and little Danny promptly became the star of the room — strangers couldn't help but stop and say hello.",
+                "Нашли место для бранча, и маленький Дэнни моментально стал звездой заведения — прохожие то и дело останавливались, чтобы с ним поздороваться.",
+                "Wir fanden einen Platz für einen ausgedehnten Brunch, und der kleine Danny wurde prompt zum Mittelpunkt des Raumes — Fremde konnten einfach nicht widerstehen, ihn anzulächeln und Hallo zu sagen.",
+                ProvenanceSource.INFERRED,
+                "brunch is in the seed; the Danny detail is not",
+            ),
+        ],
+        [
+            _sent(
+                "Fed and happy, we followed the Isar out of town.",
+                "Сытые и довольные, мы двинулись вдоль Изара за город.",
+                "Gestärkt und gut gelaunt folgten wir der Isar aus der Stadt hinaus.",
+                ProvenanceSource.SEED,
+                "river walk",
+            ),
+            _sent(
+                "The river has a way of pulling you along, and for the next few hours the four of us — Danny in the carrier — let it do exactly that.",
+                "Река умеет увлекать за собой, и несколько ближайших часов мы просто шли туда, куда она вела, — все четверо, и Дэнни в слинг-рюкзаке.",
+                "Der Fluss hat eine Art, einen mitzuziehen, und genau das ließen wir die nächsten Stunden zu — alle vier, Danny im Tragerucksack.",
+                ProvenanceSource.INFERRED,
+                "group detail not in the seed",
+            ),
+        ],
+        [
+            _sent(
+                "8.3 kilometres and just over four hours later, we were tired in the best possible way.",
+                "8,3 километра и чуть больше четырёх часов спустя усталость была приятной.",
+                "8,3 Kilometer und gut vier Stunden später waren wir auf die schönste Art erschöpft.",
+                ProvenanceSource.GPX,
+                "distance 8.3 km, duration 4h 16m",
+            ),
+            _sent(
+                "The highlight nobody had planned for was a small old church tucked along the route, its interior populated with wax figures of Jesus and his disciples lurking in unexpected corners.",
+                "Незапланированным открытием стала маленькая старая церковь на маршруте: внутри нас поджидали восковые фигуры Иисуса и его учеников, расставленные в самых неожиданных местах.",
+                "Das ungeplante Highlight war eine kleine alte Kirche am Wegesrand, in der Wachsfiguren von Jesus und seinen Jüngern an unverhofften Stellen auf uns warteten.",
+                ProvenanceSource.SEED,
+                "that strange wax-figure church",
+            ),
+            _sent(
+                "Genuinely eerie, genuinely unforgettable.",
+                "По-настоящему жутко — и по-настоящему незабываемо.",
+                "Wirklich gruselig — und wirklich unvergesslich.",
+                ProvenanceSource.SEED,
+                "that strange wax-figure church",
+            ),
+        ],
+        [
+            _sent(
+                "We capped the evening with Asian food to go, eaten on the riverbank as the light faded.",
+                "Вечер завершили едой навынос из азиатского кафе, которую съели прямо на берегу реки, пока гасло небо.",
+                "Den Abend ließen wir mit asiatischem Essen zum Mitnehmen ausklingen, gegessen am Flussufer, während das Licht langsam verblasste.",
+                ProvenanceSource.INFERRED,
+                "evening meal — not in the seed",
+            ),
+        ],
+    ]
+
+
 def build_narrative() -> NarrativeOutput:
     return NarrativeOutput(
         title=LocalizedString(
@@ -148,26 +240,7 @@ def build_narrative() -> NarrativeOutput:
             ru="Тёплая апрельская суббота вдоль Изара — бранч, жуткая церковь и ужин у воды.",
             de="Ein warmer Aprilsamstag an der Isar — Brunch, eine schaurige Kirche und Abendessen am Wasser.",
         ),
-        paragraphs=LocalizedParagraphs(
-            en=[
-                "We pulled into the parking spot just around noon, the kind of warm April Saturday that makes you glad you didn't sleep in. Bad Tölz greeted us with blue skies and a city centre that felt unhurried and inviting. We found a spot for brunch, and little Danny promptly became the star of the room — strangers couldn't help but stop and say hello.",
-                "Fed and happy, we followed the Isar out of town. The river has a way of pulling you along, and for the next few hours the four of us — plus Danny in the carrier — let it do exactly that.",
-                "Eight kilometres and just over four hours later, we were tired in the best possible way. The highlight nobody had planned for was a small old church tucked along the route, its interior populated with wax figures of Jesus and his disciples lurking in unexpected corners. Genuinely eerie, genuinely unforgettable.",
-                "We capped the evening with Asian food to go, eaten on the riverbank as the light faded.",
-            ],
-            ru=[
-                "Мы припарковались около полудня — в один из тех тёплых апрельских субботних дней, когда радуешься, что не залежался в постели. Бад-Тёльц встретил нас голубым небом и неспешным, располагающим к прогулке центром города. Нашли место для бранча, и маленький Дэнни моментально стал звездой заведения — прохожие то и дело останавливались, чтобы с ним поздороваться.",
-                "Сытые и довольные, мы двинулись вдоль Изара за город. Река умеет увлекать за собой, и несколько ближайших часов мы просто шли туда, куда она вела, — все четверо, и Дэнни в слинг-рюкзаке.",
-                "8,3 километра и чуть больше четырёх часов спустя усталость была приятной. Незапланированным открытием стала маленькая старая церковь на маршруте: внутри нас поджидали восковые фигуры Иисуса и его учеников, расставленные в самых неожиданных местах. По-настоящему жутко — и по-настоящему незабываемо.",
-                "Вечер завершили едой навынос из азиатского кафе, которую съели прямо на берегу реки, пока гасло небо.",
-            ],
-            de=[
-                "Wir kamen gegen Mittag am Parkplatz an — an einem jener warmen Aprilsamstage, an denen man froh ist, nicht länger im Bett geblieben zu sein. Bad Tölz empfing uns mit blauem Himmel und einem Stadtzentrum, das einladend und entspannt wirkte. Wir fanden einen Platz für einen ausgedehnten Brunch, und der kleine Danny wurde prompt zum Mittelpunkt des Raumes — Fremde konnten einfach nicht widerstehen, ihn anzulächeln und Hallo zu sagen.",
-                "Gestärkt und gut gelaunt folgten wir der Isar aus der Stadt hinaus. Der Fluss hat eine Art, einen mitzuziehen, und genau das ließen wir die nächsten Stunden zu — alle vier, Danny im Tragerucksack.",
-                "8,3 Kilometer und gut vier Stunden später waren wir auf die schönste Art erschöpft. Das ungeplante Highlight war eine kleine alte Kirche am Wegesrand, in der Wachsfiguren von Jesus und seinen Jüngern an unverhofften Stellen auf uns warteten. Wirklich gruselig — und wirklich unvergesslich.",
-                "Den Abend ließen wir mit asiatischem Essen zum Mitnehmen ausklingen, gegessen am Flussufer, während das Licht langsam verblasste.",
-            ],
-        ),
+        paragraphs=build_paragraphs(),
         pull_quote=LocalizedString(
             en="Genuinely eerie, genuinely unforgettable.",
             ru="По-настоящему жутко — и по-настоящему незабываемо.",
