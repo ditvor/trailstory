@@ -49,6 +49,15 @@ _EXIF_DATETIME_DIGITIZED = 36868
 _EXIF_DATETIME = 306
 _EXIF_DATETIME_FORMAT = "%Y:%m:%d %H:%M:%S"
 
+# GPS sub-IFD tag numbers per the EXIF spec. Reading the four tags below
+# is enough to recover a (lat, lon) pair; we deliberately ignore altitude
+# (GPX waypoints carry elevation already) and timestamp (the DateTime
+# sub-IFD is more reliable and we already read it).
+_EXIF_GPS_LAT_REF = 1
+_EXIF_GPS_LAT = 2
+_EXIF_GPS_LON_REF = 3
+_EXIF_GPS_LON = 4
+
 
 class PhotoLoadError(Exception):
     """Raised when the photo directory is missing or contains no usable images."""
@@ -97,7 +106,7 @@ def load_photos(
 
     resize_dir.mkdir(parents=True, exist_ok=True)
 
-    items: list[tuple[datetime, Path]] = []
+    items: list[tuple[datetime, Path, float | None, float | None]] = []
     for src in sources:
         try:
             with Image.open(src) as raw:
@@ -106,6 +115,12 @@ def load_photos(
                 img = ImageOps.exif_transpose(raw)
                 timestamp = _extract_timestamp(img, src)
                 exif = img.getexif()
+                # ADR-015: read GPS coordinates into Python BEFORE the strip
+                # below. The output JPEG still gets its GPS sub-IFD stripped
+                # (privacy contract unchanged) — these coordinates only
+                # travel through PhotoMeta into the ledger, never into the
+                # embedded base64 image.
+                gps = _extract_gps(exif)
                 # Strip the GPS sub-IFD pointer; HTML output base64-embeds these
                 # JPEGs verbatim, so any GPS coordinates would travel with the file.
                 # PIL's Exif.tobytes() iterates the private _ifds cache and restores
@@ -125,10 +140,14 @@ def load_photos(
         except Image.DecompressionBombError as exc:
             # Hostile or accidental pixel bomb; refuse rather than blow up RAM.
             raise PhotoLoadError(f"{src} exceeds the maximum pixel budget: {exc}") from exc
-        items.append((timestamp, out_path))
+        gps_lat, gps_lon = (gps[0], gps[1]) if gps is not None else (None, None)
+        items.append((timestamp, out_path, gps_lat, gps_lon))
 
     items.sort(key=lambda t: t[0])
-    return [PhotoMeta(path=path, timestamp=ts, index=i) for i, (ts, path) in enumerate(items)]
+    return [
+        PhotoMeta(path=path, timestamp=ts, index=i, gps_lat=lat, gps_lon=lon)
+        for i, (ts, path, lat, lon) in enumerate(items)
+    ]
 
 
 def _extract_timestamp(img: Image.Image, path: Path) -> datetime:
@@ -182,6 +201,68 @@ def _parse_exif_datetime(raw: object) -> datetime | None:
         return datetime.strptime(str(raw), _EXIF_DATETIME_FORMAT)
     except ValueError:
         return None
+
+
+def _extract_gps(exif: Image.Exif) -> tuple[float, float] | None:
+    """Return ``(lat, lon)`` in decimal degrees from EXIF, or ``None``.
+
+    Reads the GPS sub-IFD before the strip-on-save step in
+    :func:`load_photos`. The four tags required for a position are
+    ``GPSLatitudeRef`` (1), ``GPSLatitude`` (2), ``GPSLongitudeRef`` (3),
+    ``GPSLongitude`` (4). Lat/lon values are stored as a tuple of three
+    ``IFDRational`` values for degrees / minutes / seconds; converting
+    to decimal is ``deg + min/60 + sec/3600``, negated when the
+    reference is ``S`` or ``W``.
+
+    Returns ``None`` when any of the four tags is missing, the DMS
+    tuple is the wrong shape, the values cannot be converted to float,
+    or the resulting coordinate falls outside the valid lat/lon range
+    (a malformed iPhone Live Photo, for example, has been seen to emit
+    ``(0, 0, 0)`` for both axes — semantically "no fix", not a
+    coordinate off the coast of Africa). The caller treats ``None`` the
+    same as "this photo has no GPS" — soft signal, never an error.
+    """
+    if not exif:
+        return None
+    gps_ifd = exif.get_ifd(_EXIF_GPS_IFD_TAG)
+    if not gps_ifd:
+        return None
+    lat_ref = gps_ifd.get(_EXIF_GPS_LAT_REF)
+    lat_dms = gps_ifd.get(_EXIF_GPS_LAT)
+    lon_ref = gps_ifd.get(_EXIF_GPS_LON_REF)
+    lon_dms = gps_ifd.get(_EXIF_GPS_LON)
+    if not lat_ref or not lon_ref or lat_dms is None or lon_dms is None:
+        return None
+    try:
+        lat = _dms_to_decimal(lat_dms)
+        lon = _dms_to_decimal(lon_dms)
+    except (TypeError, ValueError, ZeroDivisionError):
+        return None
+    if str(lat_ref).strip().upper() == "S":
+        lat = -lat
+    if str(lon_ref).strip().upper() == "W":
+        lon = -lon
+    if not (-90.0 <= lat <= 90.0 and -180.0 <= lon <= 180.0):
+        return None
+    # "no fix" sentinel: both axes report exactly zero. Real coordinates
+    # near 0,0 (Gulf of Guinea) are vanishingly rare for hiking photos
+    # and not worth the risk of a confused ledger entry.
+    if lat == 0.0 and lon == 0.0:
+        return None
+    return lat, lon
+
+
+def _dms_to_decimal(dms: object) -> float:
+    """Convert an EXIF (deg, min, sec) IFDRational tuple to decimal degrees.
+
+    Accepts anything that yields three float-convertible values when
+    unpacked; raises ``TypeError`` / ``ValueError`` otherwise (caught
+    by :func:`_extract_gps` and translated to "no GPS").
+    """
+    # mypy can't see through the ``object`` annotation; the runtime
+    # ``except`` in the caller covers malformed inputs.
+    deg, minutes, seconds = dms  # type: ignore[misc]
+    return float(deg) + float(minutes) / 60.0 + float(seconds) / 3600.0  # type: ignore[has-type]
 
 
 # ── vision describer (Phase 3 / ADR-010) ─────────────────────────────────────

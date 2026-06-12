@@ -38,6 +38,8 @@ from typing import Any
 
 from pydantic import BaseModel, ConfigDict, ValidationError
 
+from trailstory.daylight import daylight_context as _daylight_context
+from trailstory.gpx import correlate_photos_to_track
 from trailstory.llm import cache as narrative_cache
 from trailstory.llm.client import (
     AnthropicClient,
@@ -61,6 +63,7 @@ from trailstory.models import (
     Person,
     PhotoMeta,
     ProvenanceSource,
+    Waypoint,
 )
 
 logger = logging.getLogger(__name__)
@@ -283,6 +286,15 @@ def extract_ledger(
             f"Extractor JSON did not match _ExtractorOutput schema: {exc}"
         ) from exc
 
+    # ADR-015: deterministic ledger expansion. Track-derived fields flow
+    # from GpxStats; daylight_context is computed from the first / last
+    # timed waypoints (falls back to "unknown" if astral can't resolve);
+    # day_of_week from ``when``; photo_positions correlates each photo
+    # to a waypoint via GPS or timestamp.
+    daylight = _compute_daylight(gpx_stats)
+    day_of_week = when.strftime("%A") if when.year != 1970 else "unknown"
+    photo_positions = correlate_photos_to_track(photos, gpx_stats)
+
     return FactLedger(
         people=extracted.people,
         weather=extracted.weather,
@@ -295,7 +307,51 @@ def extract_ledger(
         elevation_gain_m=gpx_stats.elevation_gain_m,
         summit_elev_m=gpx_stats.summit_elev_m,
         n_photos=len(photos),
+        # ADR-015 fields below
+        track_name=gpx_stats.track_name,
+        track_shape=gpx_stats.track_shape,
+        elevation_loss_m=gpx_stats.elevation_loss_m,
+        day_of_week=day_of_week,
+        daylight_context=daylight,
+        pauses=list(gpx_stats.pauses),
+        photo_positions=photo_positions,
     )
+
+
+def _compute_daylight(gpx_stats: GpxStats) -> str:
+    """Wrap :func:`trailstory.daylight.daylight_context` over the first
+    and last timed waypoints, falling back to ``"unknown"`` when the
+    GPX has no usable temporal+spatial anchors.
+    """
+    first_timed = _first_timed_waypoint(gpx_stats.waypoints)
+    last_timed = _last_timed_waypoint(gpx_stats.waypoints)
+    if (
+        first_timed is None
+        or last_timed is None
+        or first_timed.time is None
+        or last_timed.time is None
+    ):
+        return "unknown"
+    return _daylight_context(
+        lat=first_timed.lat,
+        lon=first_timed.lon,
+        start=first_timed.time,
+        end=last_timed.time,
+    )
+
+
+def _first_timed_waypoint(waypoints: list[Waypoint]) -> Waypoint | None:
+    for wp in waypoints:
+        if wp.time is not None:
+            return wp
+    return None
+
+
+def _last_timed_waypoint(waypoints: list[Waypoint]) -> Waypoint | None:
+    for wp in reversed(waypoints):
+        if wp.time is not None:
+            return wp
+    return None
 
 
 def generate_narrative(

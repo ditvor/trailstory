@@ -12,6 +12,9 @@ not part of CI.
 
 from __future__ import annotations
 
+import json
+from pathlib import Path
+
 import pytest
 
 from tests.conftest import paragraphs_from_strings
@@ -23,6 +26,8 @@ from trailstory.models import (
     Sentence,
 )
 
+GOLDEN_DIR = Path(__file__).parent / "eval" / "golden"
+
 
 def _good_narrative() -> NarrativeOutput:
     """A NarrativeOutput crafted to pass every rubric check.
@@ -32,7 +37,7 @@ def _good_narrative() -> NarrativeOutput:
     thing the assertion is responding to.
     """
     return NarrativeOutput(
-        schema_version=3,
+        schema_version=4,
         title=LocalizedString(
             en="Above the fog line",
             ru="Над линией тумана",
@@ -417,6 +422,12 @@ def test_apply_rubric_returns_one_result_per_check_in_order() -> None:
         "milestone_under_30_chars",
         "indices_valid",
         "pull_quote_drawn_from_body",
+        # ADR-015 style metrics, appended in apply_rubric.
+        "banned_substrings_en",
+        "banned_substrings_ru",
+        "banned_substrings_de",
+        "avg_sentence_length_each_lang",
+        "inferred_ratio_within_ceiling",
     ]
     assert [r.name for r in results] == expected
 
@@ -473,3 +484,242 @@ def test_apply_rubric_surfaces_disjoint_pull_quote() -> None:
     results = rubric.apply_rubric(narrative, n_photos=12)
     by_name = {r.name: r for r in results}
     assert by_name["pull_quote_drawn_from_body"].passed is False
+
+
+# ── ADR-015 — style metric checks ───────────────────────────────────────────
+
+
+def test_banned_substrings_en_passes_on_clean_text() -> None:
+    """A narrative with no banned English phrases passes the gate."""
+    result = rubric.banned_substrings_en(_good_narrative())
+    assert result.passed is True
+
+
+def test_banned_substrings_en_fails_when_phrase_in_paragraph() -> None:
+    """ADR-015: 'the kind of' in a paragraph trips the gate."""
+    narrative = _replace(
+        _good_narrative(),
+        field="pull_quote",
+        lang="en",
+        value="The kind of morning that lingers.",  # contains "the kind of"
+    )
+    result = rubric.banned_substrings_en(narrative)
+    assert result.passed is False
+    assert "the kind of" in result.detail
+
+
+def test_banned_substrings_en_fails_when_phrase_in_title() -> None:
+    """Banned substring in the title also fails the gate (not just paragraphs)."""
+    narrative = _replace(
+        _good_narrative(),
+        field="title",
+        lang="en",
+        value="A day that earned itself",  # "earned itself" is banned
+    )
+    result = rubric.banned_substrings_en(narrative)
+    assert result.passed is False
+
+
+def test_banned_substrings_is_case_insensitive() -> None:
+    """Uppercase / mixed-case banned phrases trip the gate too."""
+    narrative = _replace(
+        _good_narrative(),
+        field="subtitle",
+        lang="en",
+        value="UNSPOOLED across the valley.",
+    )
+    result = rubric.banned_substrings_en(narrative)
+    assert result.passed is False
+
+
+def test_banned_substrings_ru_passes_when_list_is_empty() -> None:
+    """An empty banned list returns pass with a clear "no gate configured"
+    message — the user hasn't yet populated banned phrases for that
+    language.
+    """
+    result = rubric.banned_substrings_ru(_good_narrative())
+    assert result.passed is True
+    assert "no banned phrases configured" in result.detail
+
+
+def test_avg_sentence_length_passes_in_band() -> None:
+    """The good narrative fixture sits comfortably in the 6-24 band."""
+    result = rubric.avg_sentence_length_each_lang(_good_narrative())
+    assert result.passed is True
+
+
+def test_inferred_ratio_passes_under_ceiling() -> None:
+    """The good narrative fixture uses SEED provenance throughout, so the
+    ratio is 0.0 — well under the 0.6 ceiling.
+    """
+    result = rubric.inferred_ratio_within_ceiling(_good_narrative())
+    assert result.passed is True
+
+
+def test_inferred_ratio_fails_when_most_sentences_inferred() -> None:
+    """A narrative where every sentence is INFERRED fails the gate."""
+    from trailstory.models import LocalizedString, Provenance, ProvenanceSource, Sentence
+
+    paragraphs = [
+        [
+            Sentence(
+                text=LocalizedString(en=f"E{i}.", ru=f"Р{i}.", de=f"D{i}."),  # noqa: RUF001
+                provenance=Provenance(source=ProvenanceSource.INFERRED, reference="mood"),
+            )
+            for i in range(3)
+        ]
+        for _ in range(3)
+    ]
+    narrative = _good_narrative().model_copy(update={"paragraphs": paragraphs})
+    result = rubric.inferred_ratio_within_ceiling(narrative)
+    assert result.passed is False
+    assert "1.00" in result.detail
+
+
+def _mixed_provenance_paragraphs(n_inferred: int, n_total: int) -> list[list[Sentence]]:
+    """One flat paragraph of ``n_total`` sentences, the first ``n_inferred``
+    tagged INFERRED and the rest SEED. For boundary tests on the ratio."""
+    from trailstory.models import Provenance, ProvenanceSource
+
+    sentences = []
+    for i in range(n_total):
+        source = ProvenanceSource.INFERRED if i < n_inferred else ProvenanceSource.SEED
+        sentences.append(
+            Sentence(
+                text=LocalizedString(en=f"E{i}.", ru=f"Р{i}.", de=f"D{i}."),  # noqa: RUF001
+                provenance=Provenance(source=source, reference="x"),
+            )
+        )
+    return [sentences]
+
+
+def test_inferred_ratio_boundary_at_exactly_0_6_passes() -> None:
+    """The 0.6 ceiling is inclusive: exactly 6 of 10 INFERRED passes."""
+    narrative = _good_narrative().model_copy(
+        update={"paragraphs": _mixed_provenance_paragraphs(6, 10)}
+    )
+    result = rubric.inferred_ratio_within_ceiling(narrative)
+    assert result.passed is True
+    assert "0.60" in result.detail
+
+
+def test_inferred_ratio_just_above_ceiling_fails() -> None:
+    """7 of 10 INFERRED (0.7) is over the 0.6 ceiling."""
+    narrative = _good_narrative().model_copy(
+        update={"paragraphs": _mixed_provenance_paragraphs(7, 10)}
+    )
+    result = rubric.inferred_ratio_within_ceiling(narrative)
+    assert result.passed is False
+
+
+# ── avg_sentence_length failure modes + splitter robustness ─────────────────
+
+
+def test_avg_sentence_length_fails_below_floor_on_telegram_register() -> None:
+    """1-3-word clipped sentences (the over-corrected register) fail."""
+    narrative = _good_narrative().model_copy(
+        update={
+            "paragraphs": paragraphs_from_strings(
+                en=["We parked. We walked. We left. It rained. We ate. We sat."] * 3,
+                ru=["Мы шли. Мы ели. Мы сели. Шёл дождь. Мы шли. Мы ели."] * 3,
+                de=["Wir gingen. Wir aßen. Wir saßen. Es regnete. Wir gingen. Gut so."] * 3,
+            )
+        }
+    )
+    result = rubric.avg_sentence_length_each_lang(narrative)
+    assert result.passed is False
+
+
+def test_avg_sentence_length_fails_above_ceiling_on_run_on_prose() -> None:
+    """A single 30+-word sentence per paragraph (winding literary register)
+    fails the upper bound."""
+    long_en = (
+        "We left the trailhead while the valley was still holding the last of "
+        "the night air and walked upward through larch and pine toward a ridge "
+        "that never seemed to come closer until it suddenly did."
+    )
+    long_ru = (
+        "Мы вышли на тропу когда долина ещё держала остатки ночного воздуха и "
+        "шли вверх через лиственницы и сосны к хребту который казалось не "
+        "приближался пока вдруг не оказался прямо перед нами совсем рядом"
+    )
+    long_de = (
+        "Wir verließen den Ausgangspunkt als das Tal noch die letzte Nachtluft "
+        "hielt und stiegen durch Lärchen und Kiefern zu einem Grat auf der nie "
+        "näher zu kommen schien bis er es plötzlich doch tat und vor uns lag"
+    )
+    narrative = _good_narrative().model_copy(
+        update={
+            "paragraphs": paragraphs_from_strings(
+                en=[long_en] * 3,
+                ru=[long_ru] * 3,
+                de=[long_de] * 3,
+            )
+        }
+    )
+    result = rubric.avg_sentence_length_each_lang(narrative)
+    assert result.passed is False
+
+
+def test_split_sentences_does_not_break_on_german_abbreviations() -> None:
+    """'z. B.' must not be chopped into pseudo-sentences — German prose with
+    everyday abbreviations would otherwise falsely fail the length floor."""
+    sentences = rubric._split_sentences(
+        "Wir sahen viele Blumen, z. B. Enzian und Krokusse, auf der Wiese."
+    )
+    assert len(sentences) == 1
+
+
+def test_split_sentences_does_not_break_on_decimals_and_initials() -> None:
+    """Decimal numbers and Russian-style initials stay inside one sentence."""
+    assert len(rubric._split_sentences("Wir liefen 3.5 Kilometer am Fluss entlang.")) == 1
+    assert len(rubric._split_sentences("Мы читали стихи А. С. Пушкина у костра.")) == 1  # noqa: RUF001
+
+
+def test_avg_sentence_length_in_band_with_german_abbreviation() -> None:
+    """Integration: normal German containing 'z. B.' stays in the 6-24 band."""
+    narrative = _good_narrative().model_copy(
+        update={
+            "paragraphs": paragraphs_from_strings(
+                en=["We saw many flowers on the meadow, for example gentian and crocus."] * 3,
+                ru=["Мы видели на лугу много цветов, например горечавку и крокусы."] * 3,
+                de=["Wir sahen viele Blumen auf der Wiese, z. B. Enzian und Krokusse."] * 3,
+            )
+        }
+    )
+    result = rubric.avg_sentence_length_each_lang(narrative)
+    assert result.passed is True
+
+
+# ── committed-golden gate (free CI arm of the banned-substring gate) ─────────
+#
+# The rubric's banned-substring checks fire inside the PAID eval
+# (make eval). This parametrized test is the FREE arm: it scans the
+# committed golden narratives in make ci, so a golden refresh that
+# reintroduces a banned phrase fails the build. Goldens still carrying
+# an older schema_version are skipped — they predate the gate and are
+# already queued for refresh (make eval-update-golden); the gate arms
+# itself automatically the moment they are refreshed.
+
+_GOLDEN_NARRATIVE_FILES = sorted(
+    p for p in GOLDEN_DIR.glob("*.json") if not p.name.endswith("-judge.json")
+)
+
+
+@pytest.mark.parametrize("golden_path", _GOLDEN_NARRATIVE_FILES, ids=lambda p: p.stem)
+def test_committed_goldens_contain_no_banned_phrases(golden_path: Path) -> None:
+    data = json.loads(golden_path.read_text(encoding="utf-8"))
+    current = NarrativeOutput.model_fields["schema_version"].default
+    if data.get("schema_version") != current:
+        pytest.skip(
+            f"{golden_path.name} carries schema_version={data.get('schema_version')}; "
+            f"gate arms after refresh to v{current} (make eval-update-golden)"
+        )
+    narrative = NarrativeOutput.model_validate(data)
+    for check in (
+        rubric.banned_substrings_en,
+        rubric.banned_substrings_ru,
+        rubric.banned_substrings_de,
+    ):
+        result = check(narrative)
+        assert result.passed, f"{golden_path.name}: {result.detail}"

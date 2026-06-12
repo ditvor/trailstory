@@ -195,15 +195,8 @@ def test_user_template_mentions_every_narrative_output_field() -> None:
     assert missing == [], f"NarrativeOutput fields absent from prompt: {missing}"
 
 
-def test_user_template_embedded_json_skeleton_is_valid_json(
-    sample_fields: dict[str, object],
-) -> None:
-    """The JSON example block in the rendered prompt must parse as JSON.
-
-    We extract the first balanced ``{...}`` block after the ``Output only
-    JSON`` marker and feed it to ``json.loads``.
-    """
-    rendered = USER_NARRATIVE_TEMPLATE.format(**sample_fields)
+def _extract_skeleton(rendered: str) -> dict[str, object]:
+    """Parse the first balanced ``{...}`` block after ``Output only JSON``."""
     start = rendered.index("{", rendered.index("Output only JSON"))
     depth = 0
     end = -1
@@ -216,11 +209,48 @@ def test_user_template_embedded_json_skeleton_is_valid_json(
                 end = i
                 break
     assert end > start, "could not locate closing brace of JSON skeleton"
-    skeleton = rendered[start : end + 1]
+    result = json.loads(rendered[start : end + 1])
+    assert isinstance(result, dict)
+    return result
 
-    parsed = json.loads(skeleton)
+
+def test_user_template_embedded_json_skeleton_is_valid_json(
+    sample_fields: dict[str, object],
+) -> None:
+    """The JSON example block in the rendered prompt must parse as JSON.
+
+    We extract the first balanced ``{...}`` block after the ``Output only
+    JSON`` marker and feed it to ``json.loads``.
+    """
+    rendered = USER_NARRATIVE_TEMPLATE.format(**sample_fields)
+    parsed = _extract_skeleton(rendered)
     # Every top-level key in the skeleton must be a NarrativeOutput field.
     assert set(parsed.keys()) == set(NarrativeOutput.model_fields)
+
+
+def test_user_template_skeleton_schema_version_matches_model_default(
+    sample_fields: dict[str, object],
+) -> None:
+    """The skeleton's ``schema_version`` literal must equal the current
+    ``NarrativeOutput.schema_version`` default.
+
+    The model echoes the skeleton literal verbatim, validation preserves
+    it (plain int field), and the narrative cache invalidates any entry
+    whose version differs from the model default — so a skeleton/model
+    mismatch silently writes cache entries that can never be read back,
+    re-paying the writer + ledger calls on every identical re-run. This
+    exact drift shipped once (the ADR-015 PR bumped the model to 4 and
+    left the skeleton at 3); this test makes the mistake loud.
+    """
+    rendered = USER_NARRATIVE_TEMPLATE.format(**sample_fields)
+    parsed = _extract_skeleton(rendered)
+    default = NarrativeOutput.model_fields["schema_version"].default
+    assert parsed["schema_version"] == default, (
+        f"prompt skeleton says schema_version={parsed['schema_version']} but "
+        f"NarrativeOutput defaults to {default} — the cache will invalidate "
+        f"every entry the writer produces. Update the skeleton in "
+        f"llm/prompts.py (CLAUDE.md 'Add a field to NarrativeOutput' step 2)."
+    )
 
 
 def test_user_template_skeleton_lists_six_to_eight_photo_indices(
