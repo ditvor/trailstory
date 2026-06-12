@@ -38,7 +38,7 @@ from trailstory.renderers.instagram import (
 
 def _narrative() -> NarrativeOutput:
     return NarrativeOutput(
-        schema_version=3,
+        schema_version=4,
         title=LocalizedString(
             en="Above the fog line",
             ru="Над линией тумана",

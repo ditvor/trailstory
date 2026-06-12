@@ -171,9 +171,13 @@ Key models:
 class GpxStats:
     distance_km: float
     elevation_gain_m: float
+    elevation_loss_m: float             # ADR-015: descent total
     duration_min: int
     start_elevation_m: float
     summit_elevation_m: float
+    track_name: str | None              # ADR-015: GPX <name> tag
+    track_shape: TrackShape             # ADR-015: loop / out_and_back / point_to_point
+    pauses: list[Pause]                 # ADR-015: rest stops >= 5 min from velocity clustering
     waypoints: list[Waypoint]           # (lat, lon, ele, time) tuples
     elevation_profile: list[tuple[float, float]]  # 20 normalised (x, y) points for SVG
 
@@ -181,6 +185,8 @@ class PhotoMeta:
     path: Path
     timestamp: datetime
     index: int                          # 0-based, used by LLM for selection
+    gps_lat: float | None               # ADR-015: EXIF GPS, read before strip-on-save;
+    gps_lon: float | None               #   never reaches the output JPEG
 
 class HikeInput:
     gpx_path: Path
@@ -558,6 +564,20 @@ don't relitigate them.
     on INFERRED. Log and Encyclopedia templates use the
     `paragraphs_as_localized()` flat fallback until Phase 4.1 ports
     them. `schema_version=3`.
+15. [ADR-015 — richer deterministic ledger fields](docs/adr/015-richer-deterministic-ledger.md):
+    Per-photo EXIF GPS read into `PhotoMeta` *before* the strip-on-save
+    step (output JPEG still has GPS stripped); pause detection via
+    waypoint velocity clustering; track-shape classification (loop /
+    out-and-back / point-to-point); GPX `<name>` flowing into the
+    ledger; `daylight_context` via `astral` sunrise/sunset; per-photo
+    `km_along_track` via GPS or timestamp matching. `FactLedger` gains
+    seven new deterministic fields; writer prompt gains one hint
+    clause naming them. Voice work is **not** in this PR. New
+    dependency: `astral`. `NarrativeOutput.schema_version=4`. The
+    rubric in `tests/eval/rubric.py` adds a banned-substring gate
+    (per language), an average-sentence-length band, and an
+    inferred-ratio ceiling so the planned voice tightening has a
+    measurement layer.
 
 If you're about to do something that touches an area covered by an existing
 ADR, **read the ADR first**. If the change is incompatible with the recorded

@@ -29,12 +29,91 @@ class Waypoint(BaseModel):
     time: datetime | None = None
 
 
+class TrackShape(StrEnum):
+    """Topology of the hike's track (ADR-015).
+
+    Distinguishing these matters for the writer: an out-and-back affords
+    a "on the way back" beat, a loop affords a "completing the circle"
+    beat, a point-to-point affords a "from A to B" framing. Detection is
+    heuristic (start↔end proximity, then a bounding-box-span vs
+    half-total-distance ratio to split out-and-back from loop — see
+    ``trailstory.gpx._classify_track_shape``); when the track is too
+    short or has only a single waypoint, we fall back to
+    ``point_to_point`` as the safest neutral value.
+    """
+
+    loop = "loop"
+    out_and_back = "out_and_back"
+    point_to_point = "point_to_point"
+
+
+class Pause(BaseModel):
+    """One rest moment in the hike — a cluster of low-velocity waypoints.
+
+    Detected in :mod:`trailstory.gpx` by walking waypoint pairs, computing
+    instantaneous velocity, and clustering consecutive points where the
+    walker was essentially stationary (< 0.3 m/s). Clusters under 5 min
+    are dropped as GPS noise. The writer uses pauses to ground "we
+    stopped" beats in the actual track rather than inventing them.
+    """
+
+    model_config = ConfigDict(frozen=True)
+
+    # Cumulative distance along the track where the pause began.
+    at_km: float = Field(ge=0)
+    # Duration in whole minutes; clusters under 5 min are filtered upstream.
+    duration_min: int = Field(ge=0)
+    # Location of the pause (midpoint of the cluster) for downstream use
+    # by reverse-geocoding or display. Not stored as a Waypoint to keep
+    # Pause independent of the timestamp field.
+    lat: float
+    lon: float
+    ele_m: float
+
+
+class PhotoPosition(BaseModel):
+    """A photo's position along the GPX track, derived after the fact.
+
+    Built by :func:`trailstory.gpx.correlate_photos_to_track` using
+    either the photo's EXIF GPS (preferred, when present) or the photo's
+    EXIF timestamp matched to the nearest timed waypoint. The ledger
+    surfaces these so the writer can ground per-beat language ("we
+    paused around the 3.5 km mark") in the actual track instead of
+    guessing. Photos that cannot be matched at all (no GPS, no timed
+    waypoints) are simply absent from the position list.
+    """
+
+    model_config = ConfigDict(frozen=True)
+
+    photo_index: int = Field(ge=0)
+    km_along_track: float = Field(ge=0)
+    ele_m: float
+
+
 class GpxStats(BaseModel):
     distance_km: float = Field(ge=0)
     elevation_gain_m: float = Field(ge=0)
+    # ADR-015: descent in metres, computed from gpxpy's uphill_downhill.
+    # For loops and out-and-backs roughly equals gain; for point-to-point
+    # tracks they diverge meaningfully and the difference grounds the
+    # writer's "long descent" vs "rolling profile" framing.
+    elevation_loss_m: float = Field(default=0.0, ge=0)
     duration_min: int = Field(ge=0)
     start_elev_m: float
     summit_elev_m: float
+    # ADR-015: optional human-readable track name from the GPX file's
+    # ``<name>`` tag (often a route name like "Wallberg via Setzberg"
+    # or a peak name). Surfaced to the ledger so the writer has a
+    # place name to lean on when the user didn't provide one.
+    track_name: str | None = None
+    # ADR-015: topology classification. ``point_to_point`` is the
+    # default fallback; the detector in :mod:`trailstory.gpx` upgrades
+    # to ``loop`` or ``out_and_back`` when the endpoints meet.
+    track_shape: TrackShape = TrackShape.point_to_point
+    # ADR-015: detected pauses (>=5 min). Empty list when no pause was
+    # detected, when the GPX has no timestamps, or when the track is
+    # too sparse for velocity clustering to work.
+    pauses: list[Pause] = Field(default_factory=list)
     waypoints: list[Waypoint]
 
 
@@ -81,6 +160,15 @@ class PhotoMeta(BaseModel):
     # contract; ``describe_photos`` produces updated copies via
     # ``model_copy(update={...})``.
     description: PhotoDescription | None = None
+    # ADR-015: GPS coordinates read from EXIF before the strip-on-output
+    # step in ``load_photos``. The resized JPEG written to disk still has
+    # the GPS sub-IFD stripped — the privacy contract for the embedded
+    # base64 photo in the HTML output is unchanged. These fields carry
+    # the coordinates into Python only, where they feed the ledger's
+    # photo↔track correlation. ``None`` when the photo has no GPS or
+    # when the EXIF GPS tags are malformed.
+    gps_lat: float | None = None
+    gps_lon: float | None = None
 
 
 class HikeInput(BaseModel):
@@ -193,7 +281,13 @@ class NarrativeOutput(BaseModel):
     # v3 (ADR-014, Phase 4): paragraphs are now list[Paragraph] with
     # sentence-level provenance. v2 entries (the old LocalizedParagraphs
     # shape) cannot be loaded; cache misses on read.
-    schema_version: int = 3
+    # v4 (ADR-015): the underlying FactLedger gained track_name,
+    # track_shape, elevation_loss_m, day_of_week, daylight_context,
+    # pauses, and photo_positions. The output shape is unchanged but
+    # the writer's prompt now references these fields, so cached v3
+    # narratives no longer reflect what the current writer would
+    # produce. Bumping forces cache invalidation.
+    schema_version: int = 4
     title: LocalizedString
     subtitle: LocalizedString
     # Paragraphs are an ordered list of paragraphs; each paragraph is an
@@ -276,6 +370,14 @@ class FactLedger(BaseModel):
     chronology) and some are deterministic (GPX stats, season, photo
     count); both halves end up here for the writer's single-input
     contract.
+
+    ADR-015 expansion: the deterministic half now also carries
+    ``track_name``, ``track_shape``, ``elevation_loss_m``,
+    ``day_of_week``, ``daylight_context``, ``pauses``, and
+    ``photo_positions`` — all computed in Python from the inputs the
+    writer otherwise has no access to (per-photo GPS, sunrise/sunset
+    math, waypoint velocity clustering). Denser ledger → less room for
+    the writer to invent specifics.
     """
 
     model_config = ConfigDict(frozen=True)
@@ -294,6 +396,38 @@ class FactLedger(BaseModel):
     elevation_gain_m: float = Field(ge=0)
     summit_elev_m: float
     n_photos: int = Field(ge=1)
+
+    # ADR-015 deterministic expansion --------------------------------------
+    # Track name from the GPX <name> tag (often a route name like
+    # "Wallberg via Setzberg"). ``None`` when the file doesn't carry one
+    # — the writer falls back to ``where`` in that case.
+    track_name: str | None = None
+    # Topology classification (loop / out_and_back / point_to_point).
+    # Default point_to_point is the safest neutral framing when the
+    # detector can't decide. See :class:`TrackShape`.
+    track_shape: TrackShape = TrackShape.point_to_point
+    # Descent in metres, complementing ``elevation_gain_m``. For loops
+    # and out-and-backs roughly equals gain; for point-to-point tracks
+    # they diverge and the gap grounds the writer's "long descent" /
+    # "rolling profile" framing.
+    elevation_loss_m: float = Field(default=0.0, ge=0)
+    # Day name ("Saturday", "Sunday"). Cheap to derive, sometimes
+    # surfaces a small narrative beat ("a Saturday walk").
+    day_of_week: str = "unknown"
+    # Coarse daylight bracket for the hike — see
+    # :func:`trailstory.daylight.daylight_context`. Examples: "morning",
+    # "morning to early afternoon", "afternoon to evening". "unknown"
+    # when sunrise/sunset can't be resolved (polar regions, missing
+    # location).
+    daylight_context: str = "unknown"
+    # Rest moments detected from waypoint velocity clustering. Empty
+    # list when no pause was detected, when the GPX has no timestamps,
+    # or when the track is too sparse for clustering to work.
+    pauses: list[Pause] = Field(default_factory=list)
+    # Per-photo positions along the track, derived from EXIF GPS or
+    # timestamp matching. Photos with no usable match are absent rather
+    # than represented as a guess.
+    photo_positions: list[PhotoPosition] = Field(default_factory=list)
 
 
 class Memory(BaseModel):
