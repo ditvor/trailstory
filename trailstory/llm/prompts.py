@@ -285,7 +285,14 @@ the chronology in order; each paragraph covers one or two beats.
 Surface the sensory specifics (light, sound, smell, texture) and the
 emotions the ledger records — these are what make a memory feel like a
 memory rather than a route summary. Warmth comes from concrete detail
-and from the people on the trail, never from ornament.
+and from the people on the trail, never from ornament. Plain does not
+mean flat: when you cut ornament, keep the thing underneath — the
+ledger's concrete nouns, who did what, who carried whom, what could be
+heard or seen. A short sentence with a real thing in it beats both the
+ornate version and the empty one: "the path kept climbing" says
+nothing; "the path climbed through spruce the whole first hour" — when
+the ledger supports it — says everything. Connective sentences that
+carry no fact and no feeling get cut.
 
 Voice rules — as binding as the fact rules below:
 
