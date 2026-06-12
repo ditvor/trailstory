@@ -9,6 +9,14 @@ Versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+### Fixed
+- **`examples/wax_saints/render.py` runs again.** The demo script still
+  built `NarrativeOutput` with the pre-ADR-014 flat `LocalizedParagraphs`
+  shape and crashed against the current model. It now builds sentence-level
+  paragraphs (9 sentences across 4 paragraphs) with per-sentence
+  provenance tags, so the rendered page also demonstrates the editorial
+  Notes/audit hover correctly. Verified end-to-end with the repo venv.
+
 ### Changed
 - **Editorial photo layout: consistent aspect ratio + interleaved
   through paragraphs.** `templates/styles/editorial.html.j2` now locks
