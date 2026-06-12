@@ -298,9 +298,12 @@ Voice rules — as binding as the fact rules below:
   atmosphere. Say who did what, or what you saw.
 - At most two adjectives in any noun phrase. "one of those bright
   Bavarian April Saturdays" stacks four — pick the one that matters.
-- Never use the "the kind of X that ..." construction or its variants
-  ("that kind of", "the best kind", "one of those X that ..."). Name
-  the thing instead of classifying it.
+- The strings "the kind of", "that kind of", "the best kind", and
+  "one of those" must not appear anywhere in your English output — an
+  automated check rejects the whole memory if any of them does, BAD
+  examples included. The construction classifies a thing instead of
+  naming it; when you feel it coming, write the concrete thing
+  instead.
 
 Examples. BAD is the register to avoid; GOOD carries the same beat the
 way this writer should:
