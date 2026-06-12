@@ -1,85 +1,85 @@
 {
-  "warmth": 4.5,
+  "warmth": 4.0,
   "narrative_arc": 4.0,
   "russian_fidelity": 4.5,
   "photo_selection_plausibility": 4.0,
   "claim_verdicts": [
     {
-      "claim": "hike took place in the Bavarian Alps",
+      "claim": "The hike took place in the Bavarian Alps",
       "verdict": "UNSUPPORTED",
       "quote": ""
     },
     {
-      "claim": "hike took place on an April morning",
+      "claim": "The hike was on a bright April morning",
       "verdict": "UNSUPPORTED",
       "quote": ""
     },
     {
-      "claim": "the sky was clear and blue",
-      "verdict": "SUPPORTED",
-      "quote": "wide blue"
-    },
-    {
-      "claim": "the air was cool and spring-sharp",
+      "claim": "The sky was cloudless blue",
       "verdict": "INFERRED",
-      "quote": "inferred from seed context implying a lively, fresh outdoor setting"
+      "quote": "the wide blue"
     },
     {
-      "claim": "birds were singing throughout the ascent",
+      "claim": "It was a Monday",
+      "verdict": "UNSUPPORTED",
+      "quote": ""
+    },
+    {
+      "claim": "Birds were calling from somewhere they couldn't see",
       "verdict": "SUPPORTED",
       "quote": "every bird"
     },
     {
-      "claim": "they crossed a stream on the way up",
+      "claim": "Little streams crossed the trail",
       "verdict": "SUPPORTED",
       "quote": "every stream"
     },
     {
-      "claim": "Mia laughed during the ascent",
+      "claim": "Wind kept tugging at their jackets",
+      "verdict": "SUPPORTED",
+      "quote": "every gust of wind"
+    },
+    {
+      "claim": "Mia laughed at the gusts surprising them",
       "verdict": "SUPPORTED",
       "quote": "Mia laughed the whole way up"
     },
     {
-      "claim": "wind was present during the climb",
-      "verdict": "SUPPORTED",
-      "quote": "every gust of wind"
-    },
-    {
-      "claim": "they reached the summit in the afternoon",
+      "claim": "They reached the top by midday",
       "verdict": "UNSUPPORTED",
       "quote": ""
     },
     {
-      "claim": "Mia packed apples for the hike",
+      "claim": "They sat down at the summit",
       "verdict": "SUPPORTED",
-      "quote": "sitting at the summit eating apples"
+      "quote": "We sat at the summit"
     },
     {
-      "claim": "apples were eaten at the summit",
+      "claim": "They ate apples at the summit",
       "verdict": "SUPPORTED",
-      "quote": "We sat at the summit eating apples"
+      "quote": "eating apples"
     },
     {
-      "claim": "Mia clapped her hands at the view",
+      "claim": "They looked up at the wide sky",
       "verdict": "SUPPORTED",
       "quote": "she clapped her hands at the wide blue"
     },
     {
-      "claim": "they sat at the summit for a while in silence",
-      "verdict": "INFERRED",
-      "quote": "We sat at the summit eating apples and she clapped her hands at the wide blue"
-    },
-    {
-      "claim": "the stream water ran fast and bright",
+      "claim": "They said little while eating",
       "verdict": "UNSUPPORTED",
       "quote": ""
     },
     {
-      "claim": "the wind came and went in open patches",
-      "verdict": "INFERRED",
-      "quote": "every gust of wind"
+      "claim": "They stayed at the summit a long time before descending",
+      "verdict": "UNSUPPORTED",
+      "quote": ""
+    },
+    {
+      "claim": "Mia is described as a good friend",
+      "verdict": "UNSUPPORTED",
+      "quote": ""
     }
   ],
-  "notes": "The English prose is warm and specific, capturing Mia's joy and the sensory texture of the day without feeling generic; the apple detail and the silence beat are especially strong. The arc is solid — opening, ascent, summit — though the human-detail beat (Mia clapping) is slightly underplayed given how central it is in the seed. Russian reads naturally with good register and idiomatic phrasing; 'под этим бескрайним небом' is a slight expansion of 'all that sky' but fits the spirit well. The Bavarian Alps setting and April date are fabricated (not in the seed), which is the main faithfulness concern; the afternoon summit timing is also invented.",
-  "faithfulness": 3.17
+  "notes": "The prose is warm and personal, with sensory grounding closely tied to the seed text (birds, streams, wind, apples, wide blue sky), though the Bavarian Alps setting and Monday/April details are introduced without source support. The narrative arc is clean — opening, ascent, summit, quiet wonder, closing reflection — with each paragraph earning its place, though the closing beat edges toward generic ('the best kind'). The Russian is fluent and natural, with idiomatic choices like 'врасплох нас заставал' and 'распахнулось во всю ширь'; minor stiffness in 'тёплое тихое восхищение' but no anglicisms. Photo indices (7 images, spread 0–11) plausibly trace the arc with reasonable distribution.",
+  "faithfulness": 2.5
 }

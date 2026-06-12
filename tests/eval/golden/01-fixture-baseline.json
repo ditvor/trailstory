@@ -1,107 +1,142 @@
 {
-  "schema_version": 3,
+  "schema_version": 4,
   "title": {
-    "en": "Up Into the Fog",
-    "ru": "Вверх, в туман",
-    "de": "Hinauf in den Nebel"
+    "en": "Above the Fog Line",
+    "ru": "Над линией тумана",
+    "de": "Über der Nebelgrenze"
   },
   "subtitle": {
-    "en": "A spring morning ridge in the Bavarian Alps",
-    "ru": "Весеннее утро на хребте в Баварских Альпах",
-    "de": "Ein Frühlingsmorgen am Grat in den Bayerischen Alpen"
+    "en": "A spring morning climb in the Bavarian Alps",
+    "ru": "Весеннее утро в Баварских Альпах",
+    "de": "Ein Frühlingsmorgen in den Bayerischen Alpen"
   },
   "paragraphs": [
     [
       {
         "text": {
-          "en": "We set out into the Bavarian Alps on a cool April morning, the kind of damp spring air that settles into your sleeves before you've even warmed up.",
-          "ru": "Мы вышли в Баварские Альпы прохладным апрельским утром — в том самом сыром весеннем воздухе, что забирается в рукава ещё до того, как успеешь согреться.",
-          "de": "Wir brachen an einem kühlen Aprilmorgen in die Bayerischen Alpen auf, in dieser feuchten Frühlingsluft, die einem schon in die Ärmel kriecht, bevor man richtig warm geworden ist."
+          "en": "We started in the soft grey of a Bavarian Alps morning, with fog lying thick around us.",
+          "ru": "Мы вышли в мягкой серости утра в Баварских Альпах, и густой туман лежал вокруг.",
+          "de": "Wir starteten im weichen Grau eines Morgens in den Bayerischen Alpen, dichter Nebel lag rund um uns."
         },
         "provenance": {
           "source": "gpx",
-          "reference": "where, season, when"
+          "reference": "where, daylight_context"
         }
       },
       {
         "text": {
-          "en": "The fog was thick from the very first steps, soft and grey all around us.",
-          "ru": "Туман стоял густой с самых первых шагов — мягкий и серый со всех сторон.",
-          "de": "Der Nebel war schon von den ersten Schritten an dicht, weich und grau um uns herum."
+          "en": "It was a Monday in April, the kind of spring day that hasn't quite made up its mind yet.",
+          "ru": "Был апрельский понедельник — такой весенний день, который ещё сам не решил, чем стать.",
+          "de": "Es war ein Montag im April, so ein Frühlingstag, der sich noch nicht ganz entschieden hat."
         },
         "provenance": {
-          "source": "seed",
-          "reference": "hiking toward the ridge in fog"
+          "source": "gpx",
+          "reference": "season, day_of_week"
         }
       }
     ],
     [
       {
         "text": {
-          "en": "We climbed toward the ridge through that quiet wall of mist, seeing only a few steps of path ahead at a time.",
-          "ru": "Мы поднимались к хребту сквозь эту тихую стену тумана, видя перед собой лишь несколько шагов тропы.",
-          "de": "Wir stiegen durch diese stille Nebelwand zum Grat hinauf und sahen jeweils nur ein paar Schritte des Weges vor uns."
+          "en": "The path tipped upward almost from the start, and we climbed steadily toward the ridge.",
+          "ru": "Тропа пошла вверх почти сразу, и мы ровно поднимались к гребню.",
+          "de": "Der Weg ging fast von Anfang an aufwärts, und wir stiegen stetig dem Grat entgegen."
         },
         "provenance": {
           "source": "seed",
-          "reference": "hiking toward the ridge in fog"
+          "reference": "hiking to ridge"
         }
       },
       {
         "text": {
-          "en": "It was a long, steady climb for such a short distance, the kind that makes your legs remember it.",
-          "ru": "Подъём был долгий и упорный для такого короткого расстояния — из тех, что ноги потом долго помнят.",
-          "de": "Es war ein langer, zäher Anstieg für so eine kurze Strecke, einer von denen, an die sich die Beine später erinnern."
+          "en": "It was a short distance on the map but a real morning's work for the legs.",
+          "ru": "На карте — короткий участок, но для ног это было настоящее утреннее дело.",
+          "de": "Auf der Karte eine kurze Strecke, für die Beine aber ein richtiges Stück Morgenarbeit."
         },
         "provenance": {
           "source": "gpx",
-          "reference": "distance_km, elevation_gain_m, duration_min"
+          "reference": "distance_km, elevation_gain_m"
+        }
+      },
+      {
+        "text": {
+          "en": "Around us the fog began to thin in patches, brightening from grey toward something almost silver.",
+          "ru": "Вокруг туман начал редеть пятнами, светлея от серого к чему-то почти серебряному.",
+          "de": "Um uns herum begann der Nebel stellenweise dünner zu werden, hellte sich vom Grau zu etwas fast Silbernem auf."
+        },
+        "provenance": {
+          "source": "seed",
+          "reference": "foggy, clearing"
         }
       }
     ],
     [
       {
         "text": {
-          "en": "And then, just as we reached the ridge, the fog lifted.",
-          "ru": "А потом, как только мы вышли на хребет, туман рассеялся.",
-          "de": "Und dann, gerade als wir den Grat erreichten, lichtete sich der Nebel."
+          "en": "Near the top we stopped for a long rest, and that's where the day really gave itself to us.",
+          "ru": "Ближе к вершине мы сделали долгий привал — и вот тут день по-настоящему раскрылся.",
+          "de": "Kurz vor oben legten wir eine lange Rast ein, und genau da schenkte sich uns der Tag richtig."
         },
         "provenance": {
-          "source": "seed",
-          "reference": "fog cleared as the group reached the ridge"
+          "source": "gpx",
+          "reference": "pauses"
         }
       },
       {
         "text": {
-          "en": "It felt like the mountains had been waiting up there the whole time, just for us.",
-          "ru": "Казалось, будто горы всё это время ждали нас наверху — именно нас.",
-          "de": "Es fühlte sich an, als hätten die Berge die ganze Zeit dort oben gewartet, nur auf uns."
+          "en": "The fog kept pulling back below us until we were sitting above it, looking down at a soft white sea.",
+          "ru": "Туман всё отступал вниз, пока мы не оказались над ним, глядя сверху на мягкое белое море.",
+          "de": "Der Nebel zog sich immer weiter unter uns zurück, bis wir darüber saßen und auf ein weiches weißes Meer hinunterblickten."
+        },
+        "provenance": {
+          "source": "seed",
+          "reference": "fog clearing"
+        }
+      },
+      {
+        "text": {
+          "en": "I took my time there — long enough to feel the cool spring air settle on my hands and the quiet press in around us.",
+          "ru": "Я не спешил уходить — успел почувствовать, как прохладный весенний воздух оседает на ладонях и тишина обступает со всех сторон.",
+          "de": "Ich ließ mir Zeit dort oben — lange genug, um die kühle Frühlingsluft auf den Händen zu spüren und die Stille rundherum."
         },
         "provenance": {
           "source": "inferred",
-          "reference": "mood of fog lifting at the ridge"
+          "reference": "mood inferred from 50-minute pause near summit"
+        }
+      }
+    ],
+    [
+      {
+        "text": {
+          "en": "By the time we walked the last little stretch to the high point, the ridge was clear and bright.",
+          "ru": "К тому моменту, как мы прошли последний короткий участок до самой высокой точки, гребень уже был чистым и светлым.",
+          "de": "Als wir das letzte Stück zur höchsten Stelle gingen, lag der Grat klar und hell vor uns."
+        },
+        "provenance": {
+          "source": "seed",
+          "reference": "ridge as fog clears"
         }
       },
       {
         "text": {
-          "en": "We stood up above the fog line in clean spring light, and it was worth every step.",
-          "ru": "Мы стояли над линией тумана в чистом весеннем свете, и это стоило каждого шага.",
-          "de": "Wir standen über der Nebelgrenze im klaren Frühlingslicht, und es war jeden Schritt wert."
+          "en": "We finished where the path finished, not turning back the way we came — a one-way morning, top to bottom on its own terms.",
+          "ru": "Мы закончили там, где заканчивалась тропа, не возвращаясь обратно — утро в одну сторону, от начала до конца на своих условиях.",
+          "de": "Wir hörten da auf, wo der Weg aufhörte, ohne denselben Weg zurückzugehen — ein Morgen in eine Richtung, von Anfang bis Ende auf eigene Art."
         },
         "provenance": {
-          "source": "seed",
-          "reference": "fog cleared at ridge; season"
+          "source": "gpx",
+          "reference": "track_shape point_to_point"
         }
       }
     ]
   ],
   "pull_quote": {
-    "en": "Just as we reached the ridge, the fog lifted.",
-    "ru": "Как только мы вышли на хребет, туман рассеялся.",
-    "de": "Gerade als wir den Grat erreichten, lichtete sich der Nebel."
+    "en": "The fog kept pulling back below us until we were sitting above it, looking down at a soft white sea.",
+    "ru": "Туман всё отступал вниз, пока мы не оказались над ним, глядя сверху на мягкое белое море.",
+    "de": "Der Nebel zog sich immer weiter unter uns zurück, bis wir darüber saßen und auf ein weiches weißes Meer hinunterblickten."
   },
   "milestone": {
-    "en": "Above the fog line",
+    "en": "Above the fog",
     "ru": "Над туманом",
     "de": "Über dem Nebel"
   },

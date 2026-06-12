@@ -1,60 +1,60 @@
 {
   "warmth": 4.0,
-  "narrative_arc": 4.0,
+  "narrative_arc": 4.5,
   "russian_fidelity": 4.5,
   "photo_selection_plausibility": 4.0,
   "claim_verdicts": [
     {
-      "claim": "hike took place in the Bavarian Alps",
-      "verdict": "UNSUPPORTED",
-      "quote": ""
-    },
-    {
-      "claim": "the hike was on a cool April morning",
-      "verdict": "UNSUPPORTED",
-      "quote": ""
-    },
-    {
-      "claim": "damp spring air that gets into your sleeves",
-      "verdict": "INFERRED",
-      "quote": "The fog cleared just as we reached the ridge — spring/fog conditions inferred"
-    },
-    {
-      "claim": "fog was thick from the very first steps",
-      "verdict": "INFERRED",
-      "quote": "The fog cleared just as we reached the ridge — implies fog was present before the ridge"
-    },
-    {
-      "claim": "fog was soft and grey",
-      "verdict": "INFERRED",
-      "quote": "The fog cleared just as we reached the ridge — fog character inferred from seed"
-    },
-    {
-      "claim": "climbed toward the ridge through mist, seeing only a few steps ahead",
-      "verdict": "INFERRED",
-      "quote": "The fog cleared just as we reached the ridge — implies limited visibility during ascent"
-    },
-    {
-      "claim": "it was a long, steady climb for a short distance",
-      "verdict": "UNSUPPORTED",
-      "quote": ""
-    },
-    {
-      "claim": "climb made your legs remember it",
-      "verdict": "UNSUPPORTED",
-      "quote": ""
-    },
-    {
-      "claim": "fog lifted just as the group reached the ridge",
+      "claim": "They started in foggy conditions in the Bavarian Alps",
       "verdict": "SUPPORTED",
       "quote": "The fog cleared just as we reached the ridge."
     },
     {
-      "claim": "stood above the fog line in clean spring light",
+      "claim": "It was a Monday in April",
       "verdict": "INFERRED",
-      "quote": "The fog cleared just as we reached the ridge — standing above fog line inferred from fog clearing at ridge; spring from April context"
+      "quote": "season, day_of_week from GPX"
+    },
+    {
+      "claim": "The path went upward almost from the start",
+      "verdict": "INFERRED",
+      "quote": "elevation_gain_m from GPX"
+    },
+    {
+      "claim": "The fog thinned in patches, brightening from grey toward silver",
+      "verdict": "INFERRED",
+      "quote": "The fog cleared just as we reached the ridge."
+    },
+    {
+      "claim": "They stopped for a long rest near the top",
+      "verdict": "INFERRED",
+      "quote": "50-minute pause near summit from GPX pauses"
+    },
+    {
+      "claim": "They sat above the fog looking down at a soft white sea",
+      "verdict": "INFERRED",
+      "quote": "The fog cleared just as we reached the ridge."
+    },
+    {
+      "claim": "Cool spring air settled on hands",
+      "verdict": "INFERRED",
+      "quote": "season from GPX; spring morning in subtitle"
+    },
+    {
+      "claim": "Quiet pressed in around them",
+      "verdict": "UNSUPPORTED",
+      "quote": ""
+    },
+    {
+      "claim": "The route was point-to-point, not an out-and-back",
+      "verdict": "INFERRED",
+      "quote": "track_shape point_to_point from GPX"
+    },
+    {
+      "claim": "The ridge was clear and bright when they reached the high point",
+      "verdict": "SUPPORTED",
+      "quote": "The fog cleared just as we reached the ridge."
     }
   ],
-  "notes": "Warmth is strong — 'damp spring air that settles into your sleeves' and 'the kind that makes your legs remember it' feel personal and specific. The arc is clean: opening atmosphere, effort/ascent, reveal, emotional payoff — though the human-detail beat is thin (no individual person or specific action). Russian fidelity is excellent; phrasings like 'из тех, что ноги потом долго помнят' read as idiomatic native Russian with no calque artifacts. Photo indices span 0–11 with 7 frames, distributed reasonably across the arc, though without photo metadata the match to specific beats cannot be fully verified.",
-  "faithfulness": 1.75
+  "notes": "The prose has genuine warmth and specificity — 'fog brightening toward something almost silver' and 'cool spring air settle on my hands' lift it above generic hiking copy. The arc is well-shaped: opening atmosphere, sustained effort, landscape payoff, a quiet human-detail beat, and a clean point-to-point ending. Russian reads naturally and idiomatically; 'такой весенний день, который ещё сам не решил, чем стать' is exactly the register a native writer would choose. Seven photo indices spanning indices 0-11 give good distribution across the arc, though the slight gap between index 4 and 6 is a minor issue rather than a real flaw.",
+  "faithfulness": 2.75
 }
