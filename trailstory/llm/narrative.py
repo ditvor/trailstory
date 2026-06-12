@@ -36,7 +36,7 @@ from datetime import UTC, datetime
 from json import JSONDecodeError
 from typing import Any
 
-from pydantic import BaseModel, ConfigDict, ValidationError
+from pydantic import BaseModel, ConfigDict, Field, ValidationError
 
 from trailstory.daylight import daylight_context as _daylight_context
 from trailstory.gpx import correlate_photos_to_track
@@ -53,6 +53,7 @@ from trailstory.llm.prompts import (
     USER_LEDGER_RETRY_SUFFIX,
     USER_NARRATIVE_RETRY_SUFFIX,
     USER_NARRATIVE_TEMPLATE,
+    VERIFIER_VERBATIM_FEEDBACK_TEMPLATE,
 )
 from trailstory.models import (
     Beat,
@@ -140,6 +141,47 @@ class _ExtractorOutput(BaseModel):
     people: list[Person]
     weather: str
     chronology: list[Beat]
+    # ADR-016: short literal quotes from the seed text. Default keeps
+    # older-shaped extractor responses (and test mocks) validating; the
+    # field is re-verified as genuine seed substrings in Python by
+    # :func:`_filter_verbatim_phrases` before it reaches the ledger.
+    verbatim_user_phrases: list[str] = Field(default_factory=list)
+
+
+# ADR-016 bounds for the verbatim-phrase anchor. The extractor is asked
+# for 2-4 phrases of ≤ 8 words; the filter below enforces both so a
+# chatty extractor can't flood the writer prompt with quotes.
+_VERBATIM_PHRASE_MAX_WORDS = 8
+_VERBATIM_PHRASE_MAX_COUNT = 4
+
+
+def _filter_verbatim_phrases(phrases: list[str], seed_text: str) -> list[str]:
+    """Keep only phrases that really are verbatim quotes of the seed.
+
+    The extractor prompt asks for character-for-character copies, but an
+    LLM's "verbatim" cannot be trusted — this filter makes the guarantee
+    deterministic. A phrase survives only if it is a case-insensitive
+    literal substring of the seed text and at most
+    ``_VERBATIM_PHRASE_MAX_WORDS`` words long; duplicates collapse and at
+    most ``_VERBATIM_PHRASE_MAX_COUNT`` survive, in extractor order. An
+    empty result is a valid outcome (thin seed, paraphrasing extractor) —
+    the writer prompt and the verifier both treat it as "proceed without".
+    """
+    haystack = seed_text.casefold()
+    seen: set[str] = set()
+    kept: list[str] = []
+    for phrase in phrases:
+        candidate = phrase.strip()
+        if not candidate or len(candidate.split()) > _VERBATIM_PHRASE_MAX_WORDS:
+            continue
+        key = candidate.casefold()
+        if key in seen or key not in haystack:
+            continue
+        seen.add(key)
+        kept.append(candidate)
+        if len(kept) == _VERBATIM_PHRASE_MAX_COUNT:
+            break
+    return kept
 
 
 # Northern-hemisphere meteorological season per calendar month. December
@@ -299,6 +341,11 @@ def extract_ledger(
         people=extracted.people,
         weather=extracted.weather,
         chronology=extracted.chronology,
+        # ADR-016: re-verify the extractor's "verbatim" claim in Python so
+        # the writer only ever sees genuine seed substrings.
+        verbatim_user_phrases=_filter_verbatim_phrases(
+            extracted.verbatim_user_phrases, hike_input.seed_text
+        ),
         where=place,
         when=when,
         season=season,
@@ -499,6 +546,40 @@ def generate_narrative(
                             ratio,
                         )
 
+    # ADR-016: verbatim-phrase verifier. Same free-signal pattern as the
+    # ratio check above — detection costs nothing (substring scan), only
+    # the conditional regen is paid. If the ledger carries verbatim
+    # phrases and none of them surfaced in any language's prose, ask the
+    # writer once more with the phrases named; keep the regen only if it
+    # actually uses one (improvement-only admission, mirroring ADR-011).
+    # Streaming is bypassed, same as the ratio verifier.
+    if ledger.verbatim_user_phrases and not _uses_verbatim_phrase(
+        narrative, ledger.verbatim_user_phrases
+    ):
+        logger.warning(
+            "writer used none of %d verbatim user phrase(s); regenerating",
+            len(ledger.verbatim_user_phrases),
+        )
+        feedback = VERIFIER_VERBATIM_FEEDBACK_TEMPLATE.format(
+            phrases=", ".join(f'"{p}"' for p in ledger.verbatim_user_phrases)
+        )
+        regen_parsed = _call_and_parse(client, base_prompt + feedback)
+        if regen_parsed is not None:
+            try:
+                regen = NarrativeOutput.model_validate(regen_parsed)
+            except ValidationError as exc:
+                logger.warning(
+                    "verbatim-regenerated draft failed schema validation (%s); "
+                    "keeping the original",
+                    exc,
+                )
+            else:
+                if _uses_verbatim_phrase(regen, ledger.verbatim_user_phrases):
+                    logger.info("verbatim verifier accepted regen")
+                    narrative = regen
+                else:
+                    logger.info("verbatim verifier rejected regen: still no phrase used")
+
     if key is not None:
         narrative_cache.put(key, narrative)
     return narrative
@@ -520,6 +601,39 @@ def _inferred_ratio(narrative: NarrativeOutput) -> float:
     if total == 0:
         return 0.0
     return inferred / total
+
+
+def _uses_verbatim_phrase(narrative: NarrativeOutput, phrases: list[str]) -> bool:
+    """True when any ledger phrase appears literally in the narrative.
+
+    Scans all three languages: the contract asks for the phrase verbatim
+    in the language the hiker wrote it in (a Russian seed lands in the RU
+    text), and only a faithful rendering — which no substring check can
+    verify — in the other two. Title, subtitle, pull quote, and milestone
+    count too, so a phrase surfaced as the pull quote satisfies the
+    contract. Case-insensitive, same as :func:`_filter_verbatim_phrases`.
+    """
+    flat = narrative.paragraphs_as_localized()
+    haystack = " ".join(
+        [
+            *flat.en,
+            *flat.ru,
+            *flat.de,
+            narrative.title.en,
+            narrative.title.ru,
+            narrative.title.de,
+            narrative.subtitle.en,
+            narrative.subtitle.ru,
+            narrative.subtitle.de,
+            narrative.pull_quote.en,
+            narrative.pull_quote.ru,
+            narrative.pull_quote.de,
+            narrative.milestone.en,
+            narrative.milestone.ru,
+            narrative.milestone.de,
+        ]
+    ).casefold()
+    return any(p.casefold() in haystack for p in phrases)
 
 
 def _verifier_feedback(observed: float, ceiling: float) -> str:

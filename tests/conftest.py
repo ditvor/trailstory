@@ -108,7 +108,7 @@ def paragraphs_from_strings(
 def sample_narrative() -> NarrativeOutput:
     """Hand-built NarrativeOutput in the same shape an LLM would return."""
     return NarrativeOutput(
-        schema_version=4,
+        schema_version=5,
         title=LocalizedString(
             en="Above the fog line",
             ru="Над линией тумана",

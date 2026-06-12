@@ -10,6 +10,20 @@ Versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 ## [Unreleased]
 
 ### Added
+- **Writer voice tightening + verbatim user phrase anchor (ADR-016).**
+  The writer prompt now positions the register explicitly ("a warm
+  family note to grandparents — neither a travel essay nor minutes of
+  a meeting"), carries four binding voice rules (no personified
+  landscape, no feeling/atmosphere sentence subjects, ≤ 2 adjectives
+  per noun phrase, no "the kind of" construction family), and shows
+  five BAD/GOOD pairs whose BAD halves are real sentences from the
+  2026-06 golden refresh. The `FactLedger` gains
+  `verbatim_user_phrases`: 2–4 short quotes (≤ 8 words) the extractor
+  copies from the seed text, re-verified in Python as genuine literal
+  substrings; the writer must weave at least one into the prose —
+  verbatim in the language the hiker wrote it in, rendered faithfully
+  in the other two. A free verifier (ADR-011 pattern) regenerates once
+  when no phrase surfaced, keeping the regen only if it improves.
 - **Richer deterministic ledger (ADR-015).** The `FactLedger` the
   writer consumes now carries seven new Python-computed fields:
   `track_name` (from the GPX `<name>` tag), `track_shape`
@@ -32,6 +46,13 @@ Versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   automatically once goldens are refreshed to schema v4.
 
 ### Changed
+- **`NarrativeOutput.schema_version` bumped 4 → 5 (ADR-016).** Output
+  shape unchanged, but the writer prompt's register and the new
+  verbatim-phrase contract mean cached v4 narratives no longer reflect
+  what the current pipeline produces. Narrative-cache entries
+  invalidate on first read; goldens require a refresh
+  (`make eval-update-golden`), which also re-arms the banned-phrase
+  golden gate.
 - **`NarrativeOutput.schema_version` bumped 3 → 4.** The output shape
   is unchanged, but the writer prompt now references the ADR-015
   ledger fields, so cached v3 narratives no longer reflect what the

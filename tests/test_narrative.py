@@ -79,7 +79,7 @@ def _photos(n: int = 12) -> list[PhotoMeta]:
 
 def _valid_response_dict(indices: list[int] | None = None) -> dict[str, object]:
     return {
-        "schema_version": 4,
+        "schema_version": 5,
         "title": {
             "en": "Above the fog line",
             "ru": "Над линией тумана",
@@ -817,3 +817,247 @@ def test_generate_narrative_stream_validates_schema() -> None:
                 ledger_client=_ledger_client(),
             )
         )
+
+
+# ── ADR-016: verbatim-phrase verifier ────────────────────────────────────────
+#
+# Detection is free (substring scan over all three languages); only the
+# conditional regen costs a call. Improvement-only admission mirrors the
+# ADR-011 ratio verifier: a regen that still uses no phrase is discarded.
+# The fixture seed is "The fog cleared just as we reached the ridge.", and
+# _valid_response_dict's pull quote carries that sentence verbatim — so the
+# default response *uses* the phrase and a phrase-free draft needs an
+# explicit pull-quote override.
+
+
+def _extractor_json_with_phrases(phrases: list[str]) -> str:
+    payload = _valid_extractor_dict()
+    payload["verbatim_user_phrases"] = phrases
+    return json.dumps(payload)
+
+
+def _response_without_phrase_json(title_en: str = "Above the fog line") -> str:
+    payload = _valid_response_dict()
+    payload["title"] = {
+        "en": title_en,
+        "ru": "Над линией тумана",
+        "de": "Über der Nebelgrenze",
+    }
+    payload["pull_quote"] = {
+        "en": "Above the clouds at last.",
+        "ru": "Наконец над облаками.",
+        "de": "Endlich über den Wolken.",
+    }
+    return json.dumps(payload)
+
+
+def test_verbatim_verifier_skips_when_phrase_already_used() -> None:
+    client = _client(_valid_response_json())
+
+    generate_narrative(
+        _hike_input(),
+        _gpx_stats(),
+        _photos(),
+        client=client,
+        ledger_client=_ledger_client(_extractor_json_with_phrases(["The fog cleared"])),
+        **_NO_CACHE,
+    )
+
+    assert client.complete.call_count == 1
+
+
+def test_verbatim_verifier_regenerates_and_accepts_improved_draft() -> None:
+    client = _client(_response_without_phrase_json(), _valid_response_json())
+
+    out = generate_narrative(
+        _hike_input(),
+        _gpx_stats(),
+        _photos(),
+        client=client,
+        ledger_client=_ledger_client(_extractor_json_with_phrases(["The fog cleared"])),
+        **_NO_CACHE,
+    )
+
+    assert client.complete.call_count == 2
+    assert out.pull_quote.en == "The fog cleared just as we reached the ridge."
+
+
+def test_verbatim_verifier_feedback_names_the_phrases() -> None:
+    client = _client(_response_without_phrase_json(), _valid_response_json())
+
+    generate_narrative(
+        _hike_input(),
+        _gpx_stats(),
+        _photos(),
+        client=client,
+        ledger_client=_ledger_client(_extractor_json_with_phrases(["The fog cleared"])),
+        **_NO_CACHE,
+    )
+
+    regen_prompt = client.complete.call_args_list[1].kwargs["prompt"]
+    assert '"The fog cleared"' in regen_prompt
+    assert "did not use any of the hiker's own phrases" in regen_prompt
+
+
+def test_verbatim_verifier_keeps_original_when_regen_does_not_improve() -> None:
+    client = _client(
+        _response_without_phrase_json(),
+        _response_without_phrase_json(title_en="Second draft"),
+    )
+
+    out = generate_narrative(
+        _hike_input(),
+        _gpx_stats(),
+        _photos(),
+        client=client,
+        ledger_client=_ledger_client(_extractor_json_with_phrases(["The fog cleared"])),
+        **_NO_CACHE,
+    )
+
+    assert client.complete.call_count == 2
+    assert out.title.en == "Above the fog line"  # first draft kept
+
+
+def test_verbatim_verifier_keeps_original_when_regen_fails_validation() -> None:
+    client = _client(_response_without_phrase_json(), json.dumps({"bad": "shape"}))
+
+    out = generate_narrative(
+        _hike_input(),
+        _gpx_stats(),
+        _photos(),
+        client=client,
+        ledger_client=_ledger_client(_extractor_json_with_phrases(["The fog cleared"])),
+        **_NO_CACHE,
+    )
+
+    assert client.complete.call_count == 2
+    assert out.pull_quote.en == "Above the clouds at last."
+
+
+def test_verbatim_verifier_inactive_when_ledger_has_no_phrases() -> None:
+    """Empty list = proceed without — no extra writer call, no error."""
+    client = _client(_response_without_phrase_json())
+
+    generate_narrative(
+        _hike_input(),
+        _gpx_stats(),
+        _photos(),
+        client=client,
+        ledger_client=_ledger_client(),
+        **_NO_CACHE,
+    )
+
+    assert client.complete.call_count == 1
+
+
+def test_verbatim_verifier_detects_phrase_in_any_language() -> None:
+    """A hiker who writes the seed in Russian anchors the RU text — the
+    check scans all three languages, not just English."""
+    hike_input = HikeInput(
+        gpx_path=Path("/tmp/hike.gpx"),
+        photos_dir=Path("/tmp/photos"),
+        seed_text="Туман рассеялся как раз когда мы вышли на хребет.",
+    )
+    client = _client(_valid_response_json())  # pull_quote.ru carries the phrase
+
+    generate_narrative(
+        hike_input,
+        _gpx_stats(),
+        _photos(),
+        client=client,
+        ledger_client=_ledger_client(_extractor_json_with_phrases(["Туман рассеялся"])),
+        **_NO_CACHE,
+    )
+
+    assert client.complete.call_count == 1
+
+
+# ── ADR-011: inferred-ratio verifier (previously untested machinery) ─────────
+
+
+def _all_inferred_response_json(title_en: str = "Above the fog line") -> str:
+    payload = _valid_response_dict()
+    payload["title"] = {
+        "en": title_en,
+        "ru": "Над линией тумана",
+        "de": "Über der Nebelgrenze",
+    }
+    payload["paragraphs"] = paragraphs_dict_from_strings(
+        en=[
+            "We left the trailhead at first light.",
+            "By the saddle the cloud was thinning.",
+            "Mia slept the whole climb, her cheek warm against the carrier.",
+        ],
+        ru=[
+            # Single-letter Russian prepositions below are genuine, not
+            # Cyrillic-Latin lookalike typos — same suppressions as the
+            # fixture at the top of this file.
+            "Вышли на тропу с первыми лучами.",  # noqa: RUF001
+            "К седловине облака начали редеть.",  # noqa: RUF001
+            "Мия проспала весь подъём, прижавшись щекой к переноске.",
+        ],
+        de=[
+            "Bei erstem Licht brachen wir auf.",
+            "Am Sattel begann die Wolke sich zu lichten.",
+            "Mia schlief den ganzen Aufstieg, die Wange warm an der Trage.",
+        ],
+        provenance="inferred",
+        reference="mood reconstruction",
+    )
+    return json.dumps(payload)
+
+
+def test_inferred_verifier_regenerates_and_accepts_improved_draft() -> None:
+    """100% INFERRED breaches the default 0.5 ceiling; the all-seed regen
+    improves the ratio and is admitted."""
+    client = _client(_all_inferred_response_json(), _valid_response_json())
+
+    out = generate_narrative(
+        _hike_input(),
+        _gpx_stats(),
+        _photos(),
+        client=client,
+        ledger_client=_ledger_client(),
+        **_NO_CACHE,
+    )
+
+    assert client.complete.call_count == 2
+    regen_prompt = client.complete.call_args_list[1].kwargs["prompt"]
+    assert "INFERRED" in regen_prompt
+    sources = {s.provenance.source.value for p in out.paragraphs for s in p}
+    assert sources == {"seed"}
+
+
+def test_inferred_verifier_keeps_original_when_regen_does_not_improve() -> None:
+    client = _client(
+        _all_inferred_response_json(),
+        _all_inferred_response_json(title_en="Second draft"),
+    )
+
+    out = generate_narrative(
+        _hike_input(),
+        _gpx_stats(),
+        _photos(),
+        client=client,
+        ledger_client=_ledger_client(),
+        **_NO_CACHE,
+    )
+
+    assert client.complete.call_count == 2
+    assert out.title.en == "Above the fog line"  # first draft kept
+
+
+def test_inferred_verifier_disabled_when_ceiling_is_none() -> None:
+    client = _client(_all_inferred_response_json())
+
+    generate_narrative(
+        _hike_input(),
+        _gpx_stats(),
+        _photos(),
+        client=client,
+        ledger_client=_ledger_client(),
+        max_inferred_ratio=None,
+        **_NO_CACHE,
+    )
+
+    assert client.complete.call_count == 1

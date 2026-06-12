@@ -55,7 +55,7 @@ def _gpx_stats() -> GpxStats:
 
 def _narrative() -> NarrativeOutput:
     return NarrativeOutput(
-        schema_version=4,
+        schema_version=5,
         title=LocalizedString(
             en="Above the fog line",
             ru="Над линией тумана",
@@ -264,7 +264,7 @@ def test_render_escapes_html_in_narrative_fields(tmp_path: Path) -> None:
     """LLM output is untrusted — autoescape must neutralise HTML."""
     photos = [_make_photo(tmp_path, 0, (50, 80, 120))]
     nasty = NarrativeOutput(
-        schema_version=4,
+        schema_version=5,
         title=_flat_string(en="<script>alert(1)</script>"),
         subtitle=_flat_string(),
         paragraphs=_flat_paragraphs(en=["</p><img src=x onerror=alert(1)>"]),
@@ -293,7 +293,7 @@ def test_render_escapes_narrative_when_emitted_into_script_block(
     """The share-button JS uses ``| tojson``; ``</script>`` must not survive raw."""
     photos = [_make_photo(tmp_path, 0, (50, 80, 120))]
     nasty = NarrativeOutput(
-        schema_version=4,
+        schema_version=5,
         title=_flat_string(en="legit"),
         subtitle=_flat_string(),
         paragraphs=_flat_paragraphs(),

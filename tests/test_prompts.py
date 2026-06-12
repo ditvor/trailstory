@@ -24,8 +24,10 @@ import pytest
 
 from trailstory.llm.prompts import (
     SYSTEM_NARRATIVE,
+    USER_LEDGER_EXTRACTOR_TEMPLATE,
     USER_NARRATIVE_RETRY_SUFFIX,
     USER_NARRATIVE_TEMPLATE,
+    VERIFIER_VERBATIM_FEEDBACK_TEMPLATE,
 )
 from trailstory.models import NarrativeOutput
 
@@ -291,6 +293,57 @@ def test_user_template_asks_for_photo_selection_arc() -> None:
     text = USER_NARRATIVE_TEMPLATE.lower()
     for cue in ("opening", "effort", "landscape", "summit"):
         assert cue in text, f"selection cue missing from prompt: {cue!r}"
+
+
+# ── ADR-016: register, voice rules, verbatim-phrase contract ─────────────────
+
+
+def test_user_template_names_the_register() -> None:
+    """The register positioning is the load-bearing voice instruction —
+    losing either pole re-opens the drift the 2026-06 refresh measured."""
+    text = USER_NARRATIVE_TEMPLATE.lower()
+    assert "travel essay" in text
+    assert "minutes of a meeting" in text
+
+
+def test_user_template_carries_paired_voice_examples() -> None:
+    """ADR-016 ships at least four BAD/GOOD pairs mined from real golden
+    output. Pairs must stay paired — an orphaned BAD teaches nothing."""
+    bad = USER_NARRATIVE_TEMPLATE.count("BAD:")
+    good = USER_NARRATIVE_TEMPLATE.count("GOOD:")
+    assert bad >= 4
+    assert bad == good
+
+
+def test_user_template_bans_the_kind_of_construction() -> None:
+    """ "the kind of" survived the 2026-06 golden refresh in fresh writer
+    output (2 of 4 cases) and gate-skirted in a third; the prompt must
+    name the construction family, not just rely on the rubric gate."""
+    text = USER_NARRATIVE_TEMPLATE.lower()
+    assert "the kind of" in text
+    assert "that kind of" in text
+    assert "the best kind" in text
+
+
+def test_user_template_mentions_verbatim_phrases() -> None:
+    assert "verbatim_user_phrases" in USER_NARRATIVE_TEMPLATE
+
+
+def test_extractor_template_asks_for_verbatim_phrases() -> None:
+    """Both the instruction section and the JSON skeleton must carry the
+    field — instruction without skeleton silently drops it from output."""
+    assert "verbatim_user_phrases" in USER_LEDGER_EXTRACTOR_TEMPLATE
+    assert '"verbatim_user_phrases"' in USER_LEDGER_EXTRACTOR_TEMPLATE
+
+
+def test_verbatim_feedback_template_has_only_phrases_placeholder() -> None:
+    """``narrative.py`` fills exactly one placeholder on the verbatim regen."""
+    assert _placeholders(VERIFIER_VERBATIM_FEEDBACK_TEMPLATE) == {"phrases"}
+
+
+def test_verbatim_feedback_demands_json_only() -> None:
+    text = VERIFIER_VERBATIM_FEEDBACK_TEMPLATE.lower()
+    assert "json" in text
 
 
 # ── retry suffix ─────────────────────────────────────────────────────────────

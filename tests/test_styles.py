@@ -49,7 +49,7 @@ def _gpx_stats() -> GpxStats:
 
 def _narrative() -> NarrativeOutput:
     return NarrativeOutput(
-        schema_version=4,
+        schema_version=5,
         title=LocalizedString(
             en="Above the fog line",
             ru="Над линией тумана",

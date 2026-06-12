@@ -37,7 +37,7 @@ def _good_narrative() -> NarrativeOutput:
     thing the assertion is responding to.
     """
     return NarrativeOutput(
-        schema_version=4,
+        schema_version=5,
         title=LocalizedString(
             en="Above the fog line",
             ru="Над линией тумана",

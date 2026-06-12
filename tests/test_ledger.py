@@ -369,3 +369,81 @@ def test_extract_ledger_rejects_empty_photo_list() -> None:
 
     with pytest.raises(LedgerExtractionError, match="at least one photo"):
         extract_ledger(_hike_input(), _gpx_stats(), [], client=client)
+
+
+# ── verbatim_user_phrases (ADR-016) ──────────────────────────────────────────
+#
+# The extractor is asked for character-for-character quotes, but the
+# guarantee is enforced in Python: only genuine seed substrings of ≤ 8
+# words survive into the ledger, at most four of them. The seed in these
+# tests is "The fog cleared just as we reached the ridge." (9 words).
+
+
+def test_extract_ledger_keeps_genuine_verbatim_phrases() -> None:
+    client = _client(
+        _valid_extractor_json(verbatim_user_phrases=["The fog cleared", "we reached the ridge"])
+    )
+
+    ledger = extract_ledger(_hike_input(), _gpx_stats(), _photos(), client=client)
+
+    assert ledger.verbatim_user_phrases == ["The fog cleared", "we reached the ridge"]
+
+
+def test_extract_ledger_drops_phrases_not_in_seed() -> None:
+    """A paraphrase the extractor merely *claims* is verbatim must not
+    reach the writer — the whole point of the anchor is literal fidelity."""
+    client = _client(
+        _valid_extractor_json(verbatim_user_phrases=["the mist parted", "The fog cleared"])
+    )
+
+    ledger = extract_ledger(_hike_input(), _gpx_stats(), _photos(), client=client)
+
+    assert ledger.verbatim_user_phrases == ["The fog cleared"]
+
+
+def test_extract_ledger_phrase_match_is_case_insensitive() -> None:
+    """Case drift is not paraphrase; the extractor's casing is preserved."""
+    client = _client(_valid_extractor_json(verbatim_user_phrases=["the fog cleared"]))
+
+    ledger = extract_ledger(_hike_input(), _gpx_stats(), _photos(), client=client)
+
+    assert ledger.verbatim_user_phrases == ["the fog cleared"]
+
+
+def test_extract_ledger_drops_overlong_phrases() -> None:
+    """More than 8 words is a transcript, not an anchor."""
+    nine_words = "The fog cleared just as we reached the ridge"
+    client = _client(_valid_extractor_json(verbatim_user_phrases=[nine_words]))
+
+    ledger = extract_ledger(_hike_input(), _gpx_stats(), _photos(), client=client)
+
+    assert ledger.verbatim_user_phrases == []
+
+
+def test_extract_ledger_caps_phrases_at_four_and_dedupes() -> None:
+    client = _client(
+        _valid_extractor_json(
+            verbatim_user_phrases=[
+                "The fog",
+                "the fog",  # casefold duplicate of the first
+                "fog cleared",
+                "cleared just",
+                "just as",
+                "we reached",  # fifth distinct survivor — over the cap
+            ]
+        )
+    )
+
+    ledger = extract_ledger(_hike_input(), _gpx_stats(), _photos(), client=client)
+
+    assert ledger.verbatim_user_phrases == ["The fog", "fog cleared", "cleared just", "just as"]
+
+
+def test_extract_ledger_defaults_to_empty_phrases_for_pre_adr016_shape() -> None:
+    """An extractor response without the field (the pre-ADR-016 shape)
+    still validates and yields the documented proceed-without state."""
+    client = _client(_valid_extractor_json())
+
+    ledger = extract_ledger(_hike_input(), _gpx_stats(), _photos(), client=client)
+
+    assert ledger.verbatim_user_phrases == []

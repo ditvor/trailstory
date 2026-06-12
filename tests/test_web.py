@@ -73,7 +73,7 @@ def _valid_response_json(n_photos: int = 5) -> str:
     """Same shape as ``tests/test_cli.py::_valid_response_json``."""
     return json.dumps(
         {
-            "schema_version": 4,
+            "schema_version": 5,
             "title": {
                 "en": "Above the fog line",
                 "ru": "Над линией тумана",
