@@ -442,9 +442,47 @@ class FactLedger(BaseModel):
     photo_positions: list[PhotoPosition] = Field(default_factory=list)
 
 
+class PlaceContext(BaseModel):
+    """The "about this place" block (ADR-017).
+
+    A short tri-lingual note giving the reader a sense of where the hike
+    happened. The ``summary`` is produced by a dedicated LLM "stitch" call
+    (``trailstory.llm.place``) that may use external knowledge ONLY in the
+    form of a supplied, citable reference extract (reverse-geocode →
+    Wikipedia) plus the hiker's own ledger-grounded place beats — never the
+    model's own memory.
+
+    Carried on :class:`Memory`, deliberately NOT on :class:`NarrativeOutput`:
+    it owns its own source attribution, must not bump the narrative
+    ``schema_version``, and is resolved by a separate, optional pass. The
+    field defaults to ``None`` everywhere, so a render without place context
+    (the default) is unchanged.
+    """
+
+    model_config = ConfigDict(frozen=True)
+
+    town: str
+    # Coarse wider area ("Bavarian Prealps", "Upper Bavaria") or None.
+    region: str | None = None
+    # The stitched 2-3 sentence note, EN / RU / DE.
+    summary: LocalizedString
+    # The hiker beats the stitch reported weaving in — a cheap audit hook
+    # mirroring sentence-level provenance (ADR-014). Not rendered.
+    used_hiker_details: list[str] = Field(default_factory=list)
+    # CC BY-SA attribution for the reference extract, rendered as a source
+    # link under the block. ``None`` when the extract was empty (the
+    # town-only fallback) — nothing to attribute.
+    source_url: str | None = None
+    source_title: str | None = None
+
+
 class Memory(BaseModel):
     hike_input: HikeInput
     gpx_stats: GpxStats
     narrative: NarrativeOutput
     selected_photos: list[PhotoMeta]
     style: Style = Style.editorial
+    # ADR-017: optional "about this place" block. ``None`` (the default)
+    # when the feature is off (no ``--place`` flag) or when geocoding /
+    # the stitch soft-failed. Never required to render.
+    place_context: PlaceContext | None = None

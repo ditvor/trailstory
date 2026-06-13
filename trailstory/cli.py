@@ -21,18 +21,35 @@ from tempfile import TemporaryDirectory
 from typing import NoReturn
 
 import click
+from pydantic import SecretStr
 from rich.console import Console
 
 from trailstory.config import load_settings
 from trailstory.gpx import GpxParseError, parse_gpx
 from trailstory.llm.client import AnthropicClient
-from trailstory.llm.narrative import NarrativeGenerationError, generate_narrative
-from trailstory.models import GpxStats, HikeInput, Memory, PhotoMeta, Style
+from trailstory.llm.narrative import (
+    LedgerExtractionError,
+    NarrativeGenerationError,
+    extract_ledger,
+    generate_narrative,
+)
+from trailstory.llm.place import generate_place_context, place_beats_from_ledger
+from trailstory.models import (
+    FactLedger,
+    GpxStats,
+    HikeInput,
+    Memory,
+    PhotoMeta,
+    PlaceContext,
+    Style,
+)
 from trailstory.photos import PhotoLoadError, describe_photos, load_photos
+from trailstory.place import representative_coordinate, resolve_place_reference
 from trailstory.renderers.html import HtmlRenderError, render_html
 from trailstory.renderers.instagram import InstagramRenderError, render_instagram_carousel
 
 console = Console()
+logger = logging.getLogger(__name__)
 
 
 @click.group()
@@ -86,6 +103,15 @@ def cli() -> None:
     help="Skip the on-disk narrative cache for this run (forces a fresh LLM call).",
 )
 @click.option(
+    "--place",
+    "place",
+    is_flag=True,
+    default=False,
+    help="Add an 'about this place' block (ADR-017): reverse-geocode the track, "
+    "fetch a grounded place description, and weave in the hiker's own beats. "
+    "Off by default — sends the track's coordinates to an external service.",
+)
+@click.option(
     "--style",
     "style",
     type=click.Choice([s.value for s in Style], case_sensitive=False),
@@ -102,6 +128,7 @@ def generate(
     location: str | None,
     instagram: bool,
     no_cache: bool,
+    place: bool,
     style: str,
 ) -> None:
     """Generate a shareable HTML memory page from a hike."""
@@ -172,6 +199,27 @@ def generate(
                         concurrency=settings.vision_concurrency,
                         use_cache=not no_cache,
                     )
+
+            # ADR-017: when --place is set, extract the ledger once up front
+            # so it feeds both the writer (passed in below) and the place
+            # block's "hiker's own beats". A ledger failure here disables the
+            # place block but never aborts the run — generate_narrative
+            # re-extracts internally and surfaces its own errors.
+            ledger: FactLedger | None = None
+            if place:
+                try:
+                    ledger = extract_ledger(
+                        hike_input,
+                        stats,
+                        photos,
+                        client=ledger_client,
+                        location=location or "the trail",
+                    )
+                except LedgerExtractionError as exc:
+                    logger.warning(
+                        "place: ledger extraction failed (%s); skipping place block", exc
+                    )
+
             with console.status("Generating narrative…", spinner="dots"):
                 narrative = generate_narrative(
                     hike_input,
@@ -181,6 +229,7 @@ def generate(
                     ledger_client=ledger_client,
                     use_cache=not no_cache,
                     max_inferred_ratio=settings.max_inferred_ratio,
+                    ledger=ledger,
                 )
             console.print(
                 f"[green]✓[/] Narrative generated "
@@ -194,12 +243,30 @@ def generate(
             hike_date = _derive_hike_date(stats, photos)
             slug = _derive_slug(hike_date, location)
 
+            place_context: PlaceContext | None = None
+            if place and ledger is not None:
+                with console.status("Resolving place…", spinner="dots"):
+                    place_context = _resolve_place(
+                        stats,
+                        ledger,
+                        location_name=location,
+                        api_key=settings.anthropic_api_key,
+                        model=settings.place_model,
+                        max_tokens=settings.narrative_max_tokens,
+                        max_retries=settings.narrative_max_retries,
+                    )
+                if place_context is not None:
+                    console.print(f"[green]✓[/] Place context added — {place_context.town}")
+                else:
+                    console.print("[yellow]·[/] No place context (geocode or stitch unavailable)")
+
             memory = Memory(
                 hike_input=hike_input,
                 gpx_stats=stats,
                 narrative=narrative,
                 selected_photos=selected,
                 style=Style(style),
+                place_context=place_context,
             )
 
             with console.status("Rendering HTML…", spinner="dots"):
@@ -245,6 +312,43 @@ def generate(
 def _abort(msg: str) -> NoReturn:
     console.print(f"[red]error:[/] {msg}")
     sys.exit(1)
+
+
+def _resolve_place(
+    stats: GpxStats,
+    ledger: FactLedger,
+    *,
+    location_name: str | None,
+    api_key: SecretStr,
+    model: str,
+    max_tokens: int,
+    max_retries: int,
+) -> PlaceContext | None:
+    """Build the ADR-017 place block, or return ``None`` if unavailable.
+
+    Reverse-geocodes the track midpoint (preferring the hiker's own
+    ``location_name`` for the town), fetches a grounded reference extract,
+    and stitches it with the hiker's own ledger beats. Every failure mode
+    soft-fails to ``None`` — the block is additive and must never break a
+    render.
+    """
+    coord = representative_coordinate(stats.waypoints)
+    if coord is None:
+        return None
+    reference = resolve_place_reference(*coord, location_name=location_name)
+    if reference is None:
+        return None
+    place_client = AnthropicClient(
+        api_key,
+        model=model,
+        max_tokens=max_tokens,
+        max_retries=max_retries,
+    )
+    return generate_place_context(
+        reference,
+        place_beats_from_ledger(ledger),
+        client=place_client,
+    )
 
 
 def _derive_hike_date(stats: GpxStats, photos: list[PhotoMeta]) -> date:

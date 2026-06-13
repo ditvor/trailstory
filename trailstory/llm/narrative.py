@@ -411,6 +411,7 @@ def generate_narrative(
     location: str = "the trail",
     use_cache: bool = True,
     max_inferred_ratio: float | None = 0.5,
+    ledger: FactLedger | None = None,
 ) -> NarrativeOutput:
     """Generate a tri-lingual narrative via the two-pass pipeline (ADR-009).
 
@@ -443,6 +444,10 @@ def generate_narrative(
             the writer honest without being so strict it produces stiff
             prose. Settable from the CLI / web layer; tests can pin to
             ``None`` to assert call counts.
+        ledger: Pre-built :class:`FactLedger` (ADR-017). When provided, the
+            extractor pass is skipped and this ledger is used directly — the
+            CLI's ``--place`` path extracts once and shares the ledger with
+            the place-context block. ``None`` (the default) extracts here.
 
     Returns:
         Validated ``NarrativeOutput``.
@@ -464,19 +469,23 @@ def generate_narrative(
             return cached
         logger.info("narrative cache miss for key %s", key)
 
-    try:
-        ledger = extract_ledger(
-            hike_input,
-            gpx_stats,
-            photos,
-            client=ledger_client,
-            location=location,
-        )
-    except LedgerExtractionError as exc:
-        # Funnel into NarrativeGenerationError so callers above the LLM
-        # layer only handle one exception type. The original chain is
-        # preserved via __cause__.
-        raise NarrativeGenerationError(f"ledger extraction failed: {exc}") from exc
+    # ADR-017: callers that also build the place-context block extract the
+    # ledger once and pass it in, so we don't pay for a second extractor
+    # call. When ``None`` (the common path) we extract here as before.
+    if ledger is None:
+        try:
+            ledger = extract_ledger(
+                hike_input,
+                gpx_stats,
+                photos,
+                client=ledger_client,
+                location=location,
+            )
+        except LedgerExtractionError as exc:
+            # Funnel into NarrativeGenerationError so callers above the LLM
+            # layer only handle one exception type. The original chain is
+            # preserved via __cause__.
+            raise NarrativeGenerationError(f"ledger extraction failed: {exc}") from exc
 
     ledger_json = json.dumps(ledger.model_dump(mode="json"), ensure_ascii=False, indent=2)
     base_prompt = USER_NARRATIVE_TEMPLATE.format(

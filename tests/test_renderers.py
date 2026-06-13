@@ -26,6 +26,8 @@ from trailstory.models import (
     NarrativeOutput,
     Paragraph,
     PhotoMeta,
+    PlaceContext,
+    Style,
     Waypoint,
 )
 from trailstory.photos import load_photos
@@ -109,6 +111,8 @@ def _memory(
     *,
     narrative: NarrativeOutput | None = None,
     gpx_stats: GpxStats | None = None,
+    place_context: PlaceContext | None = None,
+    style: Style = Style.editorial,
 ) -> Memory:
     """Build a ``Memory`` from a photo list plus optional narrative / stats overrides."""
     return Memory(
@@ -121,6 +125,22 @@ def _memory(
         gpx_stats=gpx_stats if gpx_stats is not None else _gpx_stats(),
         narrative=narrative if narrative is not None else _narrative(),
         selected_photos=photos,
+        place_context=place_context,
+        style=style,
+    )
+
+
+def _place_context() -> PlaceContext:
+    return PlaceContext(
+        town="Bad Tölz",
+        region="Bavarian Prealps",
+        summary=LocalizedString(
+            en="Bad Tölz is a spa town on the Isar in the Bavarian Prealps.",
+            ru="Бад-Тёльц — курортный город на реке Изар.",
+            de="Bad Tölz ist ein Kurort an der Isar in den Bayerischen Voralpen.",
+        ),
+        source_url="https://en.wikipedia.org/wiki/Bad_Tölz",
+        source_title="Bad Tölz",
     )
 
 
@@ -401,3 +421,42 @@ def test_render_does_not_embed_gps_exif_after_load_photos(tmp_path: Path) -> Non
 
     with Image.open(io.BytesIO(embedded_bytes)) as embedded:
         assert embedded.getexif().get_ifd(EXIF_GPS_IFD) == {}
+
+
+# ── ADR-017: "about this place" block ────────────────────────────────────────
+
+
+@pytest.mark.parametrize("style", list(Style))
+def test_render_includes_place_block(tmp_path: Path, style: Style) -> None:
+    """Every style renders the block, its tri-lingual summary, and the source link."""
+    photos = [_make_photo(tmp_path, 0, (200, 80, 80))]
+    out_path = render_html(
+        memory=_memory(photos, place_context=_place_context(), style=style),
+        output_dir=tmp_path / "out",
+        slug="hike",
+    )
+    html = out_path.read_text(encoding="utf-8")
+    assert 'class="place"' in html
+    # Town name appears in the heading regardless of the per-style label.
+    assert "Bad Tölz" in html
+    # Tri-lingual summary present in every style.
+    assert "spa town on the Isar" in html
+    assert "Бад-Тёльц — курортный город на реке Изар." in html
+    assert "Kurort an der Isar" in html
+    # Source attribution link present (URL is HTML-attribute-escaped but the
+    # path survives).
+    assert 'href="https://en.wikipedia.org/wiki/Bad_T' in html
+
+
+@pytest.mark.parametrize("style", list(Style))
+def test_render_omits_place_block_when_absent(tmp_path: Path, style: Style) -> None:
+    """Default render (no place context) carries no place markup in any style."""
+    photos = [_make_photo(tmp_path, 0, (200, 80, 80))]
+    out_path = render_html(
+        memory=_memory(photos, style=style),
+        output_dir=tmp_path / "out",
+        slug="hike",
+    )
+    html = out_path.read_text(encoding="utf-8")
+    assert 'class="place"' not in html
+    assert "spa town on the Isar" not in html
