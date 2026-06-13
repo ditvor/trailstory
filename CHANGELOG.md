@@ -10,6 +10,24 @@ Versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 ## [Unreleased]
 
 ### Added
+- **Place-stitch eval net (ADR-017 follow-up).** A programmatic rubric for
+  the "about this place" stitch (`tests/eval/place_rubric.py`): tri-lingual
+  presence, per-language length band, town-named-in-EN, Russian-actually-
+  Cyrillic, the shared ADR-016 banned-phrase gate, `used_hiker_details` are
+  real beats (faithfulness), and an EN content-word grounding ratio against
+  the supplied extract + beats. Unit-tested for free in `make ci`
+  (`tests/test_eval_place_rubric.py`) — the always-on net — plus a paid
+  runner over fixed cases (`make eval-place` / `python -m tests.eval.run_place`).
+  The net immediately caught the Haiku stitch reaching for the banned
+  "the kind of" construction and over-editorialising with ungrounded
+  filler, so the place-stitch model default moves to
+  `claude-sonnet-4-6` (override via `PLACE_MODEL`).
+
+### Changed
+- **`Settings.place_model` default is now `claude-sonnet-4-6`** (was
+  `claude-haiku-4-5`). See the eval-net entry above — Haiku failed the
+  place voice + grounding gates; Sonnet passes them. Same reasoning as the
+  ADR-018 vision bump.
 - **"About this place" in the web builder (ADR-017 follow-up).** The
   opt-in place block is now reachable from the hosted app, not just the
   CLI: an off-by-default checkbox on the builder form carries the toggle
