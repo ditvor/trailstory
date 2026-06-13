@@ -1,133 +1,122 @@
 {
-  "schema_version": 4,
+  "schema_version": 5,
   "title": {
-    "en": "Through the Fog with Mia",
-    "ru": "Сквозь туман с Мией",
-    "de": "Durch den Nebel mit Mia"
+    "en": "A foggy morning with Mia",
+    "ru": "Туманное утро с Мией",
+    "de": "Ein Nebelmorgen mit Mia"
   },
   "subtitle": {
-    "en": "A spring morning in the Bavarian Alps",
-    "ru": "Весеннее утро в Баварских Альпах",
-    "de": "Ein Frühlingsmorgen in den Bayerischen Alpen"
+    "en": "A spring climb in the Bavarian Alps",
+    "ru": "Весенний подъём в Баварских Альпах",
+    "de": "Ein Frühlingsaufstieg in den Bayerischen Alpen"
   },
   "paragraphs": [
     [
       {
         "text": {
-          "en": "I want to tell you about a Monday morning in April, when Mia and I set off into the Bavarian Alps in thick fog.",
-          "ru": "Хочу рассказать вам про апрельское утро понедельника, когда мы с Мией отправились в Баварские Альпы в густой туман.",
-          "de": "Ich möchte euch von einem Montagmorgen im April erzählen, als Mia und ich bei dichtem Nebel in die Bayerischen Alpen aufgebrochen sind."
+          "en": "We set out on a Monday morning in April, up into the Bavarian Alps.",
+          "ru": "Мы вышли в путь утром в понедельник, в апреле, вверх в Баварские Альпы.",
+          "de": "Wir sind an einem Montagmorgen im April losgegangen, hinauf in die Bayerischen Alpen."
         },
         "provenance": {
           "source": "gpx",
-          "reference": "where, when, season, day_of_week"
+          "reference": "where, when, daylight_context"
         }
       },
       {
         "text": {
-          "en": "The whole world was wrapped in grey, and we were the only two figures moving through it.",
-          "ru": "Весь мир был окутан серым, и только мы вдвоём двигались сквозь него.",
-          "de": "Die ganze Welt war in Grau gehüllt, und wir beide waren die Einzigen, die sich darin bewegten."
+          "en": "The fog never lifted — we couldn't see far ahead, just the next few steps and each other.",
+          "ru": "Туман так и не рассеялся — мы не видели далеко вперёд, только несколько шагов и друг друга.",
+          "de": "Der Nebel hat sich nie gelichtet — wir konnten nicht weit nach vorn sehen, nur ein paar Schritte und einander."
         },
         "provenance": {
           "source": "seed",
-          "reference": "foggy weather"
+          "reference": "The fog never lifted"
         }
       }
     ],
     [
       {
         "text": {
-          "en": "Most of the climb was hard — really hard.",
-          "ru": "Бóльшая часть подъёма далась тяжело — по-настоящему тяжело.",
-          "de": "Der größte Teil des Aufstiegs war hart — wirklich hart."
+          "en": "The climb was steady and long, and my shoulders burned before we were anywhere near the top.",
+          "ru": "Подъём был долгий и без передышки, и плечи горели задолго до того, как мы приблизились к вершине.",
+          "de": "Der Aufstieg war stetig und lang, und meine Schultern brannten, lange bevor wir auch nur in die Nähe des Gipfels kamen."
         },
         "provenance": {
           "source": "seed",
-          "reference": "physically strained"
+          "reference": "my shoulders burned"
         }
       },
       {
         "text": {
-          "en": "Mia cried for most of it, and I cannot pretend I didn't doubt whether we should turn back.",
-          "ru": "Мия плакала почти всю дорогу, и я не стану делать вид, что не сомневалась, не повернуть ли назад.",
-          "de": "Mia weinte fast die ganze Zeit, und ich kann nicht so tun, als hätte ich nicht gezweifelt, ob wir nicht umkehren sollten."
+          "en": "Mia cried for the last hour, and I just kept walking and talking to her through the grey.",
+          "ru": "Мия плакала последний час, а я просто продолжала идти и разговаривать с ней сквозь серую мглу.",
+          "de": "Mia hat die letzte Stunde geweint, und ich bin einfach weitergegangen und habe durch das Grau hindurch mit ihr geredet."
         },
         "provenance": {
           "source": "seed",
-          "reference": "Mia crying, doubtful"
+          "reference": "Mia cried for the last hour"
+        }
+      }
+    ],
+    [
+      {
+        "text": {
+          "en": "Near the top we stopped for a long rest — a proper sit-down, longer than the climb itself felt at the time.",
+          "ru": "Ближе к вершине мы устроили долгий привал — настоящий отдых, который казался дольше самого подъёма.",
+          "de": "Kurz vor dem höchsten Punkt haben wir eine lange Pause gemacht — ein richtiges Sitzen, das sich länger anfühlte als der Aufstieg selbst."
+        },
+        "provenance": {
+          "source": "gpx",
+          "reference": "pauses"
         }
       },
       {
         "text": {
-          "en": "The fog muffled everything, even her small voice, and my legs kept reminding me how much we were climbing.",
-          "ru": "Туман приглушал всё вокруг, даже её тоненький голос, а ноги напоминали мне, как круто мы поднимаемся.",
-          "de": "Der Nebel dämpfte alles, sogar ihre kleine Stimme, und meine Beine erinnerten mich ständig daran, wie viel wir hier hinaufstiegen."
+          "en": "Mia finally settled, and I caught my breath in the wet, quiet air.",
+          "ru": "Мия наконец успокоилась, а я отдышалась во влажном тихом воздухе.",
+          "de": "Mia hat sich endlich beruhigt, und ich konnte in der feuchten, stillen Luft durchatmen."
         },
         "provenance": {
           "source": "inferred",
-          "reference": "mood from foggy + strained beat"
+          "reference": "rest after crying, foggy weather"
         }
       }
     ],
     [
       {
         "text": {
-          "en": "Near the top we stopped for a long rest, and that pause changed everything.",
-          "ru": "Ближе к вершине мы устроили долгую передышку, и этот привал всё изменил.",
-          "de": "Kurz vor dem höchsten Punkt haben wir eine lange Pause gemacht, und diese Pause hat alles verändert."
+          "en": "On the way down Mia slept, and I noticed the ferns underfoot for the first time all morning.",
+          "ru": "На спуске Мия уснула, и я впервые за всё утро заметила папоротники под ногами.",
+          "de": "Beim Abstieg hat Mia geschlafen, und mir sind zum ersten Mal an diesem Morgen die Farne unter den Füßen aufgefallen."
         },
         "provenance": {
-          "source": "gpx",
-          "reference": "pauses near summit"
+          "source": "seed",
+          "reference": "I noticed the ferns underfoot"
         }
       },
       {
         "text": {
-          "en": "By the time we started down, Mia had fallen asleep, finally peaceful.",
-          "ru": "Когда мы тронулись вниз, Мия уже уснула — наконец-то спокойная.",
-          "de": "Als wir den Abstieg begannen, war Mia eingeschlafen, endlich friedlich."
+          "en": "The hard part was behind us, and we were fine.",
+          "ru": "Самое трудное осталось позади, и у нас всё было хорошо.",
+          "de": "Das Schwerste lag hinter uns, und uns ging es gut."
         },
         "provenance": {
           "source": "seed",
-          "reference": "Mia fell asleep on descent"
-        }
-      }
-    ],
-    [
-      {
-        "text": {
-          "en": "And then I looked down and noticed the ferns underfoot, soft and green along the path.",
-          "ru": "А потом я опустила взгляд и заметила под ногами папоротники — мягкие и зелёные вдоль тропы.",
-          "de": "Und dann blickte ich nach unten und sah die Farne unter unseren Füßen, weich und grün entlang des Weges."
-        },
-        "provenance": {
-          "source": "photo",
-          "reference": "ferns"
-        }
-      },
-      {
-        "text": {
-          "en": "Something about that small, ordinary detail reassured me — we had come through, and the mountain was already letting us go gently.",
-          "ru": "Эта маленькая, обычная деталь почему-то меня успокоила — мы прошли, и гора уже мягко отпускала нас.",
-          "de": "Irgendetwas an diesem kleinen, gewöhnlichen Detail beruhigte mich — wir hatten es geschafft, und der Berg ließ uns schon sanft wieder ziehen."
-        },
-        "provenance": {
-          "source": "seed",
-          "reference": "reassured on descent"
+          "reference": "relieved on descent"
         }
       }
     ]
   ],
   "pull_quote": {
-    "en": "Then I looked down and noticed the ferns underfoot, and somehow I knew we were going to be all right.",
-    "ru": "А потом я опустила взгляд, увидела папоротники под ногами — и почему-то поняла: всё у нас будет хорошо.",
-    "de": "Dann sah ich die Farne unter unseren Füßen, und irgendwie wusste ich: Es würde alles gut."
+    "en": "The fog never lifted — just the path, and each other.",
+    "ru": "Туман так и не рассеялся — только тропа и мы двое.",
+    "de": "Der Nebel hat sich nie gelichtet — nur der Weg und wir beide."
   },
   "milestone": {
-    "en": "Foggy climb with Mia",
-    "ru": "Туманный поход с Мией",
-    "de": "Nebelwanderung mit Mia"
+    "en": "First hike in fog with Mia",
+    "ru": "Первый поход в тумане",
+    "de": "Erste Wanderung im Nebel"
   },
   "selected_photo_indices": [
     0,
