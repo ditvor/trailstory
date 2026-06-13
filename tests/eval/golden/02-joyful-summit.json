@@ -1,22 +1,22 @@
 {
-  "schema_version": 3,
+  "schema_version": 4,
   "title": {
-    "en": "A Spring Morning with Mia",
-    "ru": "Весеннее утро с Мией",
-    "de": "Ein Frühlingsmorgen mit Mia"
+    "en": "A Monday Morning with Mia",
+    "ru": "Понедельничное утро с Мией",
+    "de": "Ein Montagmorgen mit Mia"
   },
   "subtitle": {
-    "en": "Up into the Bavarian Alps under a clear blue sky",
-    "ru": "Подъём в Баварские Альпы под ясным голубым небом",
-    "de": "Hinauf in die Bayerischen Alpen unter klarblauem Himmel"
+    "en": "A spring climb in the Bavarian Alps under a clear blue sky",
+    "ru": "Весенний подъём в Баварских Альпах под чистым синим небом",
+    "de": "Ein Frühlingsaufstieg in den Bayerischen Alpen unter klarblauem Himmel"
   },
   "paragraphs": [
     [
       {
         "text": {
-          "en": "We set out into the Bavarian Alps on an April morning, Mia and I, with the kind of clear blue sky you almost don't trust at first.",
-          "ru": "Мы с Мией вышли в Баварские Альпы апрельским утром — под таким ясным голубым небом, которому поначалу даже не веришь.",
-          "de": "Mia und ich brachen an einem Apriltag in die Bayerischen Alpen auf, unter einem klarblauen Himmel, dem man anfangs kaum traut."
+          "en": "We set out into the Bavarian Alps on a bright April morning, Mia and I, with the sky already that clean, cloudless blue you only really get in spring.",
+          "ru": "Мы вышли в Баварские Альпы ясным апрельским утром — Мия и я, — и небо уже было таким чистым, безоблачно синим, какое бывает только весной.",
+          "de": "Wir brachen an einem hellen Aprilmorgen in die Bayerischen Alpen auf, Mia und ich, und der Himmel war schon dieses klare, wolkenlose Blau, das es eigentlich nur im Frühling gibt."
         },
         "provenance": {
           "source": "gpx",
@@ -25,104 +25,117 @@
       },
       {
         "text": {
-          "en": "The air still had that spring sharpness to it, cool on the face but warming with every step.",
-          "ru": "В воздухе ещё чувствовалась весенняя резкость — прохладная на лице, но теплеющая с каждым шагом.",
-          "de": "Die Luft hatte noch diese frühlingshafte Schärfe, kühl im Gesicht, aber mit jedem Schritt wärmer."
+          "en": "It was a Monday, which made the quiet on the path feel like a small gift just for us.",
+          "ru": "Был понедельник, и тишина на тропе казалась маленьким подарком, припасённым только для нас.",
+          "de": "Es war ein Montag, und die Stille auf dem Weg fühlte sich an wie ein kleines Geschenk, nur für uns."
         },
         "provenance": {
-          "source": "inferred",
-          "reference": "spring season mood"
+          "source": "gpx",
+          "reference": "day_of_week"
         }
       }
     ],
     [
       {
         "text": {
-          "en": "The climb was steady, and the whole way up the birds wouldn't stop — somewhere off in the trees, a small stubborn chorus that kept pace with us.",
-          "ru": "Подъём был ровный, и всю дорогу птицы не умолкали — где-то в деревьях, упрямый маленький хор, который не отставал от нас.",
-          "de": "Der Aufstieg war gleichmäßig, und den ganzen Weg hinauf hörten die Vögel nicht auf — irgendwo in den Bäumen, ein kleiner, hartnäckiger Chor, der mit uns Schritt hielt."
+          "en": "The climb up was full of small joys — birds calling from somewhere we couldn't quite see, little streams crossing the trail, and a wind that kept tugging at our jackets.",
+          "ru": "Подъём был полон маленьких радостей — где-то перекликались птицы, которых мы так и не разглядели, через тропу бежали ручейки, а ветер всё дёргал нас за куртки.",
+          "de": "Der Aufstieg war voller kleiner Freuden — Vögel riefen irgendwo, wo wir sie nicht ausmachen konnten, kleine Bäche kreuzten den Pfad, und der Wind zerrte immer wieder an unseren Jacken."
         },
         "provenance": {
           "source": "seed",
-          "reference": "ascent with birds"
+          "reference": "ascent with birds, streams, and wind; joyful, amused"
         }
       },
       {
         "text": {
-          "en": "We crossed a stream where the water ran fast and bright, and stood there a moment just to listen.",
-          "ru": "Мы перешли ручей, где вода бежала быстро и светло, и постояли минуту просто чтобы послушать.",
-          "de": "Wir überquerten einen Bach, in dem das Wasser schnell und hell floss, und blieben einen Moment stehen, nur um zu lauschen."
+          "en": "Mia kept laughing at the way the gusts surprised us, and honestly, so did I.",
+          "ru": "Мия всё посмеивалась над тем, как ветер врасплох нас заставал, — и я, честно говоря, тоже.",
+          "de": "Mia musste immer wieder lachen, wie uns die Böen überraschten, und ehrlich gesagt, ich auch."
         },
         "provenance": {
           "source": "seed",
-          "reference": "stream on ascent"
-        }
-      },
-      {
-        "text": {
-          "en": "The wind came and went in the open patches, and Mia laughed — it was one of those mornings where everything felt easy.",
-          "ru": "На открытых участках ветер то приходил, то стихал, и Мия смеялась — это было одно из тех утр, когда всё даётся легко.",
-          "de": "Auf den offenen Stellen kam der Wind und ging wieder, und Mia lachte — es war einer dieser Morgen, an denen alles leicht fällt."
-        },
-        "provenance": {
-          "source": "seed",
-          "reference": "joyful ascent, wind, companion Mia"
+          "reference": "emotion: joyful, amused"
         }
       }
     ],
     [
       {
         "text": {
-          "en": "By afternoon we'd made the top, and we sat down properly, the way you do when you've earned it.",
-          "ru": "К полудню мы добрались до вершины и сели как следует — так, как садишься, когда заслужил.",
-          "de": "Am Nachmittag waren wir oben, und wir setzten uns richtig hin, so wie man es tut, wenn man es sich verdient hat."
+          "en": "By midday we'd reached the top, and we sat down to rest where the whole sky just opened up above us.",
+          "ru": "К полудню мы добрались до вершины и сели передохнуть там, где небо над нами просто распахнулось во всю ширь.",
+          "de": "Gegen Mittag waren wir oben angekommen und setzten uns dort hin, wo sich der ganze Himmel einfach über uns auftat."
         },
         "provenance": {
           "source": "seed",
-          "reference": "summit rest in afternoon"
+          "reference": "summit rest with sky observation"
         }
       },
       {
         "text": {
-          "en": "Mia had packed apples, and I don't think an apple has ever tasted that good — cold, crisp, eaten while staring up at all that sky.",
-          "ru": "Мия взяла с собой яблоки, и, кажется, никогда яблоко не было таким вкусным — холодное, хрустящее, съеденное под этим бескрайним небом.",
-          "de": "Mia hatte Äpfel eingepackt, und ich glaube, ein Apfel hat noch nie so gut geschmeckt — kalt, knackig, gegessen mit Blick in diesen ganzen Himmel."
+          "en": "We pulled out apples and ate them slowly, looking up, not saying much.",
+          "ru": "Мы достали яблоки и ели их медленно, глядя вверх и почти не разговаривая.",
+          "de": "Wir holten Äpfel heraus und aßen sie langsam, blickten nach oben und sagten nicht viel."
         },
         "provenance": {
-          "source": "seed",
-          "reference": "apples at summit, sky observation"
+          "source": "photo",
+          "reference": "apples"
         }
       },
       {
         "text": {
-          "en": "We didn't say much for a while; we didn't need to.",
-          "ru": "Какое-то время мы почти не говорили — да и не нужно было.",
-          "de": "Eine Weile sagten wir kaum etwas; wir mussten auch nicht."
+          "en": "There was that good kind of quiet wonder between us — the kind you don't really want to interrupt.",
+          "ru": "Между нами повисло то самое тёплое тихое восхищение, которое не хочется нарушать.",
+          "de": "Zwischen uns lag diese gute, stille Art von Staunen — die, die man eigentlich gar nicht unterbrechen möchte."
+        },
+        "provenance": {
+          "source": "seed",
+          "reference": "emotion: joyful, wonder"
+        }
+      }
+    ],
+    [
+      {
+        "text": {
+          "en": "We stayed up there a long time before turning back toward the valley.",
+          "ru": "Мы долго сидели наверху, прежде чем повернуть обратно к долине.",
+          "de": "Wir blieben lange dort oben, bevor wir uns wieder ins Tal aufmachten."
+        },
+        "provenance": {
+          "source": "gpx",
+          "reference": "pause duration_min 50"
+        }
+      },
+      {
+        "text": {
+          "en": "It wasn't a big or dramatic day — just a clear-skied morning with a good friend, which honestly might be the best kind.",
+          "ru": "Это был не какой-то особенный или громкий день — просто ясное утро рядом с хорошим другом, и, наверное, это и есть самое лучшее.",
+          "de": "Es war kein großer, dramatischer Tag — nur ein klarer Morgen mit einer guten Freundin, und das ist vielleicht ehrlich die schönste Art."
         },
         "provenance": {
           "source": "inferred",
-          "reference": "delighted summit mood"
+          "reference": "closing mood from joyful tone and clear weather"
         }
       }
     ]
   ],
   "pull_quote": {
-    "en": "I don't think an apple has ever tasted that good — cold, crisp, eaten while staring up at all that sky.",
-    "ru": "Кажется, никогда яблоко не было таким вкусным — холодное, хрустящее, съеденное под этим бескрайним небом.",
-    "de": "Ein Apfel hat noch nie so gut geschmeckt — kalt, knackig, gegessen mit Blick in diesen ganzen Himmel."
+    "en": "We pulled out apples and ate them slowly, looking up, not saying much.",
+    "ru": "Мы достали яблоки и ели их медленно, глядя вверх и почти не разговаривая.",
+    "de": "Wir holten Äpfel heraus und aßen sie langsam, blickten nach oben und sagten nicht viel."
   },
   "milestone": {
-    "en": "Spring hike with Mia",
-    "ru": "Весенний поход с Мией",
+    "en": "Spring climb with Mia",
+    "ru": "Весенний подъём с Мией",
     "de": "Frühlingstour mit Mia"
   },
   "selected_photo_indices": [
     0,
     2,
     4,
-    6,
-    8,
-    10,
+    5,
+    7,
+    9,
     11
   ]
 }

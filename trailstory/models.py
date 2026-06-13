@@ -287,7 +287,11 @@ class NarrativeOutput(BaseModel):
     # the writer's prompt now references these fields, so cached v3
     # narratives no longer reflect what the current writer would
     # produce. Bumping forces cache invalidation.
-    schema_version: int = 4
+    # v5 (ADR-016): the ledger gained verbatim_user_phrases and the
+    # writer prompt gained the voice-tightening register, anti-pattern
+    # rules, and paired examples. Output shape unchanged; cached v4
+    # narratives no longer reflect the current writer's voice.
+    schema_version: int = 5
     title: LocalizedString
     subtitle: LocalizedString
     # Paragraphs are an ordered list of paragraphs; each paragraph is an
@@ -386,6 +390,14 @@ class FactLedger(BaseModel):
     people: list[Person]
     weather: str  # short phrase from seed, e.g. "amazing weather" or "unknown".
     chronology: list[Beat]
+    # ADR-016: 2-4 short phrases (≤ 8 words each) copied
+    # character-for-character from the seed text by the extractor, then
+    # verified as literal seed substrings in Python — an LLM's "verbatim"
+    # cannot be trusted, so the guarantee is enforced after the call. The
+    # writer must weave at least one into the prose: verbatim in the
+    # language the hiker wrote it in, rendered faithfully in the other
+    # two. Empty when the seed is too thin to quote.
+    verbatim_user_phrases: list[str] = Field(default_factory=list)
 
     # Deterministic from inputs --------------------------------------------
     where: str  # location name (HikeInput.location_name or fallback).

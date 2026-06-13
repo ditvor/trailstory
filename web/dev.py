@@ -48,7 +48,7 @@ def _fake_paragraph(en: str, ru: str, de: str, source: str = "seed") -> list[dic
 
 _FAKE_NARRATIVE: Final[str] = json.dumps(
     {
-        "schema_version": 4,
+        "schema_version": 5,
         "title": {
             "en": "Above the fog line",
             "ru": "Над линией тумана",
@@ -151,6 +151,11 @@ _FAKE_LEDGER_EXTRACTOR_OUTPUT: Final[str] = json.dumps(
                 "objects_mentioned": ["ridge", "sun", "valley"],
             },
         ],
+        # ADR-016 shape exercise. extract_ledger re-verifies these against
+        # whatever seed the dev user actually typed, so in fake-LLM mode
+        # they usually filter down to [] — which is itself the documented
+        # "proceed without" path.
+        "verbatim_user_phrases": ["fog cleared just as we reached"],
     }
 )
 

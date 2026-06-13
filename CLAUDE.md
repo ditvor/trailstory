@@ -205,10 +205,10 @@ class LocalizedParagraphs:
     de: list[str]
 
 class NarrativeOutput:
-    schema_version: int = 2
+    schema_version: int = 5             # bump on shape/semantic change; see models.py history
     title: LocalizedString
     subtitle: LocalizedString
-    paragraphs: LocalizedParagraphs
+    paragraphs: list[Paragraph]         # ADR-014: list of sentence lists, each with provenance
     pull_quote: LocalizedString
     milestone: LocalizedString          # e.g. "First mountain hike"
     selected_photo_indices: list[int]   # 6-8 indices into PhotoMeta list
@@ -578,6 +578,21 @@ don't relitigate them.
     (per language), an average-sentence-length band, and an
     inferred-ratio ceiling so the planned voice tightening has a
     measurement layer.
+16. [ADR-016 — writer voice tightening + verbatim user phrase anchor](docs/adr/016-writer-voice-and-verbatim-phrases.md):
+    the voice work ADR-015 deferred. Writer prompt gains explicit
+    register positioning ("a warm family note to grandparents —
+    neither a travel essay nor minutes of a meeting"), binding voice
+    rules (no personified landscape, no feeling/atmosphere sentence
+    subjects, ≤ 2 adjectives per noun phrase, no "the kind of"
+    construction family), and five BAD/GOOD pairs whose BAD halves are
+    real sentences from the 2026-06 golden refresh. `FactLedger` gains
+    `verbatim_user_phrases` (2–4 literal seed quotes, ≤ 8 words,
+    re-verified as genuine substrings in Python); the writer must
+    weave at least one in, and a free ADR-011-style verifier
+    regenerates once if none surfaced (improvement-only admission,
+    streaming bypassed). `NarrativeOutput.schema_version=5`.
+    Storyboard stage, runtime critic/style gates, and tone presets
+    were evaluated and rejected — don't reintroduce them.
 
 If you're about to do something that touches an area covered by an existing
 ADR, **read the ADR first**. If the change is incompatible with the recorded

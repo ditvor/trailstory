@@ -5,96 +5,86 @@
   "photo_selection_plausibility": 3.0,
   "claim_verdicts": [
     {
-      "claim": "arrived in Bad Tölz around midday",
+      "claim": "They arrived at the parking spot around noon",
       "verdict": "SUPPORTED",
       "quote": "We arrived to the parking spot around 12"
     },
     {
-      "claim": "left the car at the parking spot",
-      "verdict": "SUPPORTED",
-      "quote": "arrived to the parking spot"
-    },
-    {
-      "claim": "went into the centre for brunch",
-      "verdict": "SUPPORTED",
-      "quote": "Went to the city centre and enjoyed some brunch"
-    },
-    {
-      "claim": "weather was amazing",
-      "verdict": "SUPPORTED",
-      "quote": "The weather was amazing"
-    },
-    {
-      "claim": "bright spring day",
-      "verdict": "INFERRED",
-      "quote": "season spring inferred from schema/title context and GPX timestamp"
-    },
-    {
-      "claim": "four people: Katya, Olga, Igor and little Danny",
+      "claim": "The group was Katya, Olga, Igor, and little Danny",
       "verdict": "SUPPORTED",
       "quote": "It was four of us: Katya, Olga, Igor and little Danny"
     },
     {
-      "claim": "walked along the river Isar",
+      "claim": "They walked into the centre of Bad Tölz for brunch",
+      "verdict": "SUPPORTED",
+      "quote": "Went to the city centre and enjoyed some brunch"
+    },
+    {
+      "claim": "The weather was bright and amazing",
+      "verdict": "SUPPORTED",
+      "quote": "The weather was amazing"
+    },
+    {
+      "claim": "It was a Bavarian Saturday in April",
+      "verdict": "INFERRED",
+      "quote": "season + day_of_week from GPX reference"
+    },
+    {
+      "claim": "They hiked along the Isar river",
       "verdict": "SUPPORTED",
       "quote": "we started our trip along the river Isar"
     },
     {
-      "claim": "April light",
-      "verdict": "INFERRED",
-      "quote": "season spring inferred from title and GPX timestamp"
-    },
-    {
-      "claim": "easy pace shaped around a small child",
-      "verdict": "INFERRED",
-      "quote": "Danny and us enjoyed the hike a lot; little Danny"
-    },
-    {
-      "claim": "visited an old church",
+      "claim": "Danny and the group enjoyed the hike",
       "verdict": "SUPPORTED",
-      "quote": "we visited an old church with very strange figures"
+      "quote": "Danny and us enjoyed the hike a lot"
     },
     {
-      "claim": "wax figures of Jesus and his companions",
+      "claim": "The river was loud and clear beside them",
+      "verdict": "INFERRED",
+      "quote": "amazing weather + river Isar context"
+    },
+    {
+      "claim": "Danny was carried during the hike",
+      "verdict": "INFERRED",
+      "quote": "Everyone loved little Danny — child small enough to be carried"
+    },
+    {
+      "claim": "They entered an old church along the way",
+      "verdict": "SUPPORTED",
+      "quote": "we visited an old church"
+    },
+    {
+      "claim": "The church contained wax figures",
       "verdict": "SUPPORTED",
       "quote": "those wax figures were waiting for us in unexpected places"
     },
     {
-      "claim": "figures were life-sized",
-      "verdict": "UNSUPPORTED",
-      "quote": ""
+      "claim": "There was a wax figure of Jesus laid out lifelike",
+      "verdict": "SUPPORTED",
+      "quote": "very strange figures of Jesus and his friends"
     },
     {
-      "claim": "figures felt creepy rather than holy",
+      "claim": "The figures were in unexpected places and gave them a chill",
+      "verdict": "SUPPORTED",
+      "quote": "those wax figures were waiting for us in unexpected places"
+    },
+    {
+      "claim": "The church visit felt creepy",
       "verdict": "SUPPORTED",
       "quote": "It was creepy"
     },
     {
-      "claim": "figures appeared in unexpected places",
-      "verdict": "SUPPORTED",
-      "quote": "those wax figures were waiting for us in unexpected places"
-    },
-    {
-      "claim": "grabbed Asian food to go",
+      "claim": "They got Asian food to go in the evening",
       "verdict": "SUPPORTED",
       "quote": "we grabbed some Asian food to go"
     },
     {
-      "claim": "ate dinner near the water",
+      "claim": "They ate dinner near the water",
       "verdict": "SUPPORTED",
-      "quote": "enjoyed our dinner near the water"
-    },
-    {
-      "claim": "ate out of containers",
-      "verdict": "INFERRED",
-      "quote": "Asian food to go — takeaway containers are a reasonable inference"
-    },
-    {
-      "claim": "river was in front of them while eating",
-      "verdict": "INFERRED",
       "quote": "enjoyed our dinner near the water"
     }
   ],
-  "notes": "The English prose is warm and specific, with good sensory texture (April light, sound of water, eating from containers), earning a high warmth score just short of 5 because 'shaped around a small child' is slightly writerly-generic. The arc is clean — arrival, brunch, walk, church, dinner — with each beat earning its place; minor dock for the church paragraph feeling slightly thin on Danny's reaction. Russian is natural and idiomatic throughout; 'становилось скорее жутко, чем благоговейно' is a particularly good register match; only very minor stiffness in 'Мне всё в этой прогулке было в радость'. Photo indices 0-5 are a sequential block of six, which is within count but gives no information about distribution across the arc; without knowing total photo count, sequential clustering is a mild concern.",
-  "faithfulness": 4.03
+  "notes": "The English prose is warm and personal with good sensory texture ('the river was loud and clear', 'slow your steps on purpose'), earning a high warmth score just short of 5 because a couple of phrases ('the kind of walk that makes you', 'perfect way to close out') edge toward light boilerplate. The arc is well-shaped — arrival, brunch, river walk, creepy church, evening meal — with each paragraph earning its place; only the transition into the church beat is slightly abrupt. Russian is fluent and natural; 'один из тех ярких баварских апрельских субботних дней' is a touch clunky with stacked adjectives but otherwise reads natively. Photo selection scores 3 because indices 0-5 are simply the first six in sequence with no evidence of distribution across a wider range, which limits confidence that they genuinely trace the arc.",
+  "faithfulness": 4.53
 }
