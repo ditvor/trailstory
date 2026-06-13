@@ -55,6 +55,7 @@ from web.pipeline import (
     PipelineStreamChunk,
     PipelineStreamRendered,
     PipelineStreamRetry,
+    PlaceReferenceResolver,
     Style,
     prepare_pipeline,
     render_carousel,
@@ -259,6 +260,7 @@ async def generate(
     description: Annotated[str, Form(min_length=1, max_length=1000)],
     style: Annotated[str, Form()] = Style.default().value,
     location: Annotated[str | None, Form()] = None,
+    place: Annotated[str | None, Form()] = None,
     gpx: UploadFile | None = None,
     photos: list[UploadFile] | None = None,
 ) -> Response:
@@ -311,6 +313,9 @@ async def generate(
             photo_max_edge=settings.photo_max_edge,
             photo_quality=settings.photo_quality,
             location=(location or None),
+            # ADR-017: the form checkbox sends "1" when ticked, nothing
+            # otherwise. Off by default — opt-in disclosure of coordinates.
+            use_place_context=(place == "1"),
         )
     except PipelineError as exc:
         storage.delete_workspace(workspace)
@@ -372,6 +377,8 @@ async def generate_stream(request: Request, slug: str) -> Response:
     client = _client_factory(request)()
     ledger_client = _ledger_client_factory(request)()
     vision_client = _vision_client_factory(request)()
+    place_client = _place_client_factory(request)()
+    resolve_reference = _place_reference_resolver(request)
     settings: Settings = request.app.state.settings
 
     def event_stream() -> Iterator[bytes]:
@@ -383,6 +390,8 @@ async def generate_stream(request: Request, slug: str) -> Response:
                 ledger_client=ledger_client,
                 vision_client=vision_client,
                 use_photo_grounding=settings.use_photo_grounding,
+                place_client=place_client,
+                resolve_reference=resolve_reference,
             ):
                 if isinstance(event, PipelineStreamChunk):
                     yield _sse_event("chunk", {"text": event.text})
@@ -583,6 +592,28 @@ def _vision_client_factory(request: Request) -> Callable[[], AnthropicClient]:
     """
     factory: Callable[[], AnthropicClient] = request.app.state.vision_client_factory
     return factory
+
+
+def _place_client_factory(request: Request) -> Callable[[], AnthropicClient]:
+    """Resolve the place-stitch factory injected by :func:`create_app`.
+
+    ADR-017: separate factory so the place-stitch model can be swapped
+    independently. Only actually invoked by the pipeline when the request
+    opted into the place block.
+    """
+    factory: Callable[[], AnthropicClient] = request.app.state.place_client_factory
+    return factory
+
+
+def _place_reference_resolver(request: Request) -> PlaceReferenceResolver:
+    """Resolve the geocode+Wikipedia resolver injected by :func:`create_app`.
+
+    ADR-017: real apps get ``trailstory.place.resolve_place_reference``; the
+    fake-LLM dev mode and tests inject an offline stub so the place path
+    touches no network.
+    """
+    resolver: PlaceReferenceResolver = request.app.state.place_reference_resolver
+    return resolver
 
 
 # ── SSE helpers ──────────────────────────────────────────────────────────────

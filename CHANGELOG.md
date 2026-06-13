@@ -10,6 +10,16 @@ Versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 ## [Unreleased]
 
 ### Added
+- **"About this place" in the web builder (ADR-017 follow-up).** The
+  opt-in place block is now reachable from the hosted app, not just the
+  CLI: an off-by-default checkbox on the builder form carries the toggle
+  through the streaming pipeline's pending state, `stream_pipeline`
+  resolves the block after the narrative (reusing the ledger it already
+  extracted — `generate_narrative_stream` gains a `ledger=` param), and a
+  `place_client_factory` plus an injectable geocode/Wikipedia resolver are
+  wired through `create_app`. The fake-LLM dev mode (`--fake-llm`) ships an
+  offline stub resolver + fake stitch client so the block renders without
+  any network call.
 - **Enriched photo description (ADR-018).** The per-photo vision pass
   now produces four new `PhotoDescription` fields: `interactions` (how
   people carry/relate, e.g. "an adult wearing a child carrier"),

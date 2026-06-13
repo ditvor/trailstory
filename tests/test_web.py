@@ -37,6 +37,7 @@ from pydantic import SecretStr
 from tests.conftest import paragraphs_dict_from_strings
 from trailstory.config import Settings
 from trailstory.llm.client import AnthropicClient
+from trailstory.place import PlaceReference
 from web.app import create_app
 from web.ratelimit import RateLimiter
 from web.routes import (
@@ -176,23 +177,63 @@ def _make_vision_client() -> MagicMock:
     return fake
 
 
+def _make_place_client() -> MagicMock:
+    """Mocked PLACE-stitch Anthropic client (ADR-017).
+
+    Returns a deterministic tri-lingual place summary. Only invoked when a
+    request opts into the place block, so non-place tests never touch it.
+    """
+    fake = MagicMock(spec=AnthropicClient)
+    fake.model = "claude-haiku-4-5-place-test"
+    fake.complete.return_value = json.dumps(
+        {
+            "summary": {
+                "en": "Bad Tölz is a market town on the Isar in the Bavarian Prealps.",
+                "ru": "Бад-Тёльц — городок на Изаре в Баварских предгорьях.",
+                "de": "Bad Tölz ist eine Marktstadt an der Isar in den Bayerischen Voralpen.",
+            },
+            "used_hiker_details": ["the ridge"],
+        }
+    )
+    return fake
+
+
+def _stub_place_resolver(
+    lat: float, lon: float, location_name: str | None = None
+) -> PlaceReference:
+    """Offline geocode + Wikipedia stub — no network touched in tests."""
+    return PlaceReference(
+        town=location_name or "Bad Tölz",
+        region="Bavarian Prealps",
+        extract="Bad Tölz is a market town in Bavaria on the river Isar.",
+        source_url="https://en.wikipedia.org/wiki/Bad_T%C3%B6lz",
+        source_title=location_name or "Bad Tölz",
+    )
+
+
 def _app_with_storage(
     storage: Storage,
     *,
     client: MagicMock | None = None,
     ledger_client: MagicMock | None = None,
     vision_client: MagicMock | None = None,
+    place_client: MagicMock | None = None,
     rate_limiter: RateLimiter | None = None,
 ) -> tuple[FastAPI, MagicMock]:
     fake = client if client is not None else _make_client()
     fake_ledger = ledger_client if ledger_client is not None else _make_ledger_client()
     fake_vision = vision_client if vision_client is not None else _make_vision_client()
+    fake_place = place_client if place_client is not None else _make_place_client()
     app = create_app(
         settings=_settings(),
         storage=storage,
         client_factory=lambda: fake,
         ledger_client_factory=lambda: fake_ledger,
         vision_client_factory=lambda: fake_vision,
+        # ADR-017: inject a fake stitch client + an OFFLINE geocode stub so
+        # the place path is fully exercised without any network call.
+        place_client_factory=lambda: fake_place,
+        place_reference_resolver=_stub_place_resolver,
         rate_limiter=rate_limiter,
         enable_sweeper=False,
     )
@@ -281,12 +322,15 @@ def _complete_generation(
     description: str = "x",
     style: str = "editorial",
     location: str | None = None,
+    place: bool = False,
     n_photos: int = 5,
 ) -> str:
     """Submit the form and drain the SSE stream. Returns the slug."""
     data: dict[str, str] = {"description": description, "style": style}
     if location is not None:
         data["location"] = location
+    if place:
+        data["place"] = "1"
     response = client.post("/generate", data=data, files=_generate_files(n_photos))
     assert response.status_code == 200, response.text
     slug = _slug_from_generating_page(response.text)
@@ -1148,3 +1192,36 @@ def test_fake_client_factory_drives_full_pipeline(storage: Storage) -> None:
         events = _drain_stream(c, slug)
     assert events[-1][0] == "done"
     assert (workspace.output_dir / f"{slug}.html").is_file()
+
+
+# ── ADR-017: "about this place" web wiring ──────────────────────────────────
+
+
+def test_landing_form_has_place_checkbox(client: TestClient) -> None:
+    """The builder form exposes the opt-in place toggle (off by default)."""
+    body = client.get("/").text
+    assert 'name="place"' in body
+    assert 'value="1"' in body
+    # Tri-lingual label is baked in for the client-side language switch.
+    assert "about this place" in body
+    assert "о месте" in body  # noqa: RUF001
+
+
+def test_generate_with_place_renders_block(client: TestClient) -> None:
+    """place=1 flows through prep → stream → render: the block is in the HTML."""
+    slug = _complete_generation(client, location="Bad Tölz", place=True)
+    html = client.get(f"/memory/{slug}").text
+    assert 'class="place"' in html
+    assert "Bad Tölz" in html
+    # The stitch summary (from the fake place client) is present.
+    assert "market town on the Isar" in html
+    # CC BY-SA source attribution link.
+    assert "en.wikipedia.org/wiki/Bad_T" in html
+
+
+def test_generate_without_place_omits_block(client: TestClient) -> None:
+    """Default generation (no place toggle) carries no place markup."""
+    slug = _complete_generation(client, location="Bad Tölz", place=False)
+    html = client.get(f"/memory/{slug}").text
+    assert 'class="place"' not in html
+    assert "market town on the Isar" not in html

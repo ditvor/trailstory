@@ -378,6 +378,25 @@
           </span>
         </template>
       </div>
+
+      {# Opt-in "about this place" block (ADR-017). Off by default:
+         resolving it sends the track's rough coordinates to an external
+         geocoder + Wikipedia. Plain checkbox — submits "1" only when ticked. #}
+      <label class="bp-place" style="display:flex;gap:10px;align-items:flex-start;margin-top:18px;padding-top:16px;border-top:1px solid rgba(0,0,0,0.12)">
+        <input type="checkbox" name="place" value="1" style="margin-top:3px;flex:none">
+        <span>
+          <span style="display:block;font-weight:600">
+            <span class="lang-en">Add an “about this place” section</span>
+            <span class="lang-ru">Добавить раздел «о месте»</span>
+            <span class="lang-de">Abschnitt „über diesen Ort“ hinzufügen</span>
+          </span>
+          <span style="display:block;margin-top:3px;font-size:13px;opacity:0.65">
+            <span class="lang-en">Looks up the town from your track and adds a short, sourced description. Sends the track’s rough coordinates to OpenStreetMap and Wikipedia.</span>
+            <span class="lang-ru">Определяет город по треку и добавляет короткое описание из источника. Отправляет примерные координаты в OpenStreetMap и Wikipedia.</span>
+            <span class="lang-de">Ermittelt den Ort aus deinem Track und ergänzt eine kurze, belegte Beschreibung. Sendet die ungefähren Koordinaten an OpenStreetMap und Wikipedia.</span>
+          </span>
+        </span>
+      </label>
     </div>
   </section>
 

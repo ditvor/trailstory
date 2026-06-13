@@ -665,6 +665,7 @@ def generate_narrative_stream(
     client: AnthropicClient,
     ledger_client: AnthropicClient,
     location: str = "the trail",
+    ledger: FactLedger | None = None,
 ) -> Iterator[NarrativeStreamEvent]:
     """Streaming variant of :func:`generate_narrative` (ADR-009).
 
@@ -706,6 +707,10 @@ def generate_narrative_stream(
             benefit from streaming.
         location: Fallback place name when ``hike_input.location_name`` is
             unset.
+        ledger: Pre-built :class:`FactLedger` (ADR-017). When provided the
+            extractor pass is skipped and this ledger is used directly — the
+            web place-context path extracts once and shares the ledger with
+            the place block. ``None`` (the default) extracts here.
 
     Yields:
         :class:`NarrativeStreamEvent` instances. The terminal event is
@@ -719,16 +724,20 @@ def generate_narrative_stream(
     if not photos:
         raise NarrativeGenerationError("at least one photo is required to build a narrative")
 
-    try:
-        ledger = extract_ledger(
-            hike_input,
-            gpx_stats,
-            photos,
-            client=ledger_client,
-            location=location,
-        )
-    except LedgerExtractionError as exc:
-        raise NarrativeGenerationError(f"ledger extraction failed: {exc}") from exc
+    # ADR-017: the web place-context path extracts the ledger once and
+    # passes it in, so we don't pay for a second extractor call. ``None``
+    # (the common path) extracts here as before.
+    if ledger is None:
+        try:
+            ledger = extract_ledger(
+                hike_input,
+                gpx_stats,
+                photos,
+                client=ledger_client,
+                location=location,
+            )
+        except LedgerExtractionError as exc:
+            raise NarrativeGenerationError(f"ledger extraction failed: {exc}") from exc
 
     ledger_json = json.dumps(ledger.model_dump(mode="json"), ensure_ascii=False, indent=2)
     base_prompt = USER_NARRATIVE_TEMPLATE.format(

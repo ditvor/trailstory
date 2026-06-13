@@ -28,6 +28,7 @@ from typing import Final
 from unittest.mock import MagicMock
 
 from trailstory.llm.client import AnthropicClient
+from trailstory.place import PlaceReference
 
 logger = logging.getLogger(__name__)
 
@@ -213,6 +214,62 @@ def make_fake_vision_client_factory() -> Callable[[], AnthropicClient]:
         return fake
 
     return _factory
+
+
+# Deterministic place-stitch fixture for the ADR-017 place pass in fake-LLM
+# dev mode. Shape matches ``trailstory.llm.place._PlaceOutput``.
+_FAKE_PLACE_OUTPUT: Final[str] = json.dumps(
+    {
+        "summary": {
+            "en": (
+                "Bad Tölz is a market town on the Isar in the Bavarian Prealps; "
+                "you walked the river path and passed the old church."
+            ),
+            "ru": "Бад-Тёльц — городок на Изаре в Баварских предгорьях; вы шли вдоль реки.",
+            "de": (
+                "Bad Tölz ist eine Marktstadt an der Isar in den Bayerischen "
+                "Voralpen; ihr seid am Fluss entlanggegangen."
+            ),
+        },
+        "used_hiker_details": ["the church"],
+    }
+)
+
+
+def make_fake_place_client_factory() -> Callable[[], AnthropicClient]:
+    """Return a factory for the ADR-017 place-stitch pass in fake-LLM dev mode.
+
+    Mirrors the other fake factories: a ``MagicMock`` whose ``complete``
+    returns a constant place-context summary so the dev UI exercises the
+    "about this place" block round-trip without an Anthropic call.
+    """
+
+    def _factory() -> AnthropicClient:
+        fake = MagicMock(spec=AnthropicClient)
+        fake.model = "trailstory-dev-fake-place"
+        fake.complete.return_value = _FAKE_PLACE_OUTPUT
+        return fake
+
+    return _factory
+
+
+def fake_place_reference_resolver(
+    lat: float, lon: float, location_name: str | None = None
+) -> PlaceReference:
+    """Offline stand-in for ``resolve_place_reference`` in fake-LLM dev mode.
+
+    The geocode + Wikipedia lookup is real network even when the LLM is
+    faked, so dev mode injects this instead to stay self-contained. Returns
+    a constant reference, honouring the hiker's ``location_name`` for the
+    town when given (matching the real resolver's "trust the hiker" rule).
+    """
+    return PlaceReference(
+        town=location_name or "Bad Tölz",
+        region="Bavarian Prealps",
+        extract="Bad Tölz is a market town in Bavaria on the river Isar.",
+        source_url="https://en.wikipedia.org/wiki/Bad_T%C3%B6lz",
+        source_title=location_name or "Bad Tölz",
+    )
 
 
 def banner() -> str:
