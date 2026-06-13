@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import json
 import logging
+import re
 from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime
 from json import JSONDecodeError
@@ -309,11 +310,22 @@ def describe_photo(path: Path, *, client: AnthropicClient) -> PhotoDescription:
             )
 
     try:
-        return PhotoDescription.model_validate(parsed)
+        desc = PhotoDescription.model_validate(parsed)
     except ValidationError as exc:
         raise PhotoDescriptionError(
             f"Photo describer JSON did not match PhotoDescription schema for {path.name}: {exc}"
         ) from exc
+
+    # ADR-017 defense-in-depth: the describer prompt forbids guessing
+    # carry orientation, but the spike showed models do it anyway. Strip
+    # any orientation modifier that slipped through, keeping the grounded
+    # carry fact. PhotoDescription is frozen, so rebuild via model_copy.
+    return desc.model_copy(
+        update={
+            "interactions": _scrub_orientation(desc.interactions),
+            "body_language_notes": _scrub_orientation(desc.body_language_notes),
+        }
+    )
 
 
 def describe_photos(
@@ -471,3 +483,75 @@ def _strip_code_fences(text: str) -> str:
     if lines and lines[-1].rstrip().startswith("```"):
         lines = lines[:-1]
     return "\n".join(lines).strip()
+
+
+# ── ADR-017 carry-orientation scrubber ───────────────────────────────────────
+#
+# The vision describer is told never to guess carry orientation (front /
+# back / chest / hip), but the spike behind ADR-017 showed every model
+# does it anyway. These substitutions remove the orientation modifier
+# while keeping the grounded carry fact, so "wearing a child carrier on
+# the back" becomes "wearing a child carrier" rather than being dropped.
+# Applied to interactions and body_language_notes in :func:`describe_photo`.
+
+# A carry cue must be present before the body-part orientation pattern
+# fires — otherwise an ordinary note like "a sign pointing to the back of
+# the valley" would be mangled into "a sign pointing of the valley". Only
+# notes that are actually about carrying / holding a person get scrubbed.
+_CARRY_CUE = re.compile(
+    r"\b(?:carrier|carr(?:y|ies|ied|ying)|wear(?:ing|s)?|worn|hold(?:ing|s)?|held|"
+    r"strapped|sling|papoose|baby|infant|toddler|child)\b",
+    re.IGNORECASE,
+)
+
+# Always safe: these forms are carry-specific by construction, so they fire
+# regardless of context.
+_ORIENTATION_ALWAYS: tuple[tuple[re.Pattern[str], str], ...] = (
+    # "front-mounted" / "back-facing" / "rear-carry" → drop the qualifier
+    (
+        re.compile(r"\b(?:front|back|rear|forward)[ \-](?:mounted|facing|carry)\b", re.IGNORECASE),
+        "",
+    ),
+    # "front carrier" / "back carrier" → "carrier"
+    (re.compile(r"\b(?:front|back|rear)[ \-](carrier)\b", re.IGNORECASE), r"\1"),
+)
+
+# Context-sensitive: "on / against / to (the|his|...) back|front|chest|hip".
+# The ``(?!-)`` stops it from eating compounds like "chest-high"; the cue
+# gate (above) stops it from touching non-carry notes.
+_ORIENTATION_BODYPART = re.compile(
+    r"\b(?:on|against|to)\s+(?:(?:the|his|her|their|its)\s+)?(?:back|front|chest|hip)s?(?!-)\b",
+    re.IGNORECASE,
+)
+
+# Trailing connector left dangling after a strip ("... the baby of" → "... the
+# baby"). Anchored to end-of-string so it only trims genuine danglers.
+_TRAILING_DANGLER = re.compile(r"[\s,;-]*\b(?:in|on|against|to|of|and|with|the)\s*$", re.IGNORECASE)
+
+
+def _scrub_orientation(notes: list[str]) -> list[str]:
+    """Strip carry-orientation modifiers from describer notes (ADR-017).
+
+    Keeps the grounded carry fact ("wearing a child carrier"), removes the
+    unreliable orientation ("on the back"). The body-part pattern only
+    fires when the note carries a carry cue (``carrier`` / ``holding`` /
+    ``baby`` …) so ordinary geography ("a path to the back of the lake")
+    is left untouched. Drops an entry only if scrubbing empties it. Logs
+    each change so the scrubber's effect is visible in eval / debug runs.
+    """
+    scrubbed: list[str] = []
+    for note in notes:
+        cleaned = note
+        for pattern, repl in _ORIENTATION_ALWAYS:
+            cleaned = pattern.sub(repl, cleaned)
+        if _CARRY_CUE.search(cleaned):
+            cleaned = _ORIENTATION_BODYPART.sub("", cleaned)
+        cleaned = re.sub(r"\s{2,}", " ", cleaned)
+        cleaned = re.sub(r"\s+([,;.])", r"\1", cleaned)  # "baby , smiling" → "baby, smiling"
+        cleaned = _TRAILING_DANGLER.sub("", cleaned)
+        cleaned = cleaned.strip(" ,;-")
+        if cleaned != note:
+            logger.info("ADR-017 scrubbed carry orientation: %r -> %r", note, cleaned)
+        if cleaned:
+            scrubbed.append(cleaned)
+    return scrubbed

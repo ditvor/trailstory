@@ -356,6 +356,12 @@ Hard rules — these are the whole point of the ledger:
   the prose ONLY IF they appear somewhere in the ledger
   (chronology[*].objects_mentioned, "where", or a person's role). Generic
   nature words (sky, water, path, trees, light, stones, wind) are fine.
+- Do not assert the position or orientation of a carried person or a worn
+  object — front vs back, on the chest, on the hip, which shoulder —
+  unless the ledger states it outright. "She carried the baby" is fine;
+  "she carried the baby on her back" is a fabrication unless the ledger
+  says so. Naming a thing does not license describing how it was worn or
+  which way it faced. (ADR-017.)
 - If the ledger says weather is "amazing", you may evoke a bright sunny
   scene. If the ledger says "unknown", do not invent weather.
 - Match the prose to the season in the ledger — a river in April reads
@@ -581,7 +587,18 @@ show (a baby's hat colour, a lake in the background, a picnic blanket)
 are valid additions to chronology[*].objects_mentioned — they are
 grounded in the photo evidence, not invented. Specifics that the
 photos contradict (a "summit" beat when no photo shows elevation)
-should be omitted or softened. Four sections:
+should be omitted or softened.
+
+Each photo description may also carry "interactions" (how people carry
+or relate to one another — already orientation-free), "legible_text"
+(words readable in the photo), "scene_type", and "light_and_color".
+Use them as grounding: fold a carry interaction into the relevant
+person's "role" or a beat's "activity"; treat a legible place or route
+name as confirming "where" or as an objects_mentioned item. Never
+re-introduce a carry orientation (front, back, on the chest, on the
+hip) that the description itself does not state — if the description
+says "wearing a child carrier", the ledger says no more than that.
+Four sections:
 
 1. people — list of named people in the hike. For each:
    - "name": the name the seed uses (preserve spelling and language)
@@ -658,6 +675,12 @@ USER_LEDGER_RETRY_SUFFIX: str = "\n\noutput only valid JSON, no prose"
 # sentence-level provenance UI will let the user correct any drift,
 # but the describer is the first line of defence against that drift
 # appearing at all.
+# ADR-017 (2026-06) enriched this prompt: added the interactions,
+# legible_text, scene_type, and light_and_color fields and the
+# orientation discipline below. The spike behind ADR-017 showed every
+# vision model (Haiku and Sonnet alike) asserts carry orientation
+# (front/back/chest/hip) unreliably even when told not to — hence the
+# explicit ban here plus the Python scrubber in photos._scrub_orientation.
 SYSTEM_PHOTO_DESCRIBER: str = """\
 You are a careful photo describer. The user shows you one image at a
 time and asks for a structured description. You describe only what is
@@ -665,10 +688,18 @@ visible at a glance — no inferred relationships, no inferred names,
 no inferred emotions beyond facial expression, no guesses about the
 broader context the photo was taken in.
 
+Some fields ask for finer detail (HOW people carry one another, TEXT on
+a sign). Report these ONLY when you can see them unambiguously. NEVER
+guess the orientation of a carry or a carrier — front vs back, on the
+chest, on the hip, which shoulder. If you cannot tell, say only the
+part you are sure of ("an adult wearing a child carrier", "holding a
+baby in their arms") and stop. Transcribe text only when you can
+actually read it.
+
 You do NOT make up details. If a field has nothing to fill, you
-return an empty list. The downstream writer will work strictly from
-your description plus the hiker's own seed text — anything you omit
-or invent shapes whether the final memory is truthful.
+return an empty list (or an empty string). The downstream writer will
+work strictly from your description plus the hiker's own seed text —
+anything you omit or invent shapes whether the final memory is truthful.
 
 Always output valid JSON. No markdown fences, no commentary.
 """
@@ -707,8 +738,32 @@ nothing applies):
 
 - body_language_notes: short phrases on body language and facial
   expression that a viewer can see directly ("smiling", "looking
-  away from the camera", "holding the baby in a carrier"). Not
-  inferred mood — only what is on the face or in the posture.
+  away from the camera", "mid-stride", "arms raised"). Not inferred
+  mood — only what is on the face or in the posture. Put how people
+  carry one another in "interactions", not here.
+
+- interactions: how people physically relate to or carry one another,
+  ONLY when unambiguous: "an adult holding a baby in their arms", "an
+  adult wearing a child carrier", "a child on an adult's shoulders",
+  "an adult leaning over a baby". Describe the act, never the
+  orientation — do not write front, back, on the chest, on the hip, or
+  which shoulder. If a baby is simply held, "in their arms" is enough.
+  Empty list if there is no clear interaction.
+
+- legible_text: text you can actually READ in the image — trail signs,
+  summit markers, route names, place labels. Transcribe it verbatim,
+  and only when it is genuinely legible. Empty list if there is no text
+  or it is too small / blurry to read. Never guess at letters.
+
+- scene_type: ONE short phrase naming the dominant setting, e.g.
+  "summit vista", "lakeside", "forest trail", "trailhead / parking",
+  "rest / picnic spot", "playground", "ridge", "residential". Empty
+  string if genuinely unclear.
+
+- light_and_color: one short, faithful phrase on the light quality and
+  dominant palette ("bright midday sun, hard shadows, green canopy",
+  "soft overcast, muted greys"). Only what is visible — no mood. Empty
+  string if unclear.
 
 Be conservative. If you are unsure whether something is in the
 photo, leave it out. The downstream writer cannot reference what
@@ -722,7 +777,11 @@ exact shape:
   "objects_visible": ["string", "..."],
   "location_clues": ["string", "..."],
   "season_clues": ["string", "..."],
-  "body_language_notes": ["string", "..."]
+  "body_language_notes": ["string", "..."],
+  "interactions": ["string", "..."],
+  "legible_text": ["string", "..."],
+  "scene_type": "string",
+  "light_and_color": "string"
 }}
 """
 
