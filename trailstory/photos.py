@@ -316,7 +316,7 @@ def describe_photo(path: Path, *, client: AnthropicClient) -> PhotoDescription:
             f"Photo describer JSON did not match PhotoDescription schema for {path.name}: {exc}"
         ) from exc
 
-    # ADR-017 defense-in-depth: the describer prompt forbids guessing
+    # ADR-018 defense-in-depth: the describer prompt forbids guessing
     # carry orientation, but the spike showed models do it anyway. Strip
     # any orientation modifier that slipped through, keeping the grounded
     # carry fact. PhotoDescription is frozen, so rebuild via model_copy.
@@ -485,10 +485,10 @@ def _strip_code_fences(text: str) -> str:
     return "\n".join(lines).strip()
 
 
-# ── ADR-017 carry-orientation scrubber ───────────────────────────────────────
+# ── ADR-018 carry-orientation scrubber ───────────────────────────────────────
 #
 # The vision describer is told never to guess carry orientation (front /
-# back / chest / hip), but the spike behind ADR-017 showed every model
+# back / chest / hip), but the spike behind ADR-018 showed every model
 # does it anyway. These substitutions remove the orientation modifier
 # while keeping the grounded carry fact, so "wearing a child carrier on
 # the back" becomes "wearing a child carrier" rather than being dropped.
@@ -530,7 +530,7 @@ _TRAILING_DANGLER = re.compile(r"[\s,;-]*\b(?:in|on|against|to|of|and|with|the)\
 
 
 def _scrub_orientation(notes: list[str]) -> list[str]:
-    """Strip carry-orientation modifiers from describer notes (ADR-017).
+    """Strip carry-orientation modifiers from describer notes (ADR-018).
 
     Keeps the grounded carry fact ("wearing a child carrier"), removes the
     unreliable orientation ("on the back"). The body-part pattern only
@@ -551,7 +551,7 @@ def _scrub_orientation(notes: list[str]) -> list[str]:
         cleaned = _TRAILING_DANGLER.sub("", cleaned)
         cleaned = cleaned.strip(" ,;-")
         if cleaned != note:
-            logger.info("ADR-017 scrubbed carry orientation: %r -> %r", note, cleaned)
+            logger.info("ADR-018 scrubbed carry orientation: %r -> %r", note, cleaned)
         if cleaned:
             scrubbed.append(cleaned)
     return scrubbed

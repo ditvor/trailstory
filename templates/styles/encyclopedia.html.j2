@@ -90,6 +90,30 @@
     box-shadow: 0 2px 6px rgba(0,0,0,0.18);
   }
 
+  /* ── about this place (ADR-017) ──────────────────────────────────── */
+  .place {
+    margin: 0 0 30px;
+    padding: 18px 22px;
+    border: 1px solid #c9bca0;
+    background: #faf5ea;
+  }
+  .place-head {
+    margin: 0 0 10px;
+    font-family: "Didot", "Bodoni 72", "Playfair Display", Garamond, ui-serif, serif;
+    font-size: 18px; font-weight: 400;
+    letter-spacing: 0.03em; color: #6b5a37;
+  }
+  .place .place-summary { margin: 0; font-size: 16px; line-height: 1.6; color: #2a2520; }
+  .place .place-source {
+    margin: 12px 0 0;
+    font-family: "Didot", Garamond, ui-serif, serif;
+    font-size: 12px; font-style: italic; color: #6b5a37;
+  }
+  .place .place-source a {
+    color: #6b5a37; text-decoration: none; border-bottom: 1px solid #c9bca0;
+  }
+  .place .place-source a:hover { color: #2a2520; }
+
   body.lang-en .ru, body.lang-en .de { display: none; }
   body.lang-ru .en, body.lang-ru .de { display: none; }
   body.lang-de .en, body.lang-de .ru { display: none; }
@@ -354,6 +378,30 @@
         {%- for x, y in elevation %} L {{ (x * 100) | round(2) }},{{ (30 - y * 25) | round(2) }}{% endfor -%}
          L 100,30 Z"/>
     </svg>
+
+    {# ADR-017: "about this place" — conditional on a resolved PlaceContext.
+       Encyclopedia idiom: a titled reference entry with a cited source. #}
+    {% if place %}
+    <section class="place" aria-label="about this place">
+      <h2 class="place-head">
+        <span class="en">About {{ place.town }}</span>
+        <span class="ru">О месте: {{ place.town }}</span>
+        <span class="de">Über {{ place.town }}</span>
+      </h2>
+      <p class="place-summary">
+        <span class="en">{{ place.summary.en }}</span>
+        <span class="ru">{{ place.summary.ru }}</span>
+        <span class="de">{{ place.summary.de }}</span>
+      </p>
+      {% if place.source_url %}
+      <p class="place-source"><a href="{{ place.source_url }}" target="_blank" rel="noopener noreferrer">
+        <span class="en">Source: {{ place.source_title or place.town }}</span>
+        <span class="ru">Источник: {{ place.source_title or place.town }}</span>
+        <span class="de">Quelle: {{ place.source_title or place.town }}</span>
+      </a></p>
+      {% endif %}
+    </section>
+    {% endif %}
 
     <article>
       {# Reading tools — Notes (audit) toggle. column-span: all keeps

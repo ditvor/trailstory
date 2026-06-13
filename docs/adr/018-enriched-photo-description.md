@@ -1,4 +1,4 @@
-# ADR 017 — Enriched photo description (scene / light / legible text / orientation-free interactions)
+# ADR 018 — Enriched photo description (scene / light / legible text / orientation-free interactions)
 
 **Date:** 2026-06
 **Status:** Accepted

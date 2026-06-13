@@ -77,9 +77,9 @@ def get(key: str) -> PhotoDescription | None:
         logger.warning("vision cache payload for %s is not a JSON object; ignoring", key)
         return None
 
-    # ADR-017: invalidate entries whose shape predates the current
+    # ADR-018: invalidate entries whose shape predates the current
     # PhotoDescription. Checked on the raw dict (not the validated model)
-    # because the optional ADR-017 fields would otherwise let a stale
+    # because the optional ADR-018 fields would otherwise let a stale
     # entry validate to silent defaults. Old entries lack the key entirely
     # (``None`` != current) and miss cleanly.
     current_version = PhotoDescription.model_fields["schema_version"].default

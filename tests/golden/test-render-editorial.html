@@ -322,6 +322,26 @@
   .facts dd { margin: 0; color: var(--ink); }
   .facts dt:first-of-type, .facts dd:first-of-type { border-top: 0; padding-top: 0; }
 
+  /* ── about this place (ADR-017) ────────────────────────────────── */
+  /* Sits at the top of the marginalia: "where am I" is the first
+     context a distant reader wants. Summary in serif (not the mono
+     facts idiom) so 2-3 sentences read as prose; source link in the
+     small mono register for attribution (Wikipedia is CC BY-SA). */
+  .place .place-summary {
+    margin: 0;
+    font-family: var(--serif);
+    font-variation-settings: "opsz" 14;
+    font-size: 13.5px; line-height: 1.5;
+    color: var(--ink-2);
+    text-wrap: pretty; hyphens: auto;
+  }
+  .place .place-source { margin: 10px 0 0; font-size: 10px; letter-spacing: 0.04em; }
+  .place .place-source a {
+    color: var(--ink-3); text-decoration: none;
+    border-bottom: 1px solid var(--hairline);
+  }
+  .place .place-source a:hover { color: var(--ink); }
+
   .path-box {
     border: 1px solid var(--hairline);
     background: var(--paper-2);
@@ -663,6 +683,7 @@
           <span class="sign" aria-hidden="true">&minus;</span>
         </button>
         <div class="margin-body">
+
 
           <section class="facts">
             <h3>

@@ -130,10 +130,10 @@ class PhotoDescription(BaseModel):
 
     model_config = ConfigDict(frozen=True)
 
-    # ADR-017: shape version for the vision cache (ADR-012). Bump when the
+    # ADR-018: shape version for the vision cache (ADR-012). Bump when the
     # describer's output shape changes so stale on-disk entries invalidate
     # instead of validating to silent defaults. Started at 1 with the
-    # ADR-017 enriched fields (interactions / legible_text / scene_type /
+    # ADR-018 enriched fields (interactions / legible_text / scene_type /
     # light_and_color).
     schema_version: int = 1
     # Coarse count + brief descriptors ("a man with a beard", "a baby in a
@@ -153,24 +153,24 @@ class PhotoDescription(BaseModel):
     # ("smiling", "concentrating on the pull-up bar"). Not emotion
     # inferred from context — only what is on the face.
     body_language_notes: list[str] = Field(default_factory=list)
-    # ADR-017: how people physically relate to / carry one another, when
+    # ADR-018: how people physically relate to / carry one another, when
     # unambiguous ("an adult holding a baby in their arms", "wearing a
     # child carrier", "a child on an adult's shoulders"). Orientation-free
     # by contract: the describer prompt forbids front/back/chest/hip, and
     # ``photos._scrub_orientation`` strips any that slip through — the
-    # spike behind ADR-017 showed every model guesses carry orientation
+    # spike behind ADR-018 showed every model guesses carry orientation
     # unreliably. Grounds the carry fact without the unreliable modifier.
     interactions: list[str] = Field(default_factory=list)
-    # ADR-017: text genuinely legible in the photo — trail signs, summit
+    # ADR-018: text genuinely legible in the photo — trail signs, summit
     # markers, route names, place labels — transcribed verbatim. Empty
     # when there is no text or it is too small / blurry to read. A summit
     # sign or route name here can corroborate the GPX location / track_name.
     legible_text: list[str] = Field(default_factory=list)
-    # ADR-017: one short phrase for the dominant setting ("summit vista",
+    # ADR-018: one short phrase for the dominant setting ("summit vista",
     # "lakeside", "forest trail", "trailhead / parking", "rest / picnic
     # spot"). None when genuinely unclear. Helps the writer place a beat.
     scene_type: str | None = None
-    # ADR-017: one short faithful phrase on light quality + dominant
+    # ADR-018: one short faithful phrase on light quality + dominant
     # palette ("bright midday sun, hard shadows, green canopy"). Only what
     # is visible — no mood. None when unclear. Lets the writer render the
     # scene specifically without inventing.
@@ -470,9 +470,47 @@ class FactLedger(BaseModel):
     photo_positions: list[PhotoPosition] = Field(default_factory=list)
 
 
+class PlaceContext(BaseModel):
+    """The "about this place" block (ADR-017).
+
+    A short tri-lingual note giving the reader a sense of where the hike
+    happened. The ``summary`` is produced by a dedicated LLM "stitch" call
+    (``trailstory.llm.place``) that may use external knowledge ONLY in the
+    form of a supplied, citable reference extract (reverse-geocode →
+    Wikipedia) plus the hiker's own ledger-grounded place beats — never the
+    model's own memory.
+
+    Carried on :class:`Memory`, deliberately NOT on :class:`NarrativeOutput`:
+    it owns its own source attribution, must not bump the narrative
+    ``schema_version``, and is resolved by a separate, optional pass. The
+    field defaults to ``None`` everywhere, so a render without place context
+    (the default) is unchanged.
+    """
+
+    model_config = ConfigDict(frozen=True)
+
+    town: str
+    # Coarse wider area ("Bavarian Prealps", "Upper Bavaria") or None.
+    region: str | None = None
+    # The stitched 2-3 sentence note, EN / RU / DE.
+    summary: LocalizedString
+    # The hiker beats the stitch reported weaving in — a cheap audit hook
+    # mirroring sentence-level provenance (ADR-014). Not rendered.
+    used_hiker_details: list[str] = Field(default_factory=list)
+    # CC BY-SA attribution for the reference extract, rendered as a source
+    # link under the block. ``None`` when the extract was empty (the
+    # town-only fallback) — nothing to attribute.
+    source_url: str | None = None
+    source_title: str | None = None
+
+
 class Memory(BaseModel):
     hike_input: HikeInput
     gpx_stats: GpxStats
     narrative: NarrativeOutput
     selected_photos: list[PhotoMeta]
     style: Style = Style.editorial
+    # ADR-017: optional "about this place" block. ``None`` (the default)
+    # when the feature is off (no ``--place`` flag) or when geocoding /
+    # the stitch soft-failed. Never required to render.
+    place_context: PlaceContext | None = None

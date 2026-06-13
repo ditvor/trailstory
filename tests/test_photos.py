@@ -394,7 +394,7 @@ def _valid_description_dict(**overrides: object) -> dict[str, object]:
         "location_clues": ["evergreen forest"],
         "season_clues": ["overcast light"],
         "body_language_notes": ["walking forward"],
-        # ADR-017 enriched fields
+        # ADR-018 enriched fields
         "interactions": ["an adult holding a baby in their arms"],
         "legible_text": [],
         "scene_type": "forest trail",
@@ -433,7 +433,7 @@ def test_describe_photo_happy_path(tmp_path: Path) -> None:
 
 
 def test_describe_photo_keeps_enriched_fields(tmp_path: Path) -> None:
-    """ADR-017: scene_type / legible_text / light_and_color flow through."""
+    """ADR-018: scene_type / legible_text / light_and_color flow through."""
     p = tmp_path / "x.jpg"
     _make_jpeg(p, size=(100, 100))
     client = _vision_client(
@@ -453,7 +453,7 @@ def test_describe_photo_keeps_enriched_fields(tmp_path: Path) -> None:
 
 
 def test_describe_photo_scrubs_carry_orientation(tmp_path: Path) -> None:
-    """ADR-017: orientation modifiers are stripped, the carry fact kept."""
+    """ADR-018: orientation modifiers are stripped, the carry fact kept."""
     p = tmp_path / "x.jpg"
     _make_jpeg(p, size=(100, 100))
     client = _vision_client(
@@ -485,7 +485,7 @@ def test_describe_photo_scrubs_carry_orientation(tmp_path: Path) -> None:
         # legitimate, unambiguous carries are NOT touched
         (["a child on an adult's shoulders"], ["a child on an adult's shoulders"]),
         (["an adult holding a baby in their arms"], ["an adult holding a baby in their arms"]),
-        # ADR-017 regression: "back/front/chest/hip" as ordinary geography
+        # ADR-018 regression: "back/front/chest/hip" as ordinary geography
         # (no carry cue) must NOT be scrubbed — the carry-cue gate protects
         # these from the over-eager body-part pattern.
         (

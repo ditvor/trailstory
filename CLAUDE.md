@@ -593,7 +593,20 @@ don't relitigate them.
     streaming bypassed). `NarrativeOutput.schema_version=5`.
     Storyboard stage, runtime critic/style gates, and tone presets
     were evaluated and rejected — don't reintroduce them.
-17. [ADR-017 — enriched photo description](docs/adr/017-enriched-photo-description.md):
+17. [ADR-017 — "about this place" block](docs/adr/017-place-context-block.md):
+    an optional `--place` block giving the reader a short, warm sense of
+    where the hike happened. Facts are **sourced, not generated**: the
+    track's GPS is reverse-geocoded (OpenStreetMap Nominatim) to a town +
+    region, the town's Wikipedia summary supplies a grounded extract, and
+    a dedicated LLM "stitch" call weaves that with the hiker's ledger
+    beats — forbidden from adding any fact not in those two sources. New
+    `trailstory/place.py` (stdlib fetch, no new dependency),
+    `trailstory/llm/place.py`, `PlaceContext` on `Memory`,
+    `Settings.place_model` / `use_place_context`, and a place block in
+    all three styles with CC BY-SA attribution. Off by default
+    (reverse-geocoding discloses coordinates); soft-fails everywhere. Web
+    builder not yet wired.
+18. [ADR-018 — enriched photo description](docs/adr/018-enriched-photo-description.md):
     `PhotoDescription` gains four fields — `interactions` (how people
     carry/relate), `legible_text` (signs/markers, corroborates
     location/track_name), `scene_type`, `light_and_color`.

@@ -188,7 +188,7 @@ _FAKE_PHOTO_DESCRIPTION: Final[str] = json.dumps(
         "location_clues": ["forest with tall pines"],
         "season_clues": ["bright midday light"],
         "body_language_notes": ["walking forward, relaxed posture"],
-        # ADR-017 enriched fields, so the dev UI exercises the full shape.
+        # ADR-018 enriched fields, so the dev UI exercises the full shape.
         "interactions": [],
         "legible_text": [],
         "scene_type": "forest trail",

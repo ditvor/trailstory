@@ -18,7 +18,7 @@ class Settings(BaseSettings):
     # bump when a newer fast model lands.
     ledger_model: str = "claude-haiku-4-5"
     # Vision describer model (Phase 3 / ADR-010; default revised under
-    # ADR-017). Sonnet by default: the ADR-017 spike showed Haiku
+    # ADR-018). Sonnet by default: the ADR-018 spike showed Haiku
     # misreads fine detail that matters (it called a child carrier a
     # "dog"; Sonnet read it correctly), and the enriched describer's new
     # fields (interactions, legible_text) lean on exactly that fine
@@ -56,6 +56,17 @@ class Settings(BaseSettings):
             "before the Phase 2.5 verifier regenerates the draft. 1.0 disables."
         ),
     )
+    # Place-context stitch model (ADR-017). The "about this place" block is
+    # a constrained stitching task — connect a supplied reference extract
+    # with the hiker's own ledger beats — not open creative writing, so a
+    # Haiku-class model is the default. Override via PLACE_MODEL. Bump if
+    # the tri-lingual register (RU/DE in particular) needs more horsepower.
+    place_model: str = "claude-haiku-4-5"
+    # Master switch for the ADR-017 place-context pass. Off by default:
+    # reverse-geocoding sends the hike's coordinates to an external service
+    # (a location disclosure), and "privacy as wedge" means the user opts
+    # in explicitly — the CLI's --place flag, or USE_PLACE_CONTEXT=1.
+    use_place_context: bool = False
     output_dir: Path = Path("./output")
     log_level: str = "INFO"
 
