@@ -10,6 +10,24 @@ Versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 ## [Unreleased]
 
 ### Added
+- **"About this place" block (ADR-017).** An optional, opt-in
+  (`--place`) block that gives the reader a short, warm sense of where
+  the hike happened. Facts are *sourced, not generated*: the hike's GPS
+  coordinates are reverse-geocoded (OpenStreetMap Nominatim) to a town +
+  region, the town's Wikipedia summary supplies a grounded reference
+  extract, and a dedicated LLM "stitch" call weaves that extract together
+  with the hiker's own ledger beats (the church they passed, the lake) —
+  forbidden from adding any fact not in one of those two sources. New
+  `trailstory/place.py` (deterministic fetch, stdlib `urllib`, no new
+  dependency), `trailstory/llm/place.py` (the stitch), `PlaceContext` on
+  `Memory`, `Settings.place_model` / `use_place_context`, and a place block
+  in all three visual styles (editorial / log / encyclopedia) with CC BY-SA
+  source attribution. The hiker's `--location` wins over the geocoded town
+  (a track midpoint can fall in a neighbouring municipality); reverse-geocode
+  only fills the region. Off by default (reverse-geocoding discloses
+  coordinates). Soft-fails everywhere: a missing article yields a town-only
+  line, a failed geocode or stitch omits the block. Live-validated against
+  real Bad Tölz data. The web builder is not yet wired.
 - **Writer voice tightening + verbatim user phrase anchor (ADR-016).**
   The writer prompt now positions the register explicitly ("a warm
   family note to grandparents — neither a travel essay nor minutes of

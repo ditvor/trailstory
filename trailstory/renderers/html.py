@@ -99,6 +99,9 @@ def render_html(
         narrative=memory.narrative,
         flat_paragraphs=flat_paragraphs,
         stats=memory.gpx_stats,
+        # ADR-017: optional "about this place" block. ``None`` unless the
+        # --place pass ran and resolved; the template guards on it.
+        place=memory.place_context,
         photos=[_photo_context(p) for p in memory.selected_photos],
         elevation=elevation_profile(memory.gpx_stats, n=ELEVATION_POINTS),
         meta={
