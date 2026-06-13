@@ -20,6 +20,7 @@ from trailstory.models import PhotoDescription, PhotoMeta
 from trailstory.photos import (
     PhotoDescriptionError,
     PhotoLoadError,
+    _scrub_orientation,
     describe_photo,
     describe_photos,
     load_photos,
@@ -393,6 +394,11 @@ def _valid_description_dict(**overrides: object) -> dict[str, object]:
         "location_clues": ["evergreen forest"],
         "season_clues": ["overcast light"],
         "body_language_notes": ["walking forward"],
+        # ADR-018 enriched fields
+        "interactions": ["an adult holding a baby in their arms"],
+        "legible_text": [],
+        "scene_type": "forest trail",
+        "light_and_color": "overcast, muted greens",
     }
     base.update(overrides)
     return base
@@ -424,6 +430,74 @@ def test_describe_photo_happy_path(tmp_path: Path) -> None:
     assert isinstance(desc, PhotoDescription)
     assert desc.people_visible == ["a hiker in a jacket"]
     assert client.complete_vision.call_count == 1
+
+
+def test_describe_photo_keeps_enriched_fields(tmp_path: Path) -> None:
+    """ADR-018: scene_type / legible_text / light_and_color flow through."""
+    p = tmp_path / "x.jpg"
+    _make_jpeg(p, size=(100, 100))
+    client = _vision_client(
+        _valid_description_json(
+            legible_text=["Wallberg 1722 m"],
+            scene_type="summit vista",
+            light_and_color="bright midday sun, hard shadows",
+        )
+    )
+
+    desc = describe_photo(p, client=client)
+
+    assert desc.legible_text == ["Wallberg 1722 m"]
+    assert desc.scene_type == "summit vista"
+    assert desc.light_and_color == "bright midday sun, hard shadows"
+    assert desc.interactions == ["an adult holding a baby in their arms"]
+
+
+def test_describe_photo_scrubs_carry_orientation(tmp_path: Path) -> None:
+    """ADR-018: orientation modifiers are stripped, the carry fact kept."""
+    p = tmp_path / "x.jpg"
+    _make_jpeg(p, size=(100, 100))
+    client = _vision_client(
+        _valid_description_json(
+            interactions=["an adult wearing a child carrier on the back"],
+            body_language_notes=["holding the baby on his hip", "smiling"],
+        )
+    )
+
+    desc = describe_photo(p, client=client)
+
+    assert desc.interactions == ["an adult wearing a child carrier"]
+    assert desc.body_language_notes == ["holding the baby", "smiling"]
+
+
+@pytest.mark.parametrize(
+    ("raw", "expected"),
+    [
+        (["an adult wearing a child carrier on the back"], ["an adult wearing a child carrier"]),
+        (["a child carrier on the chest"], ["a child carrier"]),
+        (["holding a baby on her hip"], ["holding a baby"]),
+        (["carrying the baby in a front-mounted carrier"], ["carrying the baby in a carrier"]),
+        (["a back carrier worn high"], ["a carrier worn high"]),
+        # mid-string strip leaves clean punctuation, not "baby , smiling"
+        (
+            ["a parent wearing the baby on the back, smiling"],
+            ["a parent wearing the baby, smiling"],
+        ),
+        # legitimate, unambiguous carries are NOT touched
+        (["a child on an adult's shoulders"], ["a child on an adult's shoulders"]),
+        (["an adult holding a baby in their arms"], ["an adult holding a baby in their arms"]),
+        # ADR-018 regression: "back/front/chest/hip" as ordinary geography
+        # (no carry cue) must NOT be scrubbed — the carry-cue gate protects
+        # these from the over-eager body-part pattern.
+        (
+            ["a sign pointing to the back of the valley"],
+            ["a sign pointing to the back of the valley"],
+        ),
+        (["leaning against the chest-high railing"], ["leaning against the chest-high railing"]),
+        (["the trail wraps around to the back"], ["the trail wraps around to the back"]),
+    ],
+)
+def test_scrub_orientation_cases(raw: list[str], expected: list[str]) -> None:
+    assert _scrub_orientation(raw) == expected
 
 
 def test_describe_photo_strips_markdown_fences(tmp_path: Path) -> None:

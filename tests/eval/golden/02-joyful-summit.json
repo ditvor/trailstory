@@ -1,141 +1,141 @@
 {
-  "schema_version": 4,
+  "schema_version": 5,
   "title": {
-    "en": "A Monday Morning with Mia",
-    "ru": "Понедельничное утро с Мией",
-    "de": "Ein Montagmorgen mit Mia"
+    "en": "A Morning with Mia in the Bavarian Alps",
+    "ru": "Утро с Мией в Баварских Альпах",
+    "de": "Ein Morgen mit Mia in den Bayerischen Alpen"
   },
   "subtitle": {
-    "en": "A spring climb in the Bavarian Alps under a clear blue sky",
-    "ru": "Весенний подъём в Баварских Альпах под чистым синим небом",
-    "de": "Ein Frühlingsaufstieg in den Bayerischen Alpen unter klarblauem Himmel"
+    "en": "A short climb, apples at the top, and one very happy girl",
+    "ru": "Короткий подъём, яблоки на вершине и одна очень счастливая девочка",
+    "de": "Ein kurzer Aufstieg, Äpfel oben und ein sehr glückliches Mädchen"
   },
   "paragraphs": [
     [
       {
         "text": {
-          "en": "We set out into the Bavarian Alps on a bright April morning, Mia and I, with the sky already that clean, cloudless blue you only really get in spring.",
-          "ru": "Мы вышли в Баварские Альпы ясным апрельским утром — Мия и я, — и небо уже было таким чистым, безоблачно синим, какое бывает только весной.",
-          "de": "Wir brachen an einem hellen Aprilmorgen in die Bayerischen Alpen auf, Mia und ich, und der Himmel war schon dieses klare, wolkenlose Blau, das es eigentlich nur im Frühling gibt."
+          "en": "We set off on a Monday morning in April, Mia and I, into the Bavarian Alps.",
+          "ru": "Мы вышли в путь утром в понедельник, в апреле — я и Мия, в Баварские Альпы.",
+          "de": "Wir sind an einem Montagmorgen im April losgezogen, Mia und ich, in die Bayerischen Alpen."
         },
         "provenance": {
           "source": "gpx",
-          "reference": "where, season, when"
+          "reference": "when, where, day_of_week"
         }
       },
       {
         "text": {
-          "en": "It was a Monday, which made the quiet on the path feel like a small gift just for us.",
-          "ru": "Был понедельник, и тишина на тропе казалась маленьким подарком, припасённым только для нас.",
-          "de": "Es war ein Montag, und die Stille auf dem Weg fühlte sich an wie ein kleines Geschenk, nur für uns."
+          "en": "The path climbed from the start, and Mia laughed the whole way up.",
+          "ru": "Тропа поднималась с самого начала, и Мия смеялась всю дорогу наверх.",
+          "de": "Der Weg stieg von Anfang an, und Mia hat den ganzen Weg hinauf gelacht."
         },
         "provenance": {
-          "source": "gpx",
-          "reference": "day_of_week"
+          "source": "seed",
+          "reference": "Mia laughed the whole way up"
         }
       }
     ],
     [
       {
         "text": {
-          "en": "The climb up was full of small joys — birds calling from somewhere we couldn't quite see, little streams crossing the trail, and a wind that kept tugging at our jackets.",
-          "ru": "Подъём был полон маленьких радостей — где-то перекликались птицы, которых мы так и не разглядели, через тропу бежали ручейки, а ветер всё дёргал нас за куртки.",
-          "de": "Der Aufstieg war voller kleiner Freuden — Vögel riefen irgendwo, wo wir sie nicht ausmachen konnten, kleine Bäche kreuzten den Pfad, und der Wind zerrte immer wieder an unseren Jacken."
+          "en": "She noticed every bird, every stream, every gust of wind, and wanted me to notice them too.",
+          "ru": "Она замечала каждую птицу, каждый ручей, каждый порыв ветра — и хотела, чтобы я тоже замечал.",
+          "de": "Sie hat jeden Vogel, jeden Bach, jeden Windstoß bemerkt und wollte, dass ich sie auch bemerke."
         },
         "provenance": {
           "source": "seed",
-          "reference": "ascent with birds, streams, and wind; joyful, amused"
+          "reference": "every bird, every stream, every gust of wind"
         }
       },
       {
         "text": {
-          "en": "Mia kept laughing at the way the gusts surprised us, and honestly, so did I.",
-          "ru": "Мия всё посмеивалась над тем, как ветер врасплох нас заставал, — и я, честно говоря, тоже.",
-          "de": "Mia musste immer wieder lachen, wie uns die Böen überraschten, und ehrlich gesagt, ich auch."
-        },
-        "provenance": {
-          "source": "seed",
-          "reference": "emotion: joyful, amused"
-        }
-      }
-    ],
-    [
-      {
-        "text": {
-          "en": "By midday we'd reached the top, and we sat down to rest where the whole sky just opened up above us.",
-          "ru": "К полудню мы добрались до вершины и сели передохнуть там, где небо над нами просто распахнулось во всю ширь.",
-          "de": "Gegen Mittag waren wir oben angekommen und setzten uns dort hin, wo sich der ganze Himmel einfach über uns auftat."
-        },
-        "provenance": {
-          "source": "seed",
-          "reference": "summit rest with sky observation"
-        }
-      },
-      {
-        "text": {
-          "en": "We pulled out apples and ate them slowly, looking up, not saying much.",
-          "ru": "Мы достали яблоки и ели их медленно, глядя вверх и почти не разговаривая.",
-          "de": "Wir holten Äpfel heraus und aßen sie langsam, blickten nach oben und sagten nicht viel."
-        },
-        "provenance": {
-          "source": "photo",
-          "reference": "apples"
-        }
-      },
-      {
-        "text": {
-          "en": "There was that good kind of quiet wonder between us — the kind you don't really want to interrupt.",
-          "ru": "Между нами повисло то самое тёплое тихое восхищение, которое не хочется нарушать.",
-          "de": "Zwischen uns lag diese gute, stille Art von Staunen — die, die man eigentlich gar nicht unterbrechen möchte."
-        },
-        "provenance": {
-          "source": "seed",
-          "reference": "emotion: joyful, wonder"
-        }
-      }
-    ],
-    [
-      {
-        "text": {
-          "en": "We stayed up there a long time before turning back toward the valley.",
-          "ru": "Мы долго сидели наверху, прежде чем повернуть обратно к долине.",
-          "de": "Wir blieben lange dort oben, bevor wir uns wieder ins Tal aufmachten."
-        },
-        "provenance": {
-          "source": "gpx",
-          "reference": "pause duration_min 50"
-        }
-      },
-      {
-        "text": {
-          "en": "It wasn't a big or dramatic day — just a clear-skied morning with a good friend, which honestly might be the best kind.",
-          "ru": "Это был не какой-то особенный или громкий день — просто ясное утро рядом с хорошим другом, и, наверное, это и есть самое лучшее.",
-          "de": "Es war kein großer, dramatischer Tag — nur ein klarer Morgen mit einer guten Freundin, und das ist vielleicht ehrlich die schönste Art."
+          "en": "It was a joyful, slightly out-of-breath kind of climb — the good sort that goes by quickly because someone small is chattering beside you.",
+          "ru": "Подъём был радостный и немного запыхавшийся — из тех, что пролетают быстро, потому что рядом без умолку болтает маленький человек.",
+          "de": "Es war ein fröhlicher, etwas außer Atem geratener Aufstieg — einer, der schnell vergeht, weil jemand Kleines neben einem plappert."
         },
         "provenance": {
           "source": "inferred",
-          "reference": "closing mood from joyful tone and clear weather"
+          "reference": "joyful emotion during uphill beat"
+        }
+      }
+    ],
+    [
+      {
+        "text": {
+          "en": "At the top we sat down for a long rest and got out the apples.",
+          "ru": "Наверху мы сели надолго отдохнуть и достали яблоки.",
+          "de": "Oben haben wir uns für eine lange Pause hingesetzt und die Äpfel ausgepackt."
+        },
+        "provenance": {
+          "source": "seed",
+          "reference": "sitting at summit eating apples"
+        }
+      },
+      {
+        "text": {
+          "en": "Mia was delighted — she clapped her hands at the wide blue and crunched her apple between claps.",
+          "ru": "Мия была в восторге — она хлопала в ладоши, глядя на широкую синеву, и между хлопками хрустела яблоком.",
+          "de": "Mia war begeistert — sie hat in die Hände geklatscht beim Blick ins weite Blau und zwischendurch in ihren Apfel gebissen."
+        },
+        "provenance": {
+          "source": "seed",
+          "reference": "she clapped her hands at the wide blue; apples"
+        }
+      },
+      {
+        "text": {
+          "en": "We stayed up there a good long while before turning back.",
+          "ru": "Мы пробыли наверху довольно долго, прежде чем повернуть назад.",
+          "de": "Wir sind ziemlich lange oben geblieben, bevor wir umgekehrt sind."
+        },
+        "provenance": {
+          "source": "gpx",
+          "reference": "pause duration at summit"
+        }
+      }
+    ],
+    [
+      {
+        "text": {
+          "en": "It wasn't a long morning by the map, but it felt like a whole day to both of us.",
+          "ru": "По карте это утро было недолгим, но нам обоим оно показалось целым днём.",
+          "de": "Nach der Karte war es kein langer Morgen, aber für uns beide hat sich's wie ein ganzer Tag angefühlt."
+        },
+        "provenance": {
+          "source": "inferred",
+          "reference": "short distance, full experience"
+        }
+      },
+      {
+        "text": {
+          "en": "I wish you could have heard her up there.",
+          "ru": "Жаль, что вы не слышали её там наверху.",
+          "de": "Ich wünschte, ihr hättet sie da oben hören können."
+        },
+        "provenance": {
+          "source": "inferred",
+          "reference": "warm closing to grandparents"
         }
       }
     ]
   ],
   "pull_quote": {
-    "en": "We pulled out apples and ate them slowly, looking up, not saying much.",
-    "ru": "Мы достали яблоки и ели их медленно, глядя вверх и почти не разговаривая.",
-    "de": "Wir holten Äpfel heraus und aßen sie langsam, blickten nach oben und sagten nicht viel."
+    "en": "Mia laughed the whole way up — every bird, every stream, every gust of wind.",
+    "ru": "Мия смеялась всю дорогу наверх — каждую птицу, каждый ручей, каждый порыв ветра.",
+    "de": "Mia hat den ganzen Weg hinauf gelacht — jeden Vogel, jeden Bach, jeden Windstoß."
   },
   "milestone": {
-    "en": "Spring climb with Mia",
-    "ru": "Весенний подъём с Мией",
-    "de": "Frühlingstour mit Mia"
+    "en": "Mia's first summit",
+    "ru": "Первая вершина Мии",
+    "de": "Mias erster Gipfel"
   },
   "selected_photo_indices": [
     0,
     2,
     4,
-    5,
-    7,
-    9,
+    6,
+    8,
+    10,
     11
   ]
 }

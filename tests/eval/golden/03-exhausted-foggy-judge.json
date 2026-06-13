@@ -5,49 +5,64 @@
   "photo_selection_plausibility": 4.0,
   "claim_verdicts": [
     {
-      "claim": "The hike took place on a Monday morning in April",
+      "claim": "they set out on a Monday morning in April",
       "verdict": "UNSUPPORTED",
       "quote": ""
     },
     {
-      "claim": "The hike was in the Bavarian Alps",
+      "claim": "they hiked in the Bavarian Alps",
       "verdict": "UNSUPPORTED",
       "quote": ""
     },
     {
-      "claim": "The fog was thick throughout",
+      "claim": "the fog never lifted",
       "verdict": "SUPPORTED",
-      "quote": "The fog never lifted."
+      "quote": "The fog never lifted"
     },
     {
-      "claim": "Mia cried for most of the climb",
-      "verdict": "SUPPORTED",
-      "quote": "Mia cried for the last hour"
+      "claim": "they could only see the next few steps and each other",
+      "verdict": "INFERRED",
+      "quote": "The fog never lifted"
     },
     {
-      "claim": "The hiker's shoulders burned",
+      "claim": "the climb was steady and long",
+      "verdict": "INFERRED",
+      "quote": "my shoulders burned"
+    },
+    {
+      "claim": "the hiker's shoulders burned before reaching the top",
       "verdict": "SUPPORTED",
       "quote": "my shoulders burned"
     },
     {
-      "claim": "The hiker doubted whether they should turn back",
+      "claim": "Mia cried for the last hour",
       "verdict": "SUPPORTED",
-      "quote": "I was sure we'd made a mistake"
+      "quote": "Mia cried for the last hour"
     },
     {
-      "claim": "The fog muffled sounds including Mia's voice",
+      "claim": "the hiker kept walking and talking to Mia through the grey",
+      "verdict": "UNSUPPORTED",
+      "quote": ""
+    },
+    {
+      "claim": "they stopped for a long rest near the top",
       "verdict": "INFERRED",
-      "quote": "The fog never lifted."
+      "quote": "pauses"
     },
     {
-      "claim": "They stopped for a long rest near the top",
+      "claim": "the rest felt longer than the climb itself",
       "verdict": "UNSUPPORTED",
       "quote": ""
     },
     {
-      "claim": "The pause near the top changed everything",
-      "verdict": "UNSUPPORTED",
-      "quote": ""
+      "claim": "Mia settled during the rest",
+      "verdict": "INFERRED",
+      "quote": "Mia cried for the last hour"
+    },
+    {
+      "claim": "the air was wet and quiet",
+      "verdict": "INFERRED",
+      "quote": "The fog never lifted"
     },
     {
       "claim": "Mia fell asleep on the descent",
@@ -55,26 +70,11 @@
       "quote": "she fell asleep on the descent"
     },
     {
-      "claim": "Mia was finally peaceful when she fell asleep",
-      "verdict": "INFERRED",
-      "quote": "she fell asleep on the descent"
-    },
-    {
-      "claim": "The hiker noticed ferns underfoot on the descent",
+      "claim": "the hiker noticed ferns underfoot for the first time all morning",
       "verdict": "SUPPORTED",
       "quote": "I noticed the ferns underfoot"
-    },
-    {
-      "claim": "The ferns were soft and green along the path",
-      "verdict": "INFERRED",
-      "quote": "I noticed the ferns underfoot"
-    },
-    {
-      "claim": "The fern detail reassured the hiker",
-      "verdict": "SUPPORTED",
-      "quote": "until she fell asleep on the descent and I noticed the ferns underfoot"
     }
   ],
-  "notes": "The narrative arc is well-structured — opening fog, hard climb, turning-point rest, quiet descent, and the fern epiphany — but the middle paragraph's 'long rest that changed everything' is an UNSUPPORTED beat that slightly strains credibility. Warmth is moderate: phrases like 'her small voice' and 'the mountain was already letting us go gently' are genuinely tender, but the prose stays on the safer side of generic at times, never quite achieving the hiker's own raw voice. Russian is fluent and idiomatic ('тоненький голос', 'мягко отпускала нас'), with only the opener ('про апрельское утро понедельника') feeling mildly constructed; a native reader would rarely flag it. Photo selection covers seven indices spread plausibly across a small range, suggesting a coherent arc from fog-shrouded start to fern-lit descent.",
-  "faithfulness": 3.04
+  "notes": "The narrative arc is well-shaped: opening in fog, physical effort, rest, and a quiet redemptive close on the ferns. Warmth is moderate — the prose is clean and honest but leans slightly generic ('steady and long', 'wet, quiet air') rather than reaching for the raw specificity of the seed. Russian is fluent and natural, with 'серую мглу' and 'без передышки' showing genuine register awareness rather than translation; minor stiffness in 'самое трудное осталось позади'. Photo indices span the available range with seven frames, plausibly covering the arc's beats, though the even-numbered stride is mechanical.",
+  "faithfulness": 2.68
 }

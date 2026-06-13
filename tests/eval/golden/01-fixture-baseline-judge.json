@@ -1,60 +1,60 @@
 {
-  "warmth": 4.0,
-  "narrative_arc": 4.5,
-  "russian_fidelity": 4.5,
+  "warmth": 3.0,
+  "narrative_arc": 3.5,
+  "russian_fidelity": 4.0,
   "photo_selection_plausibility": 4.0,
   "claim_verdicts": [
     {
-      "claim": "They started in foggy conditions in the Bavarian Alps",
+      "claim": "They set out on a Monday morning in April",
+      "verdict": "INFERRED",
+      "quote": "when, where, weather (provenance: gpx)"
+    },
+    {
+      "claim": "The hike took place in the Bavarian Alps",
+      "verdict": "INFERRED",
+      "quote": "where (provenance: gpx)"
+    },
+    {
+      "claim": "There was thick fog at the start",
+      "verdict": "INFERRED",
+      "quote": "mood inferred from fog before clearing"
+    },
+    {
+      "claim": "They could not see much beyond the next few steps of the path",
+      "verdict": "INFERRED",
+      "quote": "mood inferred from fog before clearing"
+    },
+    {
+      "claim": "The climb was steady and steep",
+      "verdict": "INFERRED",
+      "quote": "elevation_gain_m, distance_km (provenance: gpx)"
+    },
+    {
+      "claim": "Near the top they stopped for a long rest",
+      "verdict": "INFERRED",
+      "quote": "pauses (50 min near summit) (provenance: gpx)"
+    },
+    {
+      "claim": "They sat in the grey for a good while",
+      "verdict": "INFERRED",
+      "quote": "pauses (50 min near summit) (provenance: gpx)"
+    },
+    {
+      "claim": "They reached the ridge just as the fog cleared",
       "verdict": "SUPPORTED",
       "quote": "The fog cleared just as we reached the ridge."
     },
     {
-      "claim": "It was a Monday in April",
+      "claim": "The narrator took a lot of photos on the ridge",
       "verdict": "INFERRED",
-      "quote": "season, day_of_week from GPX"
+      "quote": "n_photos (provenance: gpx)"
     },
     {
-      "claim": "The path went upward almost from the start",
+      "claim": "They walked on from the ridge toward the end of the route",
       "verdict": "INFERRED",
-      "quote": "elevation_gain_m from GPX"
-    },
-    {
-      "claim": "The fog thinned in patches, brightening from grey toward silver",
-      "verdict": "INFERRED",
-      "quote": "The fog cleared just as we reached the ridge."
-    },
-    {
-      "claim": "They stopped for a long rest near the top",
-      "verdict": "INFERRED",
-      "quote": "50-minute pause near summit from GPX pauses"
-    },
-    {
-      "claim": "They sat above the fog looking down at a soft white sea",
-      "verdict": "INFERRED",
-      "quote": "The fog cleared just as we reached the ridge."
-    },
-    {
-      "claim": "Cool spring air settled on hands",
-      "verdict": "INFERRED",
-      "quote": "season from GPX; spring morning in subtitle"
-    },
-    {
-      "claim": "Quiet pressed in around them",
-      "verdict": "UNSUPPORTED",
-      "quote": ""
-    },
-    {
-      "claim": "The route was point-to-point, not an out-and-back",
-      "verdict": "INFERRED",
-      "quote": "track_shape point_to_point from GPX"
-    },
-    {
-      "claim": "The ridge was clear and bright when they reached the high point",
-      "verdict": "SUPPORTED",
-      "quote": "The fog cleared just as we reached the ridge."
+      "quote": "track_shape point_to_point (provenance: gpx)"
     }
   ],
-  "notes": "The prose has genuine warmth and specificity — 'fog brightening toward something almost silver' and 'cool spring air settle on my hands' lift it above generic hiking copy. The arc is well-shaped: opening atmosphere, sustained effort, landscape payoff, a quiet human-detail beat, and a clean point-to-point ending. Russian reads naturally and idiomatically; 'такой весенний день, который ещё сам не решил, чем стать' is exactly the register a native writer would choose. Seven photo indices spanning indices 0-11 give good distribution across the arc, though the slight gap between index 4 and 6 is a minor issue rather than a real flaw.",
+  "notes": "The prose is restrained and pleasant but leans on generic descriptors ('grey morning', 'small reward') rather than specific sensory detail, keeping warmth at mid-range. The narrative arc is present and coherent — fog/effort/clearing/payoff/departure — though the human-detail beat (photos) feels brief and underdeveloped. Russian is natural and idiomatic with only minor stiffness ('в этой серой пелене' is a slight over-literalism for 'sitting in the grey'). Photo indices (7 images, distributed 0–11) map plausibly to the arc's beats with reasonable spread.",
   "faithfulness": 2.75
 }

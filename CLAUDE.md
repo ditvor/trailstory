@@ -593,6 +593,33 @@ don't relitigate them.
     streaming bypassed). `NarrativeOutput.schema_version=5`.
     Storyboard stage, runtime critic/style gates, and tone presets
     were evaluated and rejected — don't reintroduce them.
+17. [ADR-017 — "about this place" block](docs/adr/017-place-context-block.md):
+    an optional `--place` block giving the reader a short, warm sense of
+    where the hike happened. Facts are **sourced, not generated**: the
+    track's GPS is reverse-geocoded (OpenStreetMap Nominatim) to a town +
+    region, the town's Wikipedia summary supplies a grounded extract, and
+    a dedicated LLM "stitch" call weaves that with the hiker's ledger
+    beats — forbidden from adding any fact not in those two sources. New
+    `trailstory/place.py` (stdlib fetch, no new dependency),
+    `trailstory/llm/place.py`, `PlaceContext` on `Memory`,
+    `Settings.place_model` / `use_place_context`, and a place block in
+    all three styles with CC BY-SA attribution. Off by default
+    (reverse-geocoding discloses coordinates); soft-fails everywhere. Web
+    builder not yet wired.
+18. [ADR-018 — enriched photo description](docs/adr/018-enriched-photo-description.md):
+    `PhotoDescription` gains four fields — `interactions` (how people
+    carry/relate), `legible_text` (signs/markers, corroborates
+    location/track_name), `scene_type`, `light_and_color`.
+    `interactions` is **orientation-free by contract**: the describer
+    prompt bans front/back/chest/hip and `photos._scrub_orientation`
+    strips any that slip through while keeping the carry fact; a
+    matching writer hard rule forbids asserting a carry/worn-object
+    orientation the ledger does not state. `Settings.vision_model`
+    default moves to `claude-sonnet-4-6` (overridable) — the spike
+    behind this ADR showed Haiku misreads fine detail (called a child
+    carrier a "dog"). `PhotoDescription` is not part of
+    `NarrativeOutput`, so `schema_version` is unchanged. A `certainty`
+    field and a spatial-claim verifier were evaluated and rejected.
 
 If you're about to do something that touches an area covered by an existing
 ADR, **read the ADR first**. If the change is incompatible with the recorded

@@ -1,18 +1,13 @@
 {
-  "warmth": 4.0,
-  "narrative_arc": 4.5,
+  "warmth": 3.5,
+  "narrative_arc": 3.5,
   "russian_fidelity": 4.5,
   "photo_selection_plausibility": 3.0,
   "claim_verdicts": [
     {
-      "claim": "They arrived at the parking spot around noon",
+      "claim": "They parked around noon",
       "verdict": "SUPPORTED",
       "quote": "We arrived to the parking spot around 12"
-    },
-    {
-      "claim": "The group was Katya, Olga, Igor, and little Danny",
-      "verdict": "SUPPORTED",
-      "quote": "It was four of us: Katya, Olga, Igor and little Danny"
     },
     {
       "claim": "They walked into the centre of Bad Tölz for brunch",
@@ -20,62 +15,72 @@
       "quote": "Went to the city centre and enjoyed some brunch"
     },
     {
-      "claim": "The weather was bright and amazing",
+      "claim": "Katya was present",
+      "verdict": "SUPPORTED",
+      "quote": "It was four of us: Katya, Olga, Igor and little Danny"
+    },
+    {
+      "claim": "Olga was present",
+      "verdict": "SUPPORTED",
+      "quote": "It was four of us: Katya, Olga, Igor and little Danny"
+    },
+    {
+      "claim": "Igor was present",
+      "verdict": "SUPPORTED",
+      "quote": "It was four of us: Katya, Olga, Igor and little Danny"
+    },
+    {
+      "claim": "Little Danny was present",
+      "verdict": "SUPPORTED",
+      "quote": "little Danny"
+    },
+    {
+      "claim": "The weather was amazing",
       "verdict": "SUPPORTED",
       "quote": "The weather was amazing"
     },
     {
-      "claim": "It was a Bavarian Saturday in April",
-      "verdict": "INFERRED",
-      "quote": "season + day_of_week from GPX reference"
-    },
-    {
-      "claim": "They hiked along the Isar river",
+      "claim": "They hiked along the river Isar",
       "verdict": "SUPPORTED",
       "quote": "we started our trip along the river Isar"
     },
     {
-      "claim": "Danny and the group enjoyed the hike",
+      "claim": "Danny and the group enjoyed the hike a lot",
       "verdict": "SUPPORTED",
       "quote": "Danny and us enjoyed the hike a lot"
     },
     {
-      "claim": "The river was loud and clear beside them",
-      "verdict": "INFERRED",
-      "quote": "amazing weather + river Isar context"
+      "claim": "Everyone loved little Danny",
+      "verdict": "SUPPORTED",
+      "quote": "Everyone loved little Danny"
     },
     {
-      "claim": "Danny was carried during the hike",
-      "verdict": "INFERRED",
-      "quote": "Everyone loved little Danny — child small enough to be carried"
+      "claim": "Strangers smiled at Danny the whole way",
+      "verdict": "UNSUPPORTED",
+      "quote": ""
     },
     {
-      "claim": "They entered an old church along the way",
+      "claim": "They visited an old church in town",
       "verdict": "SUPPORTED",
       "quote": "we visited an old church"
     },
     {
-      "claim": "The church contained wax figures",
-      "verdict": "SUPPORTED",
-      "quote": "those wax figures were waiting for us in unexpected places"
-    },
-    {
-      "claim": "There was a wax figure of Jesus laid out lifelike",
-      "verdict": "SUPPORTED",
-      "quote": "very strange figures of Jesus and his friends"
-    },
-    {
-      "claim": "The figures were in unexpected places and gave them a chill",
-      "verdict": "SUPPORTED",
-      "quote": "those wax figures were waiting for us in unexpected places"
-    },
-    {
-      "claim": "The church visit felt creepy",
+      "claim": "The church was creepy",
       "verdict": "SUPPORTED",
       "quote": "It was creepy"
     },
     {
-      "claim": "They got Asian food to go in the evening",
+      "claim": "The church had wax figures inside",
+      "verdict": "SUPPORTED",
+      "quote": "those wax figures were waiting for us in unexpected places"
+    },
+    {
+      "claim": "Jesus was among the wax figures",
+      "verdict": "SUPPORTED",
+      "quote": "very strange figures of Jesus and his friends"
+    },
+    {
+      "claim": "They got Asian food to take away",
       "verdict": "SUPPORTED",
       "quote": "we grabbed some Asian food to go"
     },
@@ -85,6 +90,6 @@
       "quote": "enjoyed our dinner near the water"
     }
   ],
-  "notes": "The English prose is warm and personal with good sensory texture ('the river was loud and clear', 'slow your steps on purpose'), earning a high warmth score just short of 5 because a couple of phrases ('the kind of walk that makes you', 'perfect way to close out') edge toward light boilerplate. The arc is well-shaped — arrival, brunch, river walk, creepy church, evening meal — with each paragraph earning its place; only the transition into the church beat is slightly abrupt. Russian is fluent and natural; 'один из тех ярких баварских апрельских субботних дней' is a touch clunky with stacked adjectives but otherwise reads natively. Photo selection scores 3 because indices 0-5 are simply the first six in sequence with no evidence of distribution across a wider range, which limits confidence that they genuinely trace the arc.",
-  "faithfulness": 4.53
+  "notes": "The narrative covers all seed beats competently and the Russian is natural, idiomatic, and free of awkward calques — 'устроились с ней у воды' and 'прохожие улыбались ему всю дорогу' read like native prose. Warmth is moderate: the piece is pleasant but leans on summary statements ('enjoyed the hike a lot') rather than sensory particulars, limiting it to 3.5. The arc is present — arrival, brunch, hike, church, dinner — but the church beat is compressed to a single sentence, losing the 'unexpected places' tension that was one of the seed's most vivid details. Photo indices are [0-5], exactly 6 frames, but with no evidence of distribution matching specific beats (e.g. church interior, food shot), scoring conservatively at 3.0. One unsupported claim: strangers smiling at Danny is an inference not found in the seed.",
+  "faithfulness": 4.71
 }

@@ -130,6 +130,12 @@ class PhotoDescription(BaseModel):
 
     model_config = ConfigDict(frozen=True)
 
+    # ADR-018: shape version for the vision cache (ADR-012). Bump when the
+    # describer's output shape changes so stale on-disk entries invalidate
+    # instead of validating to silent defaults. Started at 1 with the
+    # ADR-018 enriched fields (interactions / legible_text / scene_type /
+    # light_and_color).
+    schema_version: int = 1
     # Coarse count + brief descriptors ("a man with a beard", "a baby in a
     # green hat"). Identities, names, and inferred relationships are NOT
     # emitted by the describer — only what a viewer can see at a glance.
@@ -147,6 +153,28 @@ class PhotoDescription(BaseModel):
     # ("smiling", "concentrating on the pull-up bar"). Not emotion
     # inferred from context — only what is on the face.
     body_language_notes: list[str] = Field(default_factory=list)
+    # ADR-018: how people physically relate to / carry one another, when
+    # unambiguous ("an adult holding a baby in their arms", "wearing a
+    # child carrier", "a child on an adult's shoulders"). Orientation-free
+    # by contract: the describer prompt forbids front/back/chest/hip, and
+    # ``photos._scrub_orientation`` strips any that slip through — the
+    # spike behind ADR-018 showed every model guesses carry orientation
+    # unreliably. Grounds the carry fact without the unreliable modifier.
+    interactions: list[str] = Field(default_factory=list)
+    # ADR-018: text genuinely legible in the photo — trail signs, summit
+    # markers, route names, place labels — transcribed verbatim. Empty
+    # when there is no text or it is too small / blurry to read. A summit
+    # sign or route name here can corroborate the GPX location / track_name.
+    legible_text: list[str] = Field(default_factory=list)
+    # ADR-018: one short phrase for the dominant setting ("summit vista",
+    # "lakeside", "forest trail", "trailhead / parking", "rest / picnic
+    # spot"). None when genuinely unclear. Helps the writer place a beat.
+    scene_type: str | None = None
+    # ADR-018: one short faithful phrase on light quality + dominant
+    # palette ("bright midday sun, hard shadows, green canopy"). Only what
+    # is visible — no mood. None when unclear. Lets the writer render the
+    # scene specifically without inventing.
+    light_and_color: str | None = None
 
 
 class PhotoMeta(BaseModel):

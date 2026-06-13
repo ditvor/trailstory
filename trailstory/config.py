@@ -17,11 +17,15 @@ class Settings(BaseSettings):
     # env var. Defaulting to the latest Haiku class as of ship time;
     # bump when a newer fast model lands.
     ledger_model: str = "claude-haiku-4-5"
-    # Vision describer model (Phase 3 / ADR-010). Same model family as
-    # the ledger extractor by default — Haiku 4.5 has vision and the
-    # per-photo describer task is small enough that Opus quality is
-    # overkill. Override via VISION_MODEL env var.
-    vision_model: str = "claude-haiku-4-5"
+    # Vision describer model (Phase 3 / ADR-010; default revised under
+    # ADR-018). Sonnet by default: the ADR-018 spike showed Haiku
+    # misreads fine detail that matters (it called a child carrier a
+    # "dog"; Sonnet read it correctly), and the enriched describer's new
+    # fields (interactions, legible_text) lean on exactly that fine
+    # detail. The per-photo cost is small and the describer task is
+    # bounded. Override via VISION_MODEL env var (drop back to
+    # "claude-haiku-4-5" for cost-sensitive batch runs).
+    vision_model: str = "claude-sonnet-4-6"
     # Master switch for the Phase 3 vision pass. Default on per ADR-010
     # — vision grounding is the whole point. Set USE_PHOTO_GROUNDING=0
     # to skip vision calls entirely (cheaper, faster, but the writer
