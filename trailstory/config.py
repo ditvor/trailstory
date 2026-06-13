@@ -56,12 +56,15 @@ class Settings(BaseSettings):
             "before the Phase 2.5 verifier regenerates the draft. 1.0 disables."
         ),
     )
-    # Place-context stitch model (ADR-017). The "about this place" block is
-    # a constrained stitching task — connect a supplied reference extract
-    # with the hiker's own ledger beats — not open creative writing, so a
-    # Haiku-class model is the default. Override via PLACE_MODEL. Bump if
-    # the tri-lingual register (RU/DE in particular) needs more horsepower.
-    place_model: str = "claude-haiku-4-5"
+    # Place-context stitch model (ADR-017; default revised under the PR B
+    # eval). Sonnet by default: the place rubric (tests/eval/run_place)
+    # caught Haiku reaching for the banned "the kind of" construction and
+    # over-editorialising with ungrounded filler ("quirky details that
+    # linger") — the same voice rules Opus needs explicit help with
+    # (ADR-016) are beyond Haiku's reliable reach here. The stitch is one
+    # short call per render, so the cost is small. Override via PLACE_MODEL
+    # (drop to "claude-haiku-4-5" for cost-sensitive batch runs).
+    place_model: str = "claude-sonnet-4-6"
     # Master switch for the ADR-017 place-context pass. Off by default:
     # reverse-geocoding sends the hike's coordinates to an external service
     # (a location disclosure), and "privacy as wedge" means the user opts
