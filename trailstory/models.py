@@ -470,6 +470,26 @@ class FactLedger(BaseModel):
     photo_positions: list[PhotoPosition] = Field(default_factory=list)
 
 
+class PoiMatch(BaseModel):
+    """A hiker beat resolved to a real named OSM feature (ADR-019).
+
+    Produced deterministically by :mod:`trailstory.poi`: the hiker's
+    landmark beat ("the wax-figure church") matched conservatively to a
+    single named OpenStreetMap feature of the right category near the track
+    ("Mühlfeldkirche"). The name is a sourced fact (OSM, ODbL), not the
+    model's invention — it flows into the place stitch as grounded input.
+    """
+
+    model_config = ConfigDict(frozen=True)
+
+    # The hiker's own beat that matched (verbatim from the ledger).
+    beat: str
+    # The OSM ``name`` tag of the matched feature.
+    name: str
+    # Normalised category label ("church", "lake", "peak", …).
+    category: str
+
+
 class PlaceContext(BaseModel):
     """The "about this place" block (ADR-017).
 
@@ -502,6 +522,11 @@ class PlaceContext(BaseModel):
     # town-only fallback) — nothing to attribute.
     source_url: str | None = None
     source_title: str | None = None
+    # ADR-019: hiker beats resolved to real named OSM features. Empty unless
+    # POI resolution ran (``--poi`` / ``Settings.use_poi_resolution``) and
+    # matched. Non-empty triggers an OpenStreetMap (ODbL) credit in the
+    # rendered source line.
+    named_landmarks: list[PoiMatch] = Field(default_factory=list)
 
 
 class Memory(BaseModel):

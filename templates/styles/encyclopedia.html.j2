@@ -393,12 +393,12 @@
         <span class="ru">{{ place.summary.ru }}</span>
         <span class="de">{{ place.summary.de }}</span>
       </p>
-      {% if place.source_url %}
-      <p class="place-source"><a href="{{ place.source_url }}" target="_blank" rel="noopener noreferrer">
+      {% if place.source_url or place.named_landmarks %}
+      <p class="place-source">{% if place.source_url %}<a href="{{ place.source_url }}" target="_blank" rel="noopener noreferrer">
         <span class="en">Source: {{ place.source_title or place.town }}</span>
         <span class="ru">Источник: {{ place.source_title or place.town }}</span>
         <span class="de">Quelle: {{ place.source_title or place.town }}</span>
-      </a></p>
+      </a>{% endif %}{% if place.named_landmarks %}{% if place.source_url %} · {% endif %}<a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener noreferrer">© OpenStreetMap contributors</a>{% endif %}</p>
       {% endif %}
     </section>
     {% endif %}

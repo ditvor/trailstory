@@ -70,6 +70,12 @@ class Settings(BaseSettings):
     # (a location disclosure), and "privacy as wedge" means the user opts
     # in explicitly — the CLI's --place flag, or USE_PLACE_CONTEXT=1.
     use_place_context: bool = False
+    # Master switch for the ADR-019 POI name-resolution pass (within the
+    # place block). Off by default: it adds a second external dependency
+    # (OpenStreetMap Overpass) and another coordinate disclosure. The CLI's
+    # --poi flag drives this directly; the setting is for the (deferred) web
+    # path. Implies the place block.
+    use_poi_resolution: bool = False
     output_dir: Path = Path("./output")
     log_level: str = "INFO"
 

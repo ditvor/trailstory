@@ -10,6 +10,21 @@ Versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 ## [Unreleased]
 
 ### Added
+- **POI name resolution (ADR-019).** Opt-in (`--poi`, implies `--place`)
+  resolution of a hiker's generic landmark beat ("the wax-figure church") to
+  a real named OpenStreetMap feature ("Mühlfeldkirche"), fed into the place
+  stitch as a grounded fact. Deterministic — the name comes from OSM, never
+  the LLM: new `trailstory/poi.py` queries Overpass for named landmark
+  features (places of worship, peaks, lakes, huts, castles, waterfalls,
+  viewpoints, monasteries) near the track, categorises each hiker beat by
+  keyword (EN + DE), and matches **only when exactly one** named feature of
+  that category is near the route — a wrong name is worse than a generic one,
+  so it fails closed. `PoiMatch` model + `PlaceContext.named_landmarks`; the
+  stitch prompt gains a POI input; all three styles credit OpenStreetMap
+  (ODbL) when a landmark is named. Stdlib `urllib`, no new dependency. Web
+  wiring deferred. Live validation: the church label now requires
+  `religion=christian` (a Bad Tölz mosque was being mislabelled), and the
+  church-dense town correctly yields no match.
 - **Place-stitch eval net (ADR-017 follow-up).** A programmatic rubric for
   the "about this place" stitch (`tests/eval/place_rubric.py`): tri-lingual
   presence, per-language length band, town-named-in-EN, Russian-actually-

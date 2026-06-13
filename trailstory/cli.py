@@ -45,6 +45,7 @@ from trailstory.models import (
 )
 from trailstory.photos import PhotoLoadError, describe_photos, load_photos
 from trailstory.place import representative_coordinate, resolve_place_reference
+from trailstory.poi import resolve_poi_matches
 from trailstory.renderers.html import HtmlRenderError, render_html
 from trailstory.renderers.instagram import InstagramRenderError, render_instagram_carousel
 
@@ -112,6 +113,16 @@ def cli() -> None:
     "Off by default — sends the track's coordinates to an external service.",
 )
 @click.option(
+    "--poi",
+    "poi",
+    is_flag=True,
+    default=False,
+    help="Resolve the hiker's landmarks to real OSM names (ADR-019), e.g. "
+    "'the wax-figure church' → 'Mühlfeldkirche'. Implies --place; queries "
+    "OpenStreetMap. Conservative: names a landmark only when the match is "
+    "unambiguous.",
+)
+@click.option(
     "--style",
     "style",
     type=click.Choice([s.value for s in Style], case_sensitive=False),
@@ -129,10 +140,13 @@ def generate(
     instagram: bool,
     no_cache: bool,
     place: bool,
+    poi: bool,
     style: str,
 ) -> None:
     """Generate a shareable HTML memory page from a hike."""
     settings = load_settings()
+    # ADR-019: --poi implies the place block (it has nowhere else to land).
+    place = place or poi
     logging.basicConfig(level=settings.log_level.upper())
     out_dir = out_dir_arg if out_dir_arg is not None else settings.output_dir
 
@@ -250,13 +264,19 @@ def generate(
                         stats,
                         ledger,
                         location_name=location,
+                        resolve_poi=poi,
                         api_key=settings.anthropic_api_key,
                         model=settings.place_model,
                         max_tokens=settings.narrative_max_tokens,
                         max_retries=settings.narrative_max_retries,
                     )
                 if place_context is not None:
-                    console.print(f"[green]✓[/] Place context added — {place_context.town}")
+                    extra = (
+                        f" · {len(place_context.named_landmarks)} landmark(s) named"
+                        if place_context.named_landmarks
+                        else ""
+                    )
+                    console.print(f"[green]✓[/] Place context added — {place_context.town}{extra}")
                 else:
                     console.print("[yellow]·[/] No place context (geocode or stitch unavailable)")
 
@@ -319,6 +339,7 @@ def _resolve_place(
     ledger: FactLedger,
     *,
     location_name: str | None,
+    resolve_poi: bool,
     api_key: SecretStr,
     model: str,
     max_tokens: int,
@@ -328,9 +349,10 @@ def _resolve_place(
 
     Reverse-geocodes the track midpoint (preferring the hiker's own
     ``location_name`` for the town), fetches a grounded reference extract,
-    and stitches it with the hiker's own ledger beats. Every failure mode
-    soft-fails to ``None`` — the block is additive and must never break a
-    render.
+    optionally resolves the hiker's landmark beats to real OSM names
+    (``resolve_poi``, ADR-019), and stitches it all with the hiker's own
+    ledger beats. Every failure mode soft-fails to ``None`` (block omitted)
+    or an empty match list (names skipped) — never a broken render.
     """
     coord = representative_coordinate(stats.waypoints)
     if coord is None:
@@ -338,6 +360,8 @@ def _resolve_place(
     reference = resolve_place_reference(*coord, location_name=location_name)
     if reference is None:
         return None
+    beats = place_beats_from_ledger(ledger)
+    poi_matches = resolve_poi_matches(stats.waypoints, beats) if resolve_poi else []
     place_client = AnthropicClient(
         api_key,
         model=model,
@@ -346,8 +370,9 @@ def _resolve_place(
     )
     return generate_place_context(
         reference,
-        place_beats_from_ledger(ledger),
+        beats,
         client=place_client,
+        poi_matches=poi_matches,
     )
 
 
