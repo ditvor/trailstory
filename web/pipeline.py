@@ -28,7 +28,7 @@ from __future__ import annotations
 
 import json
 import logging
-from collections.abc import Iterator
+from collections.abc import Callable, Iterator
 from dataclasses import dataclass
 from datetime import date, datetime
 from enum import StrEnum
@@ -38,18 +38,36 @@ from typing import Final
 from trailstory.gpx import GpxParseError, parse_gpx
 from trailstory.llm.client import AnthropicClient
 from trailstory.llm.narrative import (
+    LedgerExtractionError,
     NarrativeGenerationError,
     NarrativeStreamChunk,
     NarrativeStreamComplete,
     NarrativeStreamRetry,
+    extract_ledger,
     generate_narrative_stream,
 )
-from trailstory.models import GpxStats, HikeInput, Memory, NarrativeOutput, PhotoMeta
+from trailstory.llm.place import generate_place_context, place_beats_from_ledger
+from trailstory.models import (
+    FactLedger,
+    GpxStats,
+    HikeInput,
+    Memory,
+    NarrativeOutput,
+    PhotoMeta,
+    PlaceContext,
+)
 from trailstory.models import Style as _ModelStyle
 from trailstory.photos import PhotoLoadError, describe_photos, load_photos
+from trailstory.place import PlaceReference, representative_coordinate, resolve_place_reference
 from trailstory.renderers.html import HtmlRenderError, render_html
 from trailstory.renderers.instagram import InstagramRenderError, render_instagram_carousel
 from web.storage import Workspace
+
+# ADR-017: type of the injectable geocode+Wikipedia resolver. Real apps use
+# ``trailstory.place.resolve_place_reference``; the fake-LLM dev mode and tests
+# inject an offline stub so no network is touched. Signature mirrors
+# ``resolve_place_reference(lat, lon, location_name=None)``.
+PlaceReferenceResolver = Callable[[float, float, str | None], PlaceReference | None]
 
 logger = logging.getLogger(__name__)
 
@@ -126,6 +144,7 @@ def prepare_pipeline(
     photo_max_edge: int,
     photo_quality: int,
     location: str | None = None,
+    use_place_context: bool = False,
 ) -> None:
     """Parse + load photos + persist pending state for the streaming step.
 
@@ -170,6 +189,7 @@ def prepare_pipeline(
         hike_date=hike_date,
         location=location,
         style=style,
+        use_place_context=use_place_context,
     )
     logger.info(
         "prepared workspace %s for streaming (style=%s, photos=%d)",
@@ -186,6 +206,8 @@ def stream_pipeline(
     ledger_client: AnthropicClient,
     vision_client: AnthropicClient,
     use_photo_grounding: bool = True,
+    place_client: AnthropicClient | None = None,
+    resolve_reference: PlaceReferenceResolver = resolve_place_reference,
 ) -> Iterator[PipelineStreamEvent]:
     """Resume a prepared pipeline run and stream the narrative.
 
@@ -214,6 +236,27 @@ def stream_pipeline(
     photos_with_descriptions = describe_photos(
         pending.photos, client=vision_client, enabled=use_photo_grounding
     )
+
+    # ADR-017: when the place block is requested, extract the ledger once up
+    # front so it feeds both the writer (passed in below) and the place
+    # block's "hiker's own beats". A ledger failure here disables the place
+    # block but never aborts the run — generate_narrative_stream re-extracts
+    # internally when handed ``None``. ``location="the trail"`` matches the
+    # stream's own default so the shared ledger is identical to what it
+    # would have extracted itself.
+    place_ledger: FactLedger | None = None
+    if pending.use_place_context and place_client is not None:
+        try:
+            place_ledger = extract_ledger(
+                pending.hike_input,
+                pending.gpx_stats,
+                photos_with_descriptions,
+                client=ledger_client,
+                location="the trail",
+            )
+        except LedgerExtractionError as exc:
+            logger.warning("place: ledger extraction failed (%s); skipping place block", exc)
+
     try:
         narrative: NarrativeOutput | None = None
         for event in generate_narrative_stream(
@@ -222,6 +265,7 @@ def stream_pipeline(
             photos_with_descriptions,
             client=client,
             ledger_client=ledger_client,
+            ledger=place_ledger,
         ):
             if isinstance(event, NarrativeStreamChunk):
                 yield PipelineStreamChunk(text=event.text)
@@ -245,6 +289,19 @@ def stream_pipeline(
     if not selected:
         raise PipelineError("LLM returned no usable photo indices.")
 
+    # ADR-017: resolve the place block from the shared ledger. Soft-fails to
+    # None (geocode miss / stitch failure) — the block is additive and never
+    # blocks a render.
+    place_context: PlaceContext | None = None
+    if pending.use_place_context and place_client is not None and place_ledger is not None:
+        place_context = _resolve_place_for_stream(
+            pending.gpx_stats,
+            place_ledger,
+            pending.hike_input.location_name,
+            place_client=place_client,
+            resolve_reference=resolve_reference,
+        )
+
     memory = Memory(
         hike_input=pending.hike_input,
         gpx_stats=pending.gpx_stats,
@@ -254,6 +311,7 @@ def stream_pipeline(
         # enums in this module and trailstory.models — they share string
         # values so the round-trip is lossless.
         style=_ModelStyle(pending.style.value),
+        place_context=place_context,
     )
 
     try:
@@ -340,6 +398,7 @@ class _PendingState:
         "location",
         "photos",
         "style",
+        "use_place_context",
     )
 
     def __init__(
@@ -350,6 +409,7 @@ class _PendingState:
         hike_date: date | None,
         location: str | None,
         style: Style,
+        use_place_context: bool = False,
     ) -> None:
         self.hike_input = hike_input
         self.gpx_stats = gpx_stats
@@ -357,6 +417,7 @@ class _PendingState:
         self.hike_date = hike_date
         self.location = location
         self.style = style
+        self.use_place_context = use_place_context
 
 
 def _persist_pending_state(
@@ -368,6 +429,7 @@ def _persist_pending_state(
     hike_date: date | None,
     location: str | None,
     style: Style,
+    use_place_context: bool = False,
 ) -> None:
     """Write the pre-LLM state ``stream_pipeline`` will resume from.
 
@@ -383,6 +445,7 @@ def _persist_pending_state(
         "hike_date": hike_date.isoformat() if hike_date else None,
         "location": location,
         "style": style.value,
+        "use_place_context": use_place_context,
     }
     workspace.pending_state_path.write_text(json.dumps(payload), encoding="utf-8")
 
@@ -404,6 +467,7 @@ def _load_pending_state(workspace: Workspace) -> _PendingState:
         hike_date,
         raw.get("location"),
         Style(style_raw),
+        bool(raw.get("use_place_context", False)),
     )
 
 
@@ -443,6 +507,35 @@ def _load_state(workspace: Workspace) -> _State:
 
 
 # ── pipeline helpers ─────────────────────────────────────────────────────────
+
+
+def _resolve_place_for_stream(
+    gpx_stats: GpxStats,
+    ledger: FactLedger,
+    location_name: str | None,
+    *,
+    place_client: AnthropicClient,
+    resolve_reference: PlaceReferenceResolver,
+) -> PlaceContext | None:
+    """Build the ADR-017 place block for the streaming web path, or ``None``.
+
+    Reverse-geocodes the track midpoint (preferring the hiker-supplied
+    ``location_name`` for the town — see :func:`resolve_place_reference`),
+    then stitches the grounded reference with the hiker's own ledger beats.
+    ``resolve_reference`` is injected so the fake-LLM dev mode and tests can
+    stay fully offline. Every failure mode soft-fails to ``None``.
+    """
+    coord = representative_coordinate(gpx_stats.waypoints)
+    if coord is None:
+        return None
+    reference = resolve_reference(coord[0], coord[1], location_name)
+    if reference is None:
+        return None
+    return generate_place_context(
+        reference,
+        place_beats_from_ledger(ledger),
+        client=place_client,
+    )
 
 
 def _single_gpx_file(gpx_dir: Path) -> Path:

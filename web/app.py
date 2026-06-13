@@ -28,6 +28,8 @@ from fastapi.templating import Jinja2Templates
 
 from trailstory.config import Settings, load_settings
 from trailstory.llm.client import AnthropicClient
+from trailstory.place import resolve_place_reference
+from web.pipeline import PlaceReferenceResolver
 from web.ratelimit import GENERATE_LIMIT_PER_HOUR, GENERATE_WINDOW_SECONDS, RateLimiter
 from web.routes import router
 from web.storage import Storage
@@ -51,6 +53,8 @@ def create_app(
     client_factory: Callable[[], AnthropicClient] | None = None,
     ledger_client_factory: Callable[[], AnthropicClient] | None = None,
     vision_client_factory: Callable[[], AnthropicClient] | None = None,
+    place_client_factory: Callable[[], AnthropicClient] | None = None,
+    place_reference_resolver: PlaceReferenceResolver | None = None,
     rate_limiter: RateLimiter | None = None,
     enable_sweeper: bool = True,
 ) -> FastAPI:
@@ -73,6 +77,15 @@ def create_app(
             ``AnthropicClient`` (Haiku-class, per ADR-010). Defaults to
             a factory built from ``Settings.vision_model``. Tests inject
             a mock factory the same way as the other two.
+        place_client_factory: Callable returning a configured PLACE-stitch
+            ``AnthropicClient`` (Haiku-class, per ADR-017). Defaults to a
+            factory built from ``Settings.place_model``. Only invoked when
+            a request opts into the place block.
+        place_reference_resolver: Geocode + Wikipedia resolver for the place
+            block (ADR-017). Defaults to
+            ``trailstory.place.resolve_place_reference`` (real network).
+            The fake-LLM dev mode and tests inject an offline stub so no
+            external request is made.
         rate_limiter: Per-IP limiter for ``/generate``. Defaults to a
             sliding-window ``RateLimiter`` sized at
             :data:`web.ratelimit.GENERATE_LIMIT_PER_HOUR`. Tests pass
@@ -96,6 +109,16 @@ def create_app(
         vision_client_factory
         if vision_client_factory is not None
         else _default_vision_client_factory(resolved_settings)
+    )
+    resolved_place_factory = (
+        place_client_factory
+        if place_client_factory is not None
+        else _default_place_client_factory(resolved_settings)
+    )
+    resolved_place_resolver: PlaceReferenceResolver = (
+        place_reference_resolver
+        if place_reference_resolver is not None
+        else resolve_place_reference
     )
     resolved_limiter = (
         rate_limiter
@@ -139,6 +162,8 @@ def create_app(
     app.state.client_factory = resolved_factory
     app.state.ledger_client_factory = resolved_ledger_factory
     app.state.vision_client_factory = resolved_vision_factory
+    app.state.place_client_factory = resolved_place_factory
+    app.state.place_reference_resolver = resolved_place_resolver
     app.state.generate_limiter = resolved_limiter
     app.state.templates = Jinja2Templates(directory=str(TEMPLATE_DIR))
 
@@ -203,6 +228,27 @@ def _default_vision_client_factory(settings: Settings) -> Callable[[], Anthropic
         return AnthropicClient(
             settings.anthropic_api_key,
             model=settings.vision_model,
+            max_tokens=settings.narrative_max_tokens,
+            max_retries=settings.narrative_max_retries,
+        )
+
+    return factory
+
+
+def _default_place_client_factory(settings: Settings) -> Callable[[], AnthropicClient]:
+    """Build a real PLACE-stitch ``AnthropicClient`` from settings.
+
+    ADR-017: the "about this place" stitch uses ``Settings.place_model``
+    (Haiku-class by default — a constrained stitching task). Same
+    per-request fresh-instance pattern as the other factories. Only
+    actually invoked when a request opts into the place block; building it
+    per request is cheap (it just wraps the SDK).
+    """
+
+    def factory() -> AnthropicClient:
+        return AnthropicClient(
+            settings.anthropic_api_key,
+            model=settings.place_model,
             max_tokens=settings.narrative_max_tokens,
             max_retries=settings.narrative_max_retries,
         )

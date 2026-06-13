@@ -45,8 +45,10 @@ def _build_app() -> FastAPI:
         # dependency) out of the production import graph.
         from web.dev import (
             banner,
+            fake_place_reference_resolver,
             make_fake_client_factory,
             make_fake_ledger_client_factory,
+            make_fake_place_client_factory,
             make_fake_vision_client_factory,
         )
 
@@ -64,6 +66,10 @@ def _build_app() -> FastAPI:
             client_factory=make_fake_client_factory(),
             ledger_client_factory=make_fake_ledger_client_factory(),
             vision_client_factory=make_fake_vision_client_factory(),
+            # ADR-017: fake place stitch + offline geocode resolver so the
+            # "about this place" block renders without any network call.
+            place_client_factory=make_fake_place_client_factory(),
+            place_reference_resolver=fake_place_reference_resolver,
         )
     return create_app()
 

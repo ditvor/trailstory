@@ -106,9 +106,14 @@ short factual summary, faithfully translated, not reproduced wholesale.
   result (a track midpoint can geocode to a neighbouring municipality —
   validated live: a Bad Tölz track midpoint resolved to Wackersberg).
   Reverse-geocoding only fills the coarse region.
-- **Web builder wiring is deferred** to a follow-up: the streaming pipeline's
-  pending-state persistence needs the place resolution threaded through
-  `prepare_pipeline`, which is its own change.
+- **Web builder wiring** (done in a follow-up): an opt-in checkbox on the
+  builder form carries `use_place_context` through `prepare_pipeline`'s
+  pending state; `stream_pipeline` resolves the block after the narrative
+  completes, reusing the ledger it already extracted (a `ledger=` param
+  added to `generate_narrative_stream`). A `place_client_factory` is injected
+  like the other client factories, and the geocode+Wikipedia resolver is
+  injected too (`place_reference_resolver`) so the fake-LLM dev mode and
+  tests stay fully offline.
 - **Not in this ADR / explicitly rejected for v1:**
   - *Per-language source extracts* (ru/de Wikipedia). v1 fetches the English
     summary and lets the stitch translate; localized extracts are a future
