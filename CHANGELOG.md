@@ -10,6 +10,18 @@ Versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 ## [Unreleased]
 
 ### Added
+- **Enriched photo description (ADR-017).** The per-photo vision pass
+  now produces four new `PhotoDescription` fields: `interactions` (how
+  people carry/relate, e.g. "an adult wearing a child carrier"),
+  `legible_text` (signs/markers transcribed verbatim — corroborates the
+  GPX location / route name), `scene_type`, and `light_and_color`.
+  `interactions` is **orientation-free by contract**: the describer
+  prompt forbids front/back/chest/hip, and `photos._scrub_orientation`
+  strips any that slip through while keeping the grounded carry fact. A
+  matching writer hard rule forbids asserting a carry / worn-object
+  orientation absent from the ledger. Closes the "baby carrier on the
+  back" fabrication — a spike on real photos showed every vision model
+  guesses orientation unreliably even when told not to.
 - **Writer voice tightening + verbatim user phrase anchor (ADR-016).**
   The writer prompt now positions the register explicitly ("a warm
   family note to grandparents — neither a travel essay nor minutes of
@@ -54,6 +66,12 @@ Versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   Notes/audit hover correctly. Verified end-to-end with the repo venv.
 
 ### Changed
+- **Vision describer model default → `claude-sonnet-4-6` (ADR-017).**
+  The ADR-017 spike showed Haiku misreads the fine detail the enriched
+  describer fields depend on (it called a child carrier a "dog");
+  Sonnet reads it correctly. Overridable via `VISION_MODEL` for
+  cost-sensitive batch runs. Existing Haiku-keyed vision-cache entries
+  invalidate cleanly (different model component in the key).
 - **`NarrativeOutput.schema_version` bumped 4 → 5 (ADR-016).** Output
   shape unchanged, but the writer prompt's register and the new
   verbatim-phrase contract mean cached v4 narratives no longer reflect
