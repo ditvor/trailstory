@@ -175,6 +175,10 @@ def summary_grounded_in_sources(
     grounding |= _word_set(reference.region or "")
     for b in beats:
         grounding |= _word_set(b)
+    # ADR-019: a supplied OSM landmark name the stitch may have used
+    # ("Mühlfeldkirche") is a sourced fact, not fabrication — ground it.
+    for landmark in pc.named_landmarks:
+        grounding |= _word_set(landmark.name)
 
     significant = [w for w in _words(pc.summary.en) if len(w) >= 5 and w not in _GENERIC_ALLOW]
     if len(significant) < _GROUNDED_MIN_WORDS:

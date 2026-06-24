@@ -18,7 +18,7 @@ from tests.eval.place_rubric import (
     town_named_en,
     used_details_are_real_beats,
 )
-from trailstory.models import LocalizedString, PlaceContext
+from trailstory.models import LocalizedString, PlaceContext, PoiMatch
 from trailstory.place import PlaceReference
 
 _GOOD_EXTRACT = (
@@ -120,3 +120,19 @@ def test_grounded_fails_on_ungrounded_summary() -> None:
 
 def test_grounded_passes_on_grounded_summary() -> None:
     assert summary_grounded_in_sources(_ctx(), _ref(), _BEATS).passed
+
+
+def test_grounded_counts_supplied_landmark_names() -> None:
+    # ADR-019: a real OSM name the stitch was handed is grounded, not fabricated.
+    en = (
+        "Bad Tölz is the administrative center of its Bavarian district on the "
+        "river Isar; you passed the Mühlfeldkirche on your walk."
+    )
+    pc = _ctx(en=en, used=["the church"]).model_copy(
+        update={
+            "named_landmarks": [
+                PoiMatch(beat="the church", name="Mühlfeldkirche", category="church")
+            ]
+        }
+    )
+    assert summary_grounded_in_sources(pc, _ref(), _BEATS).passed

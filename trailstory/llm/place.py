@@ -34,7 +34,7 @@ from trailstory.llm.prompts import (
     USER_PLACE_CONTEXT_RETRY_SUFFIX,
     USER_PLACE_CONTEXT_TEMPLATE,
 )
-from trailstory.models import FactLedger, LocalizedString, PlaceContext
+from trailstory.models import FactLedger, LocalizedString, PlaceContext, PoiMatch
 from trailstory.place import PlaceReference
 
 logger = logging.getLogger(__name__)
@@ -77,6 +77,7 @@ def generate_place_context(
     place_beats: list[str],
     *,
     client: AnthropicClient,
+    poi_matches: list[PoiMatch] | None = None,
 ) -> PlaceContext | None:
     """Stitch a tri-lingual place note from a reference + the hiker's beats.
 
@@ -87,17 +88,25 @@ def generate_place_context(
             :func:`place_beats_from_ledger`. May be empty.
         client: Anthropic client wrapper, typically built with
             ``Settings.place_model``. Injected so tests can mock.
+        poi_matches: ADR-019 hiker-beat → real-OSM-name pairings from
+            :func:`trailstory.poi.resolve_poi_matches`. ``None``/empty when
+            POI resolution is off or matched nothing. Supplied to the stitch
+            as grounded names and stored on the returned ``PlaceContext`` for
+            transparency + OSM attribution.
 
     Returns:
         A validated :class:`PlaceContext`, or ``None`` if the model errored,
         returned non-JSON on both attempts, or produced JSON that did not
         validate. Callers treat ``None`` as "omit the block".
     """
+    matches = poi_matches or []
+    poi_payload = [{"beat": m.beat, "name": m.name} for m in matches]
     user_prompt = USER_PLACE_CONTEXT_TEMPLATE.format(
         town=reference.town,
         region=reference.region or "unknown",
         source_extract=reference.extract or "",
         hiker_place_beats_json=json.dumps(place_beats, ensure_ascii=False),
+        poi_matches_json=json.dumps(poi_payload, ensure_ascii=False),
     )
 
     parsed = _call_and_parse(client, user_prompt)
@@ -121,6 +130,7 @@ def generate_place_context(
         used_hiker_details=out.used_hiker_details,
         source_url=reference.source_url,
         source_title=reference.source_title,
+        named_landmarks=matches,
     )
 
 

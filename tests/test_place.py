@@ -19,7 +19,7 @@ from unittest.mock import MagicMock
 import trailstory.place as place_mod
 from trailstory.llm.client import AnthropicClient, LLMResponseError
 from trailstory.llm.place import generate_place_context, place_beats_from_ledger
-from trailstory.models import Beat, FactLedger, Person, Waypoint
+from trailstory.models import Beat, FactLedger, Person, PoiMatch, Waypoint
 from trailstory.place import PlaceReference
 
 # ── deterministic place resolution (trailstory.place) ────────────────────────
@@ -252,6 +252,26 @@ def test_generate_place_context_happy_path():
     assert ctx.source_url == ref.source_url
     assert ctx.used_hiker_details == ["the church"]
     client.complete.assert_called_once()
+
+
+def test_generate_place_context_includes_poi_matches():
+    """ADR-019: POI matches reach the prompt and land on named_landmarks."""
+    ref = PlaceReference(town="Bad Tölz", region="Bavarian Prealps", extract="Bad Tölz is a town.")
+    client = _stitch_client(_STITCH_OK)
+    matches = [PoiMatch(beat="the church", name="Mühlfeldkirche", category="church")]
+    ctx = generate_place_context(ref, ["the church"], client=client, poi_matches=matches)
+    assert ctx is not None
+    assert ctx.named_landmarks == matches
+    # The resolved real name was supplied to the stitch prompt.
+    sent_prompt = client.complete.call_args.kwargs["prompt"]
+    assert "Mühlfeldkirche" in sent_prompt
+
+
+def test_generate_place_context_defaults_no_landmarks():
+    ref = PlaceReference(town="Bad Tölz")
+    ctx = generate_place_context(ref, ["the church"], client=_stitch_client(_STITCH_OK))
+    assert ctx is not None
+    assert ctx.named_landmarks == []
 
 
 def test_generate_place_context_strips_code_fences():
