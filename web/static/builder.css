@@ -860,6 +860,39 @@ html[data-lang="de"] :is(.lang-en, .lang-ru) {
   color: var(--c-ink-3);
 }
 
+/* ── opt-in "about this place" block (ADR-017) ──────────────────────── */
+.bp-place {
+  display: flex;
+  gap: 11px;
+  align-items: flex-start;
+  margin-top: 18px;
+  padding-top: 16px;
+  border-top: 1px solid var(--c-hairline);
+  cursor: pointer;
+}
+.bp-place-check {
+  margin-top: 3px;
+  flex: none;
+  accent-color: var(--c-accent);
+}
+.bp-place-text {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+.bp-place-title {
+  font-family: var(--sans);
+  font-weight: 600;
+  font-size: 14.5px;
+  color: var(--c-ink);
+}
+.bp-place-desc {
+  font-family: var(--sans);
+  font-size: 12.5px;
+  line-height: 1.45;
+  color: var(--c-ink-3);
+}
+
 /* ═══ THE CENTERPIECE — choose how to tell it ═══ */
 .bp-stylegrid {
   display: grid;

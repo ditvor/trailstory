@@ -27,6 +27,7 @@ from trailstory.models import (
     Paragraph,
     PhotoMeta,
     PlaceContext,
+    PoiMatch,
     Style,
     Waypoint,
 )
@@ -460,3 +461,39 @@ def test_render_omits_place_block_when_absent(tmp_path: Path, style: Style) -> N
     html = out_path.read_text(encoding="utf-8")
     assert 'class="place"' not in html
     assert "spa town on the Isar" not in html
+
+
+# ── ADR-019: named landmarks → OpenStreetMap credit ──────────────────────────
+
+
+@pytest.mark.parametrize("style", list(Style))
+def test_render_credits_osm_when_landmarks_named(tmp_path: Path, style: Style) -> None:
+    """A place block with named_landmarks renders an OpenStreetMap credit."""
+    photos = [_make_photo(tmp_path, 0, (200, 80, 80))]
+    place = _place_context().model_copy(
+        update={
+            "named_landmarks": [
+                PoiMatch(beat="the church", name="Mühlfeldkirche", category="church")
+            ]
+        }
+    )
+    out_path = render_html(
+        memory=_memory(photos, place_context=place, style=style),
+        output_dir=tmp_path / "out",
+        slug="hike",
+    )
+    html = out_path.read_text(encoding="utf-8")
+    assert "OpenStreetMap" in html
+    assert "openstreetmap.org/copyright" in html
+
+
+def test_render_no_osm_credit_without_landmarks(tmp_path: Path) -> None:
+    """Default place block (no landmarks) carries no OSM credit."""
+    photos = [_make_photo(tmp_path, 0, (200, 80, 80))]
+    out_path = render_html(
+        memory=_memory(photos, place_context=_place_context()),
+        output_dir=tmp_path / "out",
+        slug="hike",
+    )
+    html = out_path.read_text(encoding="utf-8")
+    assert "openstreetmap.org" not in html

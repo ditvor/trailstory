@@ -101,6 +101,9 @@ eval-live:          ## Rubric + paid LLM-as-judge layer (PAID — writer + judge
 eval-update-golden: ## Rewrite narrative AND judge goldens from a fresh paid run (PAID)
 	$(PY) -m tests.eval.run --all --live-judge --update-golden
 
+eval-place:         ## Run the ADR-017 place-stitch rubric against fixed cases (PAID — place_model call per case)
+	$(PY) -m tests.eval.run_place
+
 # ── Web builder ────────────────────────────────────────────────────────────────
 
 web:                ## Run the FastAPI builder against the real Anthropic API (needs ANTHROPIC_API_KEY)

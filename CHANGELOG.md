@@ -10,6 +10,71 @@ Versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 ## [Unreleased]
 
 ### Added
+- **POI name resolution (ADR-019).** Opt-in (`--poi`, implies `--place`)
+  resolution of a hiker's generic landmark beat ("the wax-figure church") to
+  a real named OpenStreetMap feature ("Mühlfeldkirche"), fed into the place
+  stitch as a grounded fact. Deterministic — the name comes from OSM, never
+  the LLM: new `trailstory/poi.py` queries Overpass for named landmark
+  features (places of worship, peaks, lakes, huts, castles, waterfalls,
+  viewpoints, monasteries) near the track, categorises each hiker beat by
+  keyword (EN + DE), and matches **only when exactly one** named feature of
+  that category is near the route — a wrong name is worse than a generic one,
+  so it fails closed. `PoiMatch` model + `PlaceContext.named_landmarks`; the
+  stitch prompt gains a POI input; all three styles credit OpenStreetMap
+  (ODbL) when a landmark is named. Stdlib `urllib`, no new dependency. Web
+  wiring deferred. Live validation: the church label now requires
+  `religion=christian` (a Bad Tölz mosque was being mislabelled), and the
+  church-dense town correctly yields no match.
+- **Place-stitch eval net (ADR-017 follow-up).** A programmatic rubric for
+  the "about this place" stitch (`tests/eval/place_rubric.py`): tri-lingual
+  presence, per-language length band, town-named-in-EN, Russian-actually-
+  Cyrillic, the shared ADR-016 banned-phrase gate, `used_hiker_details` are
+  real beats (faithfulness), and an EN content-word grounding ratio against
+  the supplied extract + beats. Unit-tested for free in `make ci`
+  (`tests/test_eval_place_rubric.py`) — the always-on net — plus a paid
+  runner over fixed cases (`make eval-place` / `python -m tests.eval.run_place`).
+  The net immediately caught the Haiku stitch reaching for the banned
+  "the kind of" construction and over-editorialising with ungrounded
+  filler, so the place-stitch model default moves to
+  `claude-sonnet-4-6` (override via `PLACE_MODEL`).
+
+### Changed
+- **`Settings.place_model` default is now `claude-sonnet-4-6`** (was
+  `claude-haiku-4-5`). See the eval-net entry above — Haiku failed the
+  place voice + grounding gates; Sonnet passes them. Same reasoning as the
+  ADR-018 vision bump.
+- **"About this place" in the web builder (ADR-017 follow-up).** The
+  opt-in place block is now reachable from the hosted app, not just the
+  CLI: an off-by-default checkbox on the builder form carries the toggle
+  through the streaming pipeline's pending state, `stream_pipeline`
+  resolves the block after the narrative (reusing the ledger it already
+  extracted — `generate_narrative_stream` gains a `ledger=` param), and a
+  `place_client_factory` plus an injectable geocode/Wikipedia resolver are
+  wired through `create_app`. The fake-LLM dev mode (`--fake-llm`) ships an
+  offline stub resolver + fake stitch client so the block renders without
+  any network call.
+- **Web builder reskin → "The Letter" (compose).** The builder page
+  (`web/templates/landing.html.j2` + `builder_base.html.j2` +
+  `web/static/builder.css`) moves from the "Notebook" workshop look to a
+  warm correspondence treatment that mirrors the editorial output page:
+  a to/from docket (FROM fills in with the detected place), a "Keep the
+  day. / Send it home." serif hero, sections reordered to *photos → how
+  it felt → from the walk → choose how to tell it*, a PAR AVION stamp at
+  the send, and a "with love, from the trail" sign-off. The opt-in
+  "about this place" checkbox is preserved, restyled to the new theme.
+  Selecting a style warms the page chrome toward that style's palette via
+  `--c-*` "chameleon" tokens (wired on selection; in v0 only The Letter is
+  buildable, so it resolves to the editorial palette and is ready for the
+  moment more styles unlock). Same FastAPI backend, Alpine wiring, and
+  `/generate` flow — no React, no build step. Fonts stay self-hosted
+  (Source Serif 4 with Latin **and** Cyrillic subsets, Onest, JetBrains
+  Mono, Caveat) — no Google Fonts CDN, so the builder makes no third-party
+  request, matching the privacy stance. The pre-submit copy claim is now
+  accurate ("we don't keep your photos"). Output memory styles (editorial /
+  log / encyclopedia) are untouched. Also fixes a latent bug: the track
+  minimap's start/finish markers used a `<template x-if>` inside an `<svg>`
+  (Alpine can't `cloneNode` an SVG `<template>`), so they never rendered —
+  now an `x-show` `<g>` with guarded coordinates.
 - **Enriched photo description (ADR-018).** The per-photo vision pass
   now produces four new `PhotoDescription` fields: `interactions` (how
   people carry/relate, e.g. "an adult wearing a child carrier"),
@@ -84,27 +149,6 @@ Versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   Notes/audit hover correctly. Verified end-to-end with the repo venv.
 
 ### Changed
-- **Web builder reskin → "The Letter" (compose).** The builder page
-  (`web/templates/landing.html.j2` + `builder_base.html.j2` +
-  `web/static/builder.css`) moves from the "Notebook" workshop look to a
-  warm correspondence treatment that mirrors the editorial output page:
-  a to/from docket (FROM fills in with the detected place), a "Keep the
-  day. / Send it home." serif hero, sections reordered to *photos → how
-  it felt → from the walk → choose how to tell it*, a PAR AVION stamp at
-  the send, and a "with love, from the trail" sign-off. Selecting a style
-  warms the page chrome toward that style's palette via `--c-*` "chameleon"
-  tokens (wired on selection; in v0 only The Letter is buildable, so it
-  resolves to the editorial palette and is ready for the moment more
-  styles unlock). Same FastAPI backend, Alpine wiring, and `/generate`
-  flow — no React, no build step. Fonts stay self-hosted (Source Serif 4
-  with Latin **and** Cyrillic subsets, Onest, JetBrains Mono, Caveat) — no
-  Google Fonts CDN, so the builder makes no third-party request, matching
-  the privacy stance. The pre-submit copy claim is now accurate ("we don't
-  keep your photos"). Output memory styles (editorial / log / encyclopedia)
-  are untouched. Also fixes a latent bug: the track minimap's start/finish
-  markers used a `<template x-if>` inside an `<svg>` (Alpine can't
-  `cloneNode` an SVG `<template>`), so they never rendered — now an
-  `x-show` `<g>` with guarded coordinates.
 - **Vision describer model default → `claude-sonnet-4-6` (ADR-018).**
   The ADR-018 spike showed Haiku misreads the fine detail the enriched
   describer fields depend on (it called a child carrier a "dog");

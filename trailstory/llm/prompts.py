@@ -819,8 +819,7 @@ reader is a family member abroad who may never have heard of the place —
 a grandparent in Russia, a neighbour in Germany — and wants a quick, warm
 sense of where the hike happened.
 
-You work from two — and only two — sources of fact, supplied in the user
-message:
+You work only from the sources of fact supplied in the user message:
 
   1. A factual reference extract about the town or area. Every objective
      claim you make about the place — its name, its setting, its river or
@@ -830,12 +829,19 @@ message:
      passed, a lake, a square, a feeling they had). These are the personal
      beats. Their subjective words ("a creepy old church", "a quiet
      square") are theirs — carry them over as written.
+  3. Real names for some of those landmarks, resolved from map data — a
+     pairing of a hiker beat with the feature's actual name (e.g. "the
+     wax-figure church" → "Mühlfeldkirche"). When a beat is paired with a
+     name here, you may use that real name, instead of or alongside the
+     hiker's generic phrase. Use ONLY the names supplied; never a name you
+     supply yourself.
 
-Your only freedom is connective tissue: you may join these two streams
-into a few warm, natural sentences. You may NOT add a third fact from your
-own knowledge — no dates, no founders, no landmarks, no "famous for", no
-population, no history that is not in the reference extract. Inventing a
-single such fact defeats the entire purpose of this note.
+Your only freedom is connective tissue: you may join these streams into a
+few warm, natural sentences. You may NOT add a fact from your own
+knowledge — no dates, no founders, no "famous for", no population, no
+history, and no place or landmark name that the reference extract or the
+resolved map names did not give you. Inventing a single such fact defeats
+the entire purpose of this note.
 
 Do not invent new subjective claims about the place itself ("charming",
 "picturesque", "must-see"). Report what the extract states and what the
@@ -860,15 +866,17 @@ fences, no commentary.
 # ── USER_PLACE_CONTEXT_TEMPLATE ──────────────────────────────────────────────
 #
 # Required placeholders (the orchestrator must supply every one):
-#   town, region, source_extract, hiker_place_beats_json
+#   town, region, source_extract, hiker_place_beats_json, poi_matches_json
 #
 # region is a coarse area / range string ("Bavarian Prealps") or "unknown".
 # source_extract is the reference text (e.g. a Wikipedia summary); pass an
 # empty string when reverse-geocoding or the fetch failed, and the prompt
 # falls back to a single plain sentence built from town + region. The
-# hiker beats arrive as a JSON array of short strings (may be empty). JSON
-# braces in the output skeleton are doubled so str.format() leaves them
-# intact.
+# hiker beats arrive as a JSON array of short strings (may be empty).
+# poi_matches_json (ADR-019) is a JSON array of {{"beat","name"}} objects
+# pairing a hiker beat with a real OSM name; "[]" when POI resolution is off
+# or matched nothing. JSON braces in the output skeleton are doubled so
+# str.format() leaves them intact.
 USER_PLACE_CONTEXT_TEMPLATE: str = """\
 Place: {town}
 Wider area (if known): {region}
@@ -881,6 +889,12 @@ Reference extract — the ONLY source for objective facts about this place:
 The hiker's own place-related details from this walk (JSON array; may be
 empty):
 {hiker_place_beats_json}
+
+Real names for some of those landmarks, resolved from map data (JSON array
+of {{"beat", "name"}} pairs; may be empty). Where a beat is paired with a
+name, you may use that real name in place of the hiker's generic phrase —
+it is a sourced fact:
+{poi_matches_json}
 
 Write a short "about this place" note — 2 to 3 sentences — that gives the
 reader a quick, warm sense of where this hike happened. Lead with the
