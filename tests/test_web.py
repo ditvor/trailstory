@@ -346,15 +346,15 @@ def test_landing_page_renders_all_three_languages(client: TestClient) -> None:
     visibility client-side, so all three must be present in the HTML for
     the lang switcher to work without a roundtrip."""
     body = client.get("/").text
-    # Hero copy in each language — these are exact strings, so a typo in
+    # Hero h1 in each language — these are exact strings, so a typo in
     # any of them surfaces here.
-    assert "Drop your day in." in body
-    assert "Загрузи свой день." in body
-    assert "Lade deinen Tag hoch." in body
-    # Eyebrow.
-    assert "MAKE A HIKE LETTER" in body
-    assert "ПИСЬМО О ПОХОДЕ" in body  # noqa: RUF001
-    assert "EIN WANDERBRIEF" in body
+    assert "Keep the day." in body
+    assert "Сохрани день." in body
+    assert "Bewahre den Tag." in body
+    # The to/from docket carries tri-lingual copy too.
+    assert "family in Russia, friends elsewhere" in body
+    assert "семье в России, друзьям повсюду" in body
+    assert "Familie in Russland, Freunde anderswo" in body
 
 
 def test_landing_page_includes_three_lang_toggle_buttons(client: TestClient) -> None:

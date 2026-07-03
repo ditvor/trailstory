@@ -84,6 +84,27 @@ Versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   Notes/audit hover correctly. Verified end-to-end with the repo venv.
 
 ### Changed
+- **Web builder reskin → "The Letter" (compose).** The builder page
+  (`web/templates/landing.html.j2` + `builder_base.html.j2` +
+  `web/static/builder.css`) moves from the "Notebook" workshop look to a
+  warm correspondence treatment that mirrors the editorial output page:
+  a to/from docket (FROM fills in with the detected place), a "Keep the
+  day. / Send it home." serif hero, sections reordered to *photos → how
+  it felt → from the walk → choose how to tell it*, a PAR AVION stamp at
+  the send, and a "with love, from the trail" sign-off. Selecting a style
+  warms the page chrome toward that style's palette via `--c-*` "chameleon"
+  tokens (wired on selection; in v0 only The Letter is buildable, so it
+  resolves to the editorial palette and is ready for the moment more
+  styles unlock). Same FastAPI backend, Alpine wiring, and `/generate`
+  flow — no React, no build step. Fonts stay self-hosted (Source Serif 4
+  with Latin **and** Cyrillic subsets, Onest, JetBrains Mono, Caveat) — no
+  Google Fonts CDN, so the builder makes no third-party request, matching
+  the privacy stance. The pre-submit copy claim is now accurate ("we don't
+  keep your photos"). Output memory styles (editorial / log / encyclopedia)
+  are untouched. Also fixes a latent bug: the track minimap's start/finish
+  markers used a `<template x-if>` inside an `<svg>` (Alpine can't
+  `cloneNode` an SVG `<template>`), so they never rendered — now an
+  `x-show` `<g>` with guarded coordinates.
 - **Vision describer model default → `claude-sonnet-4-6` (ADR-018).**
   The ADR-018 spike showed Haiku misreads the fine detail the enriched
   describer fields depend on (it called a child carrier a "dog");
