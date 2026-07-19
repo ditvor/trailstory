@@ -32,6 +32,19 @@ Versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   picker, and were never surfaced to a real user.
 
 ### Added
+- **The Zine style (`--style zine`).** Second built style from the
+  ADR-021 lineup: a riso-printed indie-zine treatment of the same
+  narrative — ink + terracotta spot color on warm paper, real SVG
+  duotone halftone photos with tape-down framing, a massive
+  solid/outlined condensed cover title, numbered paragraph sections,
+  a route badge, a "filed from" postmark stamp, and a rotated
+  terracotta pull-quote block. Tri-lingual (EN/RU/DE) like The Letter,
+  fully self-contained (ADR-001): Oswald latin+cyrillic subsets are
+  committed under `templates/fonts/zine/` (Big Shoulders has no
+  Cyrillic; Oswald is the condensed stand-in) and JetBrains Mono is
+  reused from the Letter set as the typewriter body. `zine` joins
+  `BUILT_STYLES`, the CLI `--style` choices, and the web builder
+  picker (its card loses the SOON pill).
 - **"Save as PDF" and "Share page (HTML file)" on the memory page.** The
   share row in all three styles now offers a PDF export (the browser's
   print dialog against a cleaned-up print stylesheet — chrome hidden,

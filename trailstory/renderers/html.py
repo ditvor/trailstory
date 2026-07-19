@@ -29,17 +29,30 @@ TEMPLATE_DIR: Final[Path] = Path(__file__).resolve().parents[2] / "templates"
 TEMPLATE_NAME: Final[str] = "memory.html.j2"
 ELEVATION_POINTS: Final[int] = 40
 
-# Letter-style WOFF2 subsets — committed under templates/fonts/letter/
-# and embedded as base64 data URIs so the rendered HTML works offline (ADR-001).
-# Source Serif 4 stands in for Newsreader because the latter has no Cyrillic
-# subset on Google Fonts; see templates/fonts/letter/LICENSE.md.
-_LETTER_FONT_FILES: Final[dict[str, str]] = {
-    "serif_italic_latin": "SourceSerif4-Italic-VF.latin.woff2",
-    "serif_italic_cyrillic": "SourceSerif4-Italic-VF.cyrillic.woff2",
-    "serif_roman_latin": "SourceSerif4-Roman-VF.latin.woff2",
-    "serif_roman_cyrillic": "SourceSerif4-Roman-VF.cyrillic.woff2",
-    "mono_latin": "JetBrainsMono-VF.latin.woff2",
-    "mono_cyrillic": "JetBrainsMono-VF.cyrillic.woff2",
+# Per-style WOFF2 subsets — committed under templates/fonts/<dir>/ and
+# embedded as base64 data URIs so the rendered HTML works offline (ADR-001).
+# Every family carries latin + cyrillic subsets; briefs that named a
+# latin-only face got a Cyrillic-capable stand-in (Source Serif 4 for
+# Newsreader, Oswald for Big Shoulders, JetBrains Mono for Space Mono) —
+# see the LICENSE.md next to each font set.
+# Maps style → {template role: (fonts subdir, filename)}.
+_STYLE_FONT_FILES: Final[dict[Style, dict[str, tuple[str, str]]]] = {
+    Style.letter: {
+        "serif_italic_latin": ("letter", "SourceSerif4-Italic-VF.latin.woff2"),
+        "serif_italic_cyrillic": ("letter", "SourceSerif4-Italic-VF.cyrillic.woff2"),
+        "serif_roman_latin": ("letter", "SourceSerif4-Roman-VF.latin.woff2"),
+        "serif_roman_cyrillic": ("letter", "SourceSerif4-Roman-VF.cyrillic.woff2"),
+        "mono_latin": ("letter", "JetBrainsMono-VF.latin.woff2"),
+        "mono_cyrillic": ("letter", "JetBrainsMono-VF.cyrillic.woff2"),
+    },
+    Style.zine: {
+        "display_latin": ("zine", "Oswald-VF.latin.woff2"),
+        "display_cyrillic": ("zine", "Oswald-VF.cyrillic.woff2"),
+        # The zine body reuses the letter mono subsets (same files, same
+        # base64 payload) rather than committing a duplicate copy.
+        "mono_latin": ("letter", "JetBrainsMono-VF.latin.woff2"),
+        "mono_cyrillic": ("letter", "JetBrainsMono-VF.cyrillic.woff2"),
+    },
 }
 
 
@@ -114,7 +127,7 @@ def render_html(
             "location": location or "",
             "style": memory.style.value,
         },
-        fonts=_letter_fonts() if memory.style == Style.letter else {},
+        fonts=_style_fonts(memory.style),
     )
 
     output_dir.mkdir(parents=True, exist_ok=True)
@@ -138,24 +151,24 @@ def _environment() -> Environment:
     )
 
 
-@lru_cache(maxsize=1)
-def _letter_fonts() -> dict[str, str]:
-    """Return Letter WOFF2 fonts as base64 data URIs, keyed by role.
+@lru_cache(maxsize=len(_STYLE_FONT_FILES))
+def _style_fonts(style: Style) -> dict[str, str]:
+    """Return the style's WOFF2 fonts as base64 payloads, keyed by role.
 
-    Read once per process. The returned mapping is what
-    ``templates/styles/letter.html.j2`` uses inside its ``@font-face``
-    declarations — each value is the base64 payload only (no
-    ``data:font/woff2;base64,`` prefix), so the template can construct
-    full ``src: url(...)`` expressions.
+    Read once per process per style. The returned mapping is what the
+    style template under ``templates/styles/`` uses inside its
+    ``@font-face`` declarations — each value is the base64 payload only
+    (no ``data:font/woff2;base64,`` prefix), so the template can
+    construct full ``src: url(...)`` expressions. Styles without an
+    entry in ``_STYLE_FONT_FILES`` get an empty mapping.
     """
-    fonts_dir = TEMPLATE_DIR / "fonts" / "letter"
     encoded: dict[str, str] = {}
-    for role, filename in _LETTER_FONT_FILES.items():
-        path = fonts_dir / filename
+    for role, (subdir, filename) in _STYLE_FONT_FILES.get(style, {}).items():
+        path = TEMPLATE_DIR / "fonts" / subdir / filename
         try:
             encoded[role] = base64.b64encode(path.read_bytes()).decode("ascii")
         except OSError as exc:
-            raise HtmlRenderError(f"unable to read Letter font {path}: {exc}") from exc
+            raise HtmlRenderError(f"unable to read {style.value} font {path}: {exc}") from exc
     return encoded
 
 

@@ -3,8 +3,8 @@
 The same ``Memory`` rendered under each built :class:`trailstory.models.Style`
 must produce structurally distinct HTML — but the narrative text must be
 byte-identical across styles. These tests pin both halves of that
-contract, plus the ADR-021 lineup rules: ``letter`` is the only built
-style today, and the planned styles (zine / sunday / postcard / album)
+contract, plus the ADR-021 lineup rules: ``letter`` and ``zine`` are the
+built styles today, and the planned styles (sunday / postcard / album)
 are refused by the renderer until their templates land.
 """
 
@@ -134,17 +134,17 @@ def _render_all_styles(tmp_path: Path) -> dict[Style, str]:
 
 
 def test_built_styles_is_a_subset_of_the_lineup() -> None:
-    """Every built style must be a real enum member, and ``letter`` is
-    the only one built today."""
+    """Every built style must be a real enum member; ``letter`` and
+    ``zine`` are the ones built today."""
     assert BUILT_STYLES <= frozenset(Style)
-    assert BUILT_STYLES == frozenset({Style.letter})
+    assert BUILT_STYLES == frozenset({Style.letter, Style.zine})
 
 
 def test_planned_styles_are_in_the_enum_but_not_built() -> None:
-    """The four planned styles (see the web picker's SOON cards) exist as
-    enum members so the pipeline vocabulary is ready, but have no
+    """The three planned styles (see the web picker's SOON cards) exist
+    as enum members so the pipeline vocabulary is ready, but have no
     renderer yet."""
-    planned = {Style.zine, Style.sunday, Style.postcard, Style.album}
+    planned = {Style.sunday, Style.postcard, Style.album}
     assert planned <= set(Style)
     assert planned.isdisjoint(BUILT_STYLES)
 
@@ -278,7 +278,10 @@ def test_every_style_includes_gpx_stats(tmp_path: Path) -> None:
     for style, html in rendered.items():
         assert "6.2" in html, style  # distance_km
         assert "610" in html, style  # elevation_gain_m
-        assert "165" in html, style  # duration_min
+        # duration_min=165 rendered through the shared '%dh %02dm' idiom.
+        # (The raw "165" this test used to look for only ever matched by
+        # accident inside base64 font payloads.)
+        assert "2h 45m" in html, style
         assert "1330" in html, style  # summit_elev_m
 
 

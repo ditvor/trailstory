@@ -27,7 +27,7 @@ class Style(StrEnum):
 
 # Styles whose renderer template exists. The renderer refuses the rest,
 # the CLI only offers these, and the web picker shows the rest as SOON.
-BUILT_STYLES: frozenset[Style] = frozenset({Style.letter})
+BUILT_STYLES: frozenset[Style] = frozenset({Style.letter, Style.zine})
 
 
 class Waypoint(BaseModel):

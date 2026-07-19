@@ -286,7 +286,7 @@ async def generate(
         raise HTTPException(status_code=400, detail="At least one photo is required")
 
     # ``Style(style)`` rejects anything outside the enum, which already
-    # covers the SOON placeholders (``zine``/``sunday``/``postcard``/
+    # covers the SOON placeholders (``sunday``/``postcard``/
     # ``album``) — the web enum lists only built styles (ADR-021). The
     # picker's ``coming_soon`` flag is a UX-layer concern (disabled
     # radio, ``accepted_style_values()`` for tests) and doesn't need a

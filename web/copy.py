@@ -85,7 +85,6 @@ STYLE_CARDS: Final[tuple[StyleCard, ...]] = (
         desc_en="Indie zine. Halftone duotone photos, tall condensed display type, tape, terracotta spot color. Designed to be printed and mailed.",
         desc_ru="Инди-зин. Полутоновое дуо, узкий заголовочный шрифт, скотч, терракотовый акцент. Чтобы напечатать и отправить.",
         desc_de="Indie-Zine. Halftone-Duoton-Fotos, schmale Versalien, Tape, Terrakotta-Spotfarbe. Zum Drucken und Verschicken.",
-        coming_soon=True,
     ),
     StyleCard(
         value="sunday",
