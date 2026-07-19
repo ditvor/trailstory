@@ -287,13 +287,10 @@ async def generate(
 
     # ``Style(style)`` rejects anything outside the enum, which already
     # covers the SOON placeholders (``zine``/``sunday``/``postcard``/
-    # ``album``) — they aren't enum members. The picker's
-    # ``coming_soon`` flag is a UX-layer concern (disabled radio,
-    # ``accepted_style_values()`` for tests) and doesn't need a second
-    # server-side gate. The ``log`` and ``encyclopedia`` renderers
-    # remain accepted at the backend even though the picker hides them,
-    # so direct POSTs (the carousel + IG button tests rely on this)
-    # keep working.
+    # ``album``) — the web enum lists only built styles (ADR-020). The
+    # picker's ``coming_soon`` flag is a UX-layer concern (disabled
+    # radio, ``accepted_style_values()`` for tests) and doesn't need a
+    # second server-side gate.
     try:
         chosen_style = Style(style)
     except ValueError as exc:

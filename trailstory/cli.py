@@ -35,6 +35,7 @@ from trailstory.llm.narrative import (
 )
 from trailstory.llm.place import generate_place_context, place_beats_from_ledger
 from trailstory.models import (
+    BUILT_STYLES,
     FactLedger,
     GpxStats,
     HikeInput,
@@ -125,11 +126,12 @@ def cli() -> None:
 @click.option(
     "--style",
     "style",
-    type=click.Choice([s.value for s in Style], case_sensitive=False),
-    default=Style.editorial.value,
+    type=click.Choice(sorted(s.value for s in BUILT_STYLES), case_sensitive=False),
+    default=Style.letter.value,
     show_default=True,
-    help="Visual treatment of the rendered memory page (see ADR-006). "
-    "All three styles share one narrative; only layout and CSS differ.",
+    help="Visual treatment of the rendered memory page (see ADR-006, ADR-020). "
+    "All styles share one narrative; only layout and CSS differ. Planned "
+    "styles (zine, sunday, postcard, album) appear here once built.",
 )
 def generate(
     photos_path: Path,

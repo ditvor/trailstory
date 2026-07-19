@@ -320,7 +320,7 @@ def _complete_generation(
     client: TestClient,
     *,
     description: str = "x",
-    style: str = "editorial",
+    style: str = "letter",
     location: str | None = None,
     place: bool = False,
     n_photos: int = 5,
@@ -358,7 +358,7 @@ def test_landing_page_returns_form(client: TestClient) -> None:
     assert 'name="location"' in body
     assert 'name="style"' in body
     # The single buildable style id renders as a radio value.
-    assert 'value="editorial"' in body
+    assert 'value="letter"' in body
 
 
 def test_landing_page_links_to_privacy_in_new_tab(client: TestClient) -> None:
@@ -371,8 +371,8 @@ def test_landing_page_links_to_privacy_in_new_tab(client: TestClient) -> None:
     assert 'href="/privacy" target="_blank"' in body
 
 
-def test_landing_page_loads_editorial_design_assets(client: TestClient) -> None:
-    """Landing extends ``builder_base.html.j2`` and pulls in the editorial CSS.
+def test_landing_page_loads_letter_design_assets(client: TestClient) -> None:
+    """Landing extends ``builder_base.html.j2`` and pulls in the Letter CSS.
 
     Locks the visual refresh in: a regression that drops the design
     system (e.g. someone reverts ``builder_base.html.j2`` to the old
@@ -449,16 +449,16 @@ def test_landing_page_marks_coming_soon_cards(client: TestClient) -> None:
     assert ">СКОРО<" in body  # noqa: RUF001
     assert ">BALD<" in body
     # The Letter is the only buildable card — its radio is not disabled.
-    # We look for the editorial radio's <input> line without ``disabled``.
-    # Search the body for the editorial radio markup.
+    # We look for the Letter radio's <input> line without ``disabled``.
+    # Search the body for the Letter radio markup.
     import re
 
-    editorial_radio = re.search(
-        r'<input[^>]*name="style"[^>]*value="editorial"[^>]*>',
+    letter_radio = re.search(
+        r'<input[^>]*name="style"[^>]*value="letter"[^>]*>',
         body,
     )
-    assert editorial_radio is not None
-    assert "disabled" not in editorial_radio.group(0)
+    assert letter_radio is not None
+    assert "disabled" not in letter_radio.group(0)
 
 
 def test_generate_rejects_coming_soon_style(client: TestClient) -> None:
@@ -580,16 +580,16 @@ def test_landing_page_wires_preview_endpoints(client: TestClient) -> None:
     assert "bp-chip" in body
 
 
-def test_accepted_style_values_only_editorial() -> None:
+def test_accepted_style_values_only_letter() -> None:
     """The :func:`accepted_style_values` helper is the source of truth
-    for which style ids the form is allowed to submit. Only ``editorial``
+    for which style ids the form is allowed to submit. Only ``letter``
     has a built renderer that matches its design promise (The Letter);
     the other four cards (Zine, Sunday, Postcard, Album) are placeholders
     until their renderers ship."""
     from web.copy import accepted_style_values
 
     accepted = accepted_style_values()
-    assert accepted == frozenset({"editorial"})
+    assert accepted == frozenset({"letter"})
     for placeholder in ("zine", "sunday", "postcard", "album"):
         assert placeholder not in accepted
 
@@ -658,7 +658,7 @@ def test_generate_returns_generating_page(client: TestClient, storage: Storage) 
         "/generate",
         data={
             "description": "The fog cleared just as we reached the ridge.",
-            "style": "editorial",
+            "style": "letter",
             "location": "Bavarian Alps",
         },
         files=_generate_files(),
@@ -691,7 +691,7 @@ def test_stream_emits_chunks_then_done_then_renders_html(
         "/generate",
         data={
             "description": "The fog cleared just as we reached the ridge.",
-            "style": "editorial",
+            "style": "letter",
             "location": "Bavarian Alps",
         },
         files=_generate_files(),
@@ -756,7 +756,7 @@ def test_stream_retries_once_on_unparseable_first_attempt(
     with TestClient(app) as c:
         response = c.post(
             "/generate",
-            data={"description": "x", "style": "editorial"},
+            data={"description": "x", "style": "letter"},
             files=_generate_files(),
         )
         slug = _slug_from_generating_page(response.text)
@@ -779,7 +779,7 @@ def test_stream_emits_error_on_double_failure(storage: Storage) -> None:
     with TestClient(app) as c:
         response = c.post(
             "/generate",
-            data={"description": "x", "style": "editorial"},
+            data={"description": "x", "style": "letter"},
             files=_generate_files(),
         )
         slug = _slug_from_generating_page(response.text)
@@ -813,7 +813,7 @@ def test_stream_endpoint_sets_event_stream_content_type(
     """SSE clients reject anything that isn't ``text/event-stream``."""
     response = client.post(
         "/generate",
-        data={"description": "x", "style": "editorial"},
+        data={"description": "x", "style": "letter"},
         files=_generate_files(),
     )
     slug = _slug_from_generating_page(response.text)
@@ -892,7 +892,7 @@ def test_carousel_returns_n_slides_for_n_photos(
     with TestClient(app) as c:
         response = c.post(
             "/generate",
-            data={"description": "x", "style": "editorial"},
+            data={"description": "x", "style": "letter"},
             files=_generate_files(n_photos=4),
         )
         slug = _slug_from_generating_page(response.text)
@@ -911,7 +911,7 @@ def test_generate_rejects_missing_gpx(client: TestClient) -> None:
     files = [(name, payload) for name, payload in _generate_files() if name != "gpx"]
     response = client.post(
         "/generate",
-        data={"description": "x", "style": "editorial"},
+        data={"description": "x", "style": "letter"},
         files=files,
     )
     # FastAPI returns 422 for missing form/file fields by default; our
@@ -926,7 +926,7 @@ def test_generate_rejects_missing_photos(client: TestClient) -> None:
     ]
     response = client.post(
         "/generate",
-        data={"description": "x", "style": "editorial"},
+        data={"description": "x", "style": "letter"},
         files=files,
     )
     assert response.status_code in (400, 422)
@@ -949,7 +949,7 @@ def test_generate_rejects_unsupported_photo_format(
     files.append(("photos", ("note.txt", b"not a photo", "text/plain")))
     response = client.post(
         "/generate",
-        data={"description": "x", "style": "editorial"},
+        data={"description": "x", "style": "letter"},
         files=files,
     )
     assert response.status_code == 400
@@ -965,7 +965,7 @@ def test_generate_rejects_oversized_photo(
     with TestClient(app) as c:
         response = c.post(
             "/generate",
-            data={"description": "x", "style": "editorial"},
+            data={"description": "x", "style": "letter"},
             files=_generate_files(n_photos=1),
         )
     assert response.status_code == 413
@@ -991,13 +991,13 @@ def test_generate_returns_429_when_over_rate_limit(storage: Storage) -> None:
             "/generate",
             data={
                 "description": "The fog cleared just as we reached the ridge.",
-                "style": "editorial",
+                "style": "letter",
             },
             files=_generate_files(),
         )
         second = c.post(
             "/generate",
-            data={"description": "Same client trying again.", "style": "editorial"},
+            data={"description": "Same client trying again.", "style": "letter"},
             files=_generate_files(),
         )
     assert first.status_code == 200
@@ -1015,19 +1015,19 @@ def test_generate_rate_limit_keys_on_fly_client_ip(storage: Storage) -> None:
     with TestClient(app) as c:
         first = c.post(
             "/generate",
-            data={"description": "Client A.", "style": "editorial"},
+            data={"description": "Client A.", "style": "letter"},
             files=_generate_files(),
             headers={"Fly-Client-IP": "203.0.113.1"},
         )
         second = c.post(
             "/generate",
-            data={"description": "Client B.", "style": "editorial"},
+            data={"description": "Client B.", "style": "letter"},
             files=_generate_files(),
             headers={"Fly-Client-IP": "203.0.113.2"},
         )
         third = c.post(
             "/generate",
-            data={"description": "Client A again.", "style": "editorial"},
+            data={"description": "Client A again.", "style": "letter"},
             files=_generate_files(),
             headers={"Fly-Client-IP": "203.0.113.1"},
         )
@@ -1177,7 +1177,7 @@ def test_fake_client_factory_drives_full_pipeline(storage: Storage) -> None:
     with TestClient(app) as c:
         response = c.post(
             "/generate",
-            data={"description": "x", "style": "editorial"},
+            data={"description": "x", "style": "letter"},
             files=_generate_files(),
         )
     assert response.status_code == 200

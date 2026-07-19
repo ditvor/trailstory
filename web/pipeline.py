@@ -8,9 +8,11 @@ keeps the *pipeline* logic in one place so the route handlers stay thin.
 
 Public surface:
 
-* :class:`Style` — three-value enum mirroring the form's radio buttons
-  (editorial / log / encyclopedia). Per ADR-006 the style chooses the
-  visual template only — the narrative text is identical across styles.
+* :class:`Style` — enum of the *buildable* styles the form accepts
+  (currently only ``letter``; the picker's SOON cards are placeholder
+  ids outside this enum, see ``web.copy``). Per ADR-006 the style
+  chooses the visual template only — the narrative text is identical
+  across styles.
 * :func:`prepare_pipeline` — runs the deterministic prep phase (parse +
   load_photos) and persists the inputs as ``pending.json`` so the SSE
   endpoint can resume with a streaming LLM call.
@@ -79,18 +81,20 @@ CAROUSEL_QUALITY: Final[int] = 90
 class Style(StrEnum):
     """Visual style picked by the user on the builder form.
 
-    The narrative is identical across styles (one prompt, one
-    NarrativeOutput); only the rendering template differs. See
+    Deliberately narrower than :class:`trailstory.models.Style`: this
+    enum doubles as the form's server-side gate, so it lists only the
+    styles with a built renderer (ADR-020). Planned styles (zine,
+    sunday, postcard, album) join as their templates land. The narrative
+    is identical across styles (one prompt, one NarrativeOutput); only
+    the rendering template differs. See
     `docs/adr/006-three-visual-styles-share-one-narrative.md`.
     """
 
-    editorial = "editorial"
-    log = "log"
-    encyclopedia = "encyclopedia"
+    letter = "letter"
 
     @classmethod
     def default(cls) -> Style:
-        return cls.editorial
+        return cls.letter
 
 
 class PipelineError(Exception):

@@ -6,7 +6,7 @@
    the whole page toward that style's palette (the "chameleon", driven by
    the --c-* tokens which builderForm() rewrites on selection).
 
-   Mirrors the editorial output renderer so the builder and the page it
+   Mirrors the Letter output renderer so the builder and the page it
    produces feel like one product. Self-hosted fonts only — no CDN, no
    third-party font request (the privacy wedge applies to the builder too).
 
