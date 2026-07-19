@@ -11,9 +11,7 @@ before every destructive or externally-visible action — committing, pushing,
 opening the PR.**
 
 > Note: this is the project-local `/ship` for Trailstory. It runs `make ci`
-> against the project venv and uses the repo's PR template. It is **not** the
-> gstack `/ship` skill. If a user explicitly asks for the gstack version,
-> defer to that instead.
+> against the project venv and uses the repo's PR template.
 
 ## Steps
 
