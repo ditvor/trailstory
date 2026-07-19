@@ -15,6 +15,14 @@ Versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   data URI in both base templates — no asset files.
 
 ### Added
+- **"Save as PDF" and "Share page (HTML file)" on the memory page.** The
+  share row in all three styles now offers a PDF export (the browser's
+  print dialog against a cleaned-up print stylesheet — chrome hidden,
+  current language only) and an explicit way to share the page as the
+  self-contained `.html` file it is: the native share sheet on phones
+  (WhatsApp, Telegram, email — recipient's choice), a plain download
+  elsewhere. Log and encyclopedia gain the print stylesheet rules that
+  editorial already had.
 - **POI name resolution (ADR-019).** Opt-in (`--poi`, implies `--place`)
   resolution of a hiker's generic landmark beat ("the wax-figure church") to
   a real named OpenStreetMap feature ("Mühlfeldkirche"), fed into the place
@@ -44,6 +52,10 @@ Versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   `claude-sonnet-4-6` (override via `PLACE_MODEL`).
 
 ### Removed
+- **"Copy link" and WhatsApp buttons on the memory page.** Both shared
+  only a title-plus-quote text snippet — there is no link to copy on a
+  self-contained page, and the WhatsApp button never carried the memory
+  itself. Superseded by the HTML-file share above.
 - **"Notes" audit UI on the memory page (ADR-020).** The per-sentence
   provenance underlines, tints, hover tooltips, and the Notes toggle
   button are gone from all three styles — the page now reads as plain

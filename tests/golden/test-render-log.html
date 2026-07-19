@@ -102,6 +102,11 @@
   body.lang-ru .en, body.lang-ru .de { display: none; }
   body.lang-de .en, body.lang-de .ru { display: none; }
 
+  @media print {
+    .lang-toggle, .share { display: none !important; }
+    body { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    figure { page-break-inside: avoid; }
+  }
   /* stats — list, not a grid; aligned key/value pairs */
   .stats {
     list-style: none;
@@ -341,8 +346,8 @@ Mia schlief den ganzen Aufstieg, die Wange warm an der Trage.          </p>
     </section>
 
     <section class="share" aria-label="share">
-      <a id="waLink" href="#" target="_blank" rel="noopener noreferrer">WhatsApp</a>
-      <button id="copyBtn" type="button">Copy text</button>
+      <button id="pdfBtn" type="button">Save as PDF</button>
+      <button id="htmlBtn" type="button">Share page (HTML file)</button>
       <button id="igBtn" type="button" data-slug="test-render-log">Save for Instagram</button>
       <p id="igStatus" class="ig-status" aria-live="polite"></p>
     </section>
@@ -405,13 +410,83 @@ Mia schlief den ganzen Aufstieg, die Wange warm an der Trage.          </p>
       var quoteEn = "The fog cleared just as we reached the ridge.";
       var msg = titleEn + ' — ' + quoteEn;
 
-      document.getElementById('waLink').href =
-        'https://wa.me/?text=' + encodeURIComponent(msg);
+      // The @media print stylesheet strips the chrome and keeps only the
+      // active language, so the browser's "Save as PDF" destination
+      // produces a clean single-language document.
+      document.getElementById('pdfBtn').addEventListener('click', function () {
+        window.print();
+      });
 
-      document.getElementById('copyBtn').addEventListener('click', function () {
-        if (navigator.clipboard && navigator.clipboard.writeText) {
-          navigator.clipboard.writeText(msg);
+      // The page itself is the shareable artifact (ADR-001): one
+      // self-contained .html file. Served over http(s) we re-fetch our own
+      // URL for the original bytes; opened from disk (file://), fetch is
+      // blocked, so we serialize a cleaned clone of the live DOM — photos
+      // survive as inline data URIs, and the clone drops transient UI
+      // state (disabled buttons, status text) so a forwarded copy works
+      // for the next reader too. The result is cached: pages carry
+      // multi-MB of photos, and navigator.share() must run inside the
+      // tap's transient-activation window.
+      var pageFilePromise = null;
+      function pageAsFile() {
+        if (pageFilePromise) return pageFilePromise;
+        var name = "test-render-log" + '.html';
+        pageFilePromise = fetch(window.location.href)
+          .then(function (res) {
+            if (!res.ok) throw new Error('HTTP ' + res.status);
+            return res.blob();
+          })
+          .catch(function () {
+            var root = document.documentElement.cloneNode(true);
+            var btn = root.querySelector('#htmlBtn');
+            if (btn) btn.removeAttribute('disabled');
+            var status = root.querySelector('#igStatus');
+            if (status) status.textContent = '';
+            var fb = root.querySelector('#igFallback');
+            if (fb && fb.parentNode) fb.parentNode.removeChild(fb);
+            return new Blob(['<!doctype html>\n' + root.outerHTML], { type: 'text/html' });
+          })
+          .then(function (blob) { return new File([blob], name, { type: 'text/html' }); });
+        pageFilePromise.catch(function () { pageFilePromise = null; });
+        return pageFilePromise;
+      }
+
+      var htmlBtn = document.getElementById('htmlBtn');
+      // Warm the page bytes before the click lands.
+      htmlBtn.addEventListener('pointerenter', pageAsFile);
+      htmlBtn.addEventListener('touchstart', pageAsFile, { passive: true });
+      htmlBtn.addEventListener('click', async function () {
+        htmlBtn.disabled = true;
+        setStatus('Preparing page…');
+        try {
+          var file = await pageAsFile();
+          if (navigator.canShare && navigator.canShare({ files: [file] })) {
+            try {
+              await navigator.share({ files: [file], title: titleEn, text: msg });
+              setStatus('Shared.');
+              htmlBtn.disabled = false;
+              return;
+            } catch (e) {
+              if (e && e.name === 'AbortError') { setStatus(''); htmlBtn.disabled = false; return; }
+              if (e && e.name === 'NotAllowedError') {
+                // Activation expired during the first fetch; the file is
+                // cached now, so the next tap shares instantly.
+                setStatus('Ready — tap again to share.');
+                htmlBtn.disabled = false;
+                return;
+              }
+              // Share sheet unavailable; fall through to download.
+            }
+          }
+          var url = URL.createObjectURL(file);
+          var a = document.createElement('a');
+          a.href = url; a.download = file.name;
+          document.body.appendChild(a); a.click(); a.remove();
+          window.setTimeout(function () { URL.revokeObjectURL(url); }, 60000);
+          setStatus('Downloaded — attach the .html file in any messenger.');
+        } catch (err) {
+          setStatus('Could not share the page: ' + (err && err.message ? err.message : 'unknown'));
         }
+        htmlBtn.disabled = false;
       });
 
       // ── Instagram carousel ────────────────────────────────────────
