@@ -642,7 +642,7 @@ don't relitigate them.
     `encyclopedia` renderers deleted. The `Style` enum carries the full
     five-style lineup from the Claude Design proposal (`letter`,
     `zine`, `sunday`, `postcard`, `album`); `BUILT_STYLES` (currently
-    `{letter}`) gates the renderer, CLI choices, and — via the narrower
+    `{letter, zine}`) gates the renderer, CLI choices, and — via the narrower
     `web.pipeline.Style` — the builder form. Planned styles show as
     SOON cards in the picker but cannot be submitted or rendered until
     their templates land. ADR-006's one-narrative-many-templates

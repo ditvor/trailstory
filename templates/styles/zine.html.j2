@@ -1,0 +1,968 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=5">
+<meta name="color-scheme" content="light">
+<title>{{ narrative.title.en }}</title>
+<style>
+  /* ── fonts ─────────────────────────────────────────────────────────
+     Oswald (variable, wght 200..700) stands in for Big Shoulders
+     Display because Big Shoulders has no Cyrillic on Google Fonts and
+     RU is a primary audience. JetBrains Mono (reused from the Letter
+     font set) stands in for Space Mono for the same reason. Subsets
+     split latin + cyrillic so the browser only activates the cyrillic
+     file when it renders Cyrillic glyphs. All payloads base64-embedded
+     → page works offline (ADR-001). */
+  @font-face {
+    font-family: 'Zine Display';
+    font-style: normal;
+    font-weight: 200 700;
+    font-display: swap;
+    src: url(data:font/woff2;base64,{{ fonts.display_latin }}) format('woff2');
+    unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+  }
+  @font-face {
+    font-family: 'Zine Display';
+    font-style: normal;
+    font-weight: 200 700;
+    font-display: swap;
+    src: url(data:font/woff2;base64,{{ fonts.display_cyrillic }}) format('woff2');
+    unicode-range: U+0301, U+0400-045F, U+0490-0491, U+04B0-04B1, U+2116;
+  }
+  @font-face {
+    font-family: 'Zine Mono';
+    font-style: normal;
+    font-weight: 400 500;
+    font-display: swap;
+    src: url(data:font/woff2;base64,{{ fonts.mono_latin }}) format('woff2');
+    unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+  }
+  @font-face {
+    font-family: 'Zine Mono';
+    font-style: normal;
+    font-weight: 400 500;
+    font-display: swap;
+    src: url(data:font/woff2;base64,{{ fonts.mono_cyrillic }}) format('woff2');
+    unicode-range: U+0301, U+0400-045F, U+0490-0491, U+04B0-04B1, U+2116;
+  }
+
+  /* ── design tokens (riso: ink + terracotta spot on warm paper) ──── */
+  :root {
+    --zine-paper:   oklch(0.948 0.022 86);
+    --zine-paper-2: oklch(0.92 0.028 84);
+    --zine-ink:     oklch(0.14 0.01 70);
+    --zine-spot:    oklch(0.62 0.19 35);
+    --zine-spot-dim: oklch(0.62 0.19 35 / 0.22);
+    --zine-hairline: oklch(0.14 0.01 70 / 0.14);
+    --display: 'Zine Display', 'Arial Narrow', 'Helvetica Neue', sans-serif;
+    --mono:    'Zine Mono', ui-monospace, Menlo, monospace;
+  }
+
+  *, *::before, *::after { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+  html { scroll-behavior: smooth; }
+  body {
+    background: var(--zine-paper);
+    color: var(--zine-ink);
+    font-family: var(--mono);
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+  }
+  ::selection { background: var(--zine-spot); color: var(--zine-paper); }
+  :focus-visible { outline: 2px solid var(--zine-ink); outline-offset: 2px; }
+
+  .sr-only {
+    position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px;
+    overflow: hidden; clip: rect(0,0,0,0); white-space: nowrap; border: 0;
+  }
+
+  /* ── paper grain (riso texture over everything) ────────────────── */
+  .grain {
+    position: fixed; inset: 0; z-index: 40;
+    pointer-events: none;
+    mix-blend-mode: multiply; opacity: 0.5;
+    background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='180' height='180'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.88' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 0.08 0'/></filter><rect width='100%25' height='100%25' filter='url(%23n)'/></svg>");
+  }
+
+  /* ── page shell ────────────────────────────────────────────────── */
+  .zine {
+    position: relative;
+    max-width: 1080px; margin: 0 auto;
+    padding: clamp(24px, 5vw, 56px) clamp(20px, 5vw, 56px) clamp(48px, 7vw, 96px);
+  }
+
+  /* ── language toggle ───────────────────────────────────────────── */
+  .lang {
+    position: absolute; top: 14px; right: clamp(20px, 5vw, 56px); z-index: 50;
+    display: flex; gap: 0;
+    border: 2px solid var(--zine-ink); background: var(--zine-paper);
+    font-family: var(--display);
+  }
+  .lang button {
+    background: var(--zine-paper); color: var(--zine-ink);
+    border: 0; padding: 6px 12px; margin: 0;
+    font-family: var(--display); font-weight: 700; font-size: 12px;
+    letter-spacing: 0.18em; text-transform: uppercase;
+    cursor: pointer;
+  }
+  .lang button + button { border-left: 2px solid var(--zine-ink); }
+  .lang button[aria-pressed="true"] { background: var(--zine-spot); color: var(--zine-paper); }
+  @media (max-width: 767px) { .lang button { padding: 5px 9px; font-size: 11px; } }
+
+  /* ── tri-lingual swap ──────────────────────────────────────────── */
+  body.lang-en .ru, body.lang-en .de { display: none; }
+  body.lang-ru .en, body.lang-ru .de { display: none; }
+  body.lang-de .en, body.lang-de .ru { display: none; }
+  .swap { transition: opacity 180ms ease; }
+  .swap.is-swapping { opacity: 0.4; }
+
+  /* ── shared idioms ─────────────────────────────────────────────── */
+  .eyebrow {
+    font-family: var(--display); font-weight: 700; font-size: 11px;
+    letter-spacing: 0.18em; text-transform: uppercase;
+    color: var(--zine-ink);
+  }
+  .eyebrow.spot { color: var(--zine-spot); }
+  .section-head {
+    display: flex; align-items: center; gap: 10px; margin-bottom: 12px;
+  }
+  .section-head .rule-lead { flex: 1; height: 1px; background: var(--zine-ink); }
+
+  /* ── cover ─────────────────────────────────────────────────────── */
+  .cover-top {
+    display: flex; justify-content: space-between; align-items: baseline;
+    gap: 16px; flex-wrap: wrap;
+    margin-top: 32px; /* start below the absolutely-positioned lang toggle */
+  }
+  .cover-rules { margin-top: 8px; }
+  .cover-rules .thick { height: 4px; background: var(--zine-ink); }
+  .cover-rules .thin  { height: 1px; background: var(--zine-ink); margin-top: 4px; }
+
+  .cover-main {
+    display: grid; grid-template-columns: 1fr minmax(220px, 300px);
+    gap: 36px; align-items: end;
+    margin-top: 24px;
+  }
+  /* Cap the hero in the single-column layout; in the desktop grid the
+     300px column already constrains it. Pushed right to echo the
+     cover mockup's taped-photo placement. */
+  .cover-hero { width: min(100%, 380px); margin-left: auto; }
+  @media (max-width: 767px) {
+    .cover-main { grid-template-columns: 1fr; gap: 28px; }
+  }
+
+  h1.display {
+    margin: 0;
+    font-family: var(--display); font-weight: 700;
+    font-size: clamp(56px, 12.5vw, 170px);
+    line-height: 0.85;
+    letter-spacing: -0.02em;
+    text-transform: uppercase;
+    color: var(--zine-ink);
+    overflow-wrap: break-word;
+  }
+  h1.display .top { display: block; }
+  h1.display .bot {
+    display: block;
+    margin-left: 0.35em;
+    color: transparent;
+    -webkit-text-stroke: 0.018em var(--zine-ink);
+  }
+  @supports not (-webkit-text-stroke: 1px black) {
+    h1.display .bot { color: var(--zine-ink); }
+  }
+
+  .dek {
+    margin: 22px 0 0; max-width: 580px;
+    font-size: 14px; line-height: 1.6;
+    color: var(--zine-ink);
+  }
+
+  .tagline {
+    margin-top: 26px; padding-top: 12px;
+    border-top: 1px solid var(--zine-ink);
+    display: flex; justify-content: space-between; align-items: baseline;
+    gap: 16px; flex-wrap: wrap;
+  }
+
+  /* ── taped riso photo ──────────────────────────────────────────── */
+  .zphoto { position: relative; display: block; }
+  .zphoto .tape {
+    position: absolute; top: -10px;
+    width: 58px; height: 18px; z-index: 2;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.12);
+  }
+  .zphoto .tape.l { left: 16%; transform: rotate(-3deg); }
+  .zphoto .tape.r { right: 16%; transform: rotate(3deg); }
+  .zphoto.t-ink  .tape { background: oklch(0.96 0.012 80 / 0.78); }
+  .zphoto.t-spot .tape { background: oklch(0.95 0.05 35 / 0.65); }
+  .zphoto .ph {
+    position: relative;
+    background: var(--zine-paper-2);
+    box-shadow: 0 6px 14px -8px rgba(0,0,0,0.2);
+  }
+  .zphoto .ph img {
+    display: block; width: 100%; height: 100%;
+    position: absolute; inset: 0;
+    object-fit: cover;
+    filter: url(#zine-duotone);
+    opacity: 0; transition: opacity 240ms ease;
+  }
+  .zphoto .ph img.loaded { opacity: 1; }
+  .zphoto .ph.r45 { aspect-ratio: 4 / 5; }
+  .zphoto .ph.r11 { aspect-ratio: 1 / 1; }
+  .zphoto .ph.r32 { aspect-ratio: 3 / 2; }
+  /* halftone dot overlay — screen-blended paper dots over the duotone */
+  .zphoto .ph::after {
+    content: ""; position: absolute; inset: 0;
+    background:
+      radial-gradient(circle at center, transparent 1px, var(--zine-paper) 1.4px),
+      radial-gradient(circle at center, transparent 1px, var(--zine-paper) 1.4px);
+    background-size: 3px 3px, 3px 3px;
+    background-position: 0 0, 1.5px 1.5px;
+    mix-blend-mode: screen; opacity: 0.20;
+    pointer-events: none;
+  }
+  .fig {
+    margin-top: 10px;
+    font-size: 11px; line-height: 1.5;
+    display: flex; gap: 6px; align-items: baseline;
+  }
+  .fig .fig-num { color: var(--zine-spot); white-space: nowrap; }
+
+  /* ── middle strip: tally / route / postmark ────────────────────── */
+  .strip {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    gap: 32px; align-items: start;
+    margin-top: 56px;
+  }
+  .tally-rows { list-style: none; margin: 0; padding: 0; font-size: 13px; line-height: 2.0; }
+  .tally-rows li {
+    display: flex; justify-content: space-between; gap: 12px;
+    border-bottom: 1px dotted var(--zine-ink);
+  }
+  .tally-rows .v { color: var(--zine-spot); white-space: nowrap; }
+  .elev { margin-top: 18px; }
+  .elev svg { display: block; width: 100%; height: 40px; }
+  .elev-caption { margin-top: 6px; font-size: 11px; }
+
+  .routebox {
+    border: 2px solid var(--zine-ink);
+    background: var(--zine-paper-2);
+    padding: 14px;
+  }
+  .routebox svg { display: block; width: 100%; height: auto; }
+  .routebox .routefoot {
+    margin-top: 10px; display: flex; justify-content: space-between;
+    font-size: 11px;
+  }
+  .routebox .routefoot .v { color: var(--zine-spot); }
+
+  .stampcol { display: flex; justify-content: center; }
+  .postmark { width: min(220px, 70vw); transform: rotate(-8deg); }
+  .postmark svg { display: block; width: 100%; height: auto; }
+
+  /* ── chapters ──────────────────────────────────────────────────── */
+  .chapters { margin-top: 56px; border-top: 4px solid var(--zine-ink); }
+  .chapter {
+    display: flex; gap: 36px; align-items: flex-start;
+    padding: 36px 0; border-bottom: 1px solid var(--zine-ink);
+  }
+  .chapter.side-left  { flex-direction: row; }
+  .chapter.side-right { flex-direction: row-reverse; }
+  .chapter .photo-col { flex: 0 0 auto; }
+  .chapter .text-col  { flex: 1; min-width: 0; }
+  .chapter-head { display: flex; align-items: center; gap: 18px; }
+  .chapter-num {
+    font-family: var(--display); font-weight: 700;
+    font-size: clamp(56px, 8vw, 96px); line-height: 0.9;
+    letter-spacing: -0.02em;
+    color: var(--zine-spot);
+  }
+  .chapter-head .rule-lead { flex: 1; height: 1px; background: var(--zine-ink); }
+  .chapter p {
+    margin: 18px 0 0;
+    font-size: 14px; line-height: 1.7;
+  }
+  @media (max-width: 767px) {
+    .chapter, .chapter.side-left, .chapter.side-right {
+      flex-direction: column; gap: 24px;
+    }
+    .chapter .photo-col { width: 100% !important; transform: none !important; }
+  }
+
+  /* ── pull quote (riso block) ───────────────────────────────────── */
+  .quote {
+    margin: 48px auto; max-width: 760px;
+    padding: 26px 30px;
+    background: var(--zine-spot); color: var(--zine-paper);
+    transform: rotate(-1.2deg);
+    font-family: var(--display); font-weight: 700;
+    font-size: clamp(22px, 3.4vw, 38px);
+    line-height: 1.05; letter-spacing: 0.01em;
+    text-transform: uppercase;
+    box-shadow: 0 8px 18px -12px rgba(0,0,0,0.35);
+  }
+
+  /* ── the rest of the roll (overflow photos) ────────────────────── */
+  .roll { margin-top: 48px; }
+  .roll-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 36px 32px;
+    margin-top: 20px;
+  }
+
+  /* ── about this place (ADR-017) ────────────────────────────────── */
+  .place {
+    margin-top: 56px;
+    border: 2px solid var(--zine-ink);
+    padding: 20px 22px;
+  }
+  .place .place-summary { margin: 0; font-size: 13px; line-height: 1.7; }
+  .place .place-source { margin: 12px 0 0; font-size: 10px; letter-spacing: 0.04em; }
+  .place .place-source a {
+    color: var(--zine-ink); text-decoration: none;
+    border-bottom: 1px solid var(--zine-hairline);
+  }
+  .place .place-source a:hover { color: var(--zine-spot); }
+
+  /* ── share row ─────────────────────────────────────────────────── */
+  .share {
+    margin-top: 64px; padding-top: 18px;
+    border-top: 4px solid var(--zine-ink);
+    display: flex; flex-wrap: wrap; gap: 10px; align-items: center;
+  }
+  .share-label {
+    margin-right: 6px;
+    font-family: var(--display); font-weight: 700; font-size: 12px;
+    letter-spacing: 0.18em; text-transform: uppercase;
+    color: var(--zine-spot);
+  }
+  .share button, .share a {
+    display: inline-block; padding: 9px 15px; margin: 0;
+    font-family: var(--display); font-weight: 700; font-size: 12px;
+    letter-spacing: 0.12em; text-transform: uppercase;
+    background: transparent; color: var(--zine-ink);
+    border: 2px solid var(--zine-ink); cursor: pointer;
+    text-decoration: none;
+    transition: background 120ms ease, color 120ms ease, border-color 120ms ease;
+  }
+  .share button:hover, .share a:hover {
+    background: var(--zine-ink); color: var(--zine-paper);
+  }
+  .share button.primary, .share a.primary {
+    background: var(--zine-spot); color: var(--zine-paper); border-color: var(--zine-spot);
+  }
+  .share button.primary:hover, .share a.primary:hover {
+    background: var(--zine-ink); border-color: var(--zine-ink);
+  }
+  .share-status {
+    width: 100%; margin-top: 6px;
+    font-size: 10px; letter-spacing: 0.04em;
+    min-height: 1.2em;
+  }
+  .ig-fallback { display: flex; flex-wrap: wrap; gap: 6px; width: 100%; margin-top: 6px; }
+  .ig-fallback a {
+    padding: 6px 10px; font-size: 10px;
+    font-family: var(--mono); letter-spacing: 0.04em; text-transform: none;
+    background: var(--zine-paper-2); border: 1px solid var(--zine-hairline); color: var(--zine-ink);
+  }
+  .ig-fallback a:hover { background: var(--zine-ink); color: var(--zine-paper); border-color: var(--zine-ink); }
+
+  /* ── colophon ──────────────────────────────────────────────────── */
+  .colophon {
+    margin-top: 48px; padding-top: 16px;
+    border-top: 1px solid var(--zine-ink);
+    display: flex; justify-content: space-between; align-items: baseline;
+    gap: 16px; flex-wrap: wrap;
+  }
+  .colophon .slug { font-size: 10px; letter-spacing: 0.04em; }
+
+  /* ── print ─────────────────────────────────────────────────────── */
+  @media print {
+    .lang, .share { display: none !important; }
+    html, body { background: var(--zine-paper); color: var(--zine-ink); }
+    .zine { padding: 24pt; max-width: none; }
+    .chapter { page-break-inside: avoid; }
+    .zphoto .ph img { opacity: 1 !important; }
+    body { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  }
+</style>
+</head>
+<body class="lang-en style-zine">
+
+  {# Duotone filter: luma collapse then a two-color transfer — terracotta
+     highlights into ink shadows. The design handoff is explicit that
+     faking this with grayscale+tint reads noticeably worse. #}
+  <svg width="0" height="0" style="position:absolute" aria-hidden="true">
+    <defs>
+      <filter id="zine-duotone">
+        <feColorMatrix type="matrix"
+          values="0.33 0.33 0.33 0 0
+                  0.33 0.33 0.33 0 0
+                  0.33 0.33 0.33 0 0
+                  0    0    0    1 0"/>
+        <feComponentTransfer>
+          <feFuncR type="table" tableValues="0.13 0.84"/>
+          <feFuncG type="table" tableValues="0.12 0.42"/>
+          <feFuncB type="table" tableValues="0.11 0.27"/>
+        </feComponentTransfer>
+      </filter>
+    </defs>
+  </svg>
+
+  <div class="grain" aria-hidden="true"></div>
+
+  <div class="zine">
+
+    <div class="lang" role="group" aria-label="Language">
+      <button type="button" data-lang="en" aria-pressed="true">EN</button>
+      <button type="button" data-lang="ru" aria-pressed="false">RU</button>
+      <button type="button" data-lang="de" aria-pressed="false">DE</button>
+    </div>
+
+    <header class="cover swap">
+      <div class="cover-top">
+        <span class="eyebrow">
+          <span class="en">Trailstory / Field notes</span>
+          <span class="ru">Trailstory / Полевые заметки</span>
+          <span class="de">Trailstory / Feldnotizen</span>
+        </span>
+        <span class="eyebrow spot">
+          <span class="en">{{ narrative.milestone.en }}</span>
+          <span class="ru">{{ narrative.milestone.ru }}</span>
+          <span class="de">{{ narrative.milestone.de }}</span>
+        </span>
+      </div>
+      <div class="cover-rules" aria-hidden="true">
+        <div class="thick"></div>
+        <div class="thin"></div>
+      </div>
+
+      <div class="cover-main">
+        {# First word solid, remainder outlined — the riso cover idiom.
+           One-word titles collapse the outlined line naturally. #}
+        <h1 class="display">
+          <span class="en">
+            <span class="sr-only">{{ narrative.title.en }}</span>
+            {% set words = narrative.title.en.split(' ', 1) %}
+            <span class="top" aria-hidden="true">{{ words[0] }}</span>
+            <span class="bot" aria-hidden="true">{{ words[1] if words|length > 1 else '' }}</span>
+          </span>
+          <span class="ru">
+            <span class="sr-only">{{ narrative.title.ru }}</span>
+            {% set words = narrative.title.ru.split(' ', 1) %}
+            <span class="top" aria-hidden="true">{{ words[0] }}</span>
+            <span class="bot" aria-hidden="true">{{ words[1] if words|length > 1 else '' }}</span>
+          </span>
+          <span class="de">
+            <span class="sr-only">{{ narrative.title.de }}</span>
+            {% set words = narrative.title.de.split(' ', 1) %}
+            <span class="top" aria-hidden="true">{{ words[0] }}</span>
+            <span class="bot" aria-hidden="true">{{ words[1] if words|length > 1 else '' }}</span>
+          </span>
+        </h1>
+
+        {% if photos|length > 0 %}
+        <div class="cover-hero" style="transform: rotate(2.5deg)">
+          <figure class="zphoto t-ink" style="margin:0">
+            <span class="tape l" aria-hidden="true"></span>
+            <span class="tape r" aria-hidden="true"></span>
+            <div class="ph r45"><img src="{{ photos[0].data_uri }}" alt="" loading="eager"></div>
+            <figcaption class="fig">
+              <span class="fig-num"><span class="en">FIG. 01 &rarr;</span><span class="ru">РИС. 01 &rarr;</span><span class="de">ABB. 01 &rarr;</span></span>
+            </figcaption>
+          </figure>
+        </div>
+        {% endif %}
+      </div>
+
+      <p class="dek">
+        <span class="en">{{ narrative.subtitle.en }}</span>
+        <span class="ru">{{ narrative.subtitle.ru }}</span>
+        <span class="de">{{ narrative.subtitle.de }}</span>
+      </p>
+
+      <div class="tagline">
+        <span class="eyebrow">
+          {%- if meta.location %}{{ meta.location | upper }}{% endif %}{% if meta.location and meta.date %} &middot; {% endif %}{% if meta.date %}{{ meta.date }}{% endif -%}
+        </span>
+        <span class="eyebrow spot">{{ stats.distance_km }} km &middot; +{{ stats.elevation_gain_m | int }} m &middot; {{ '%dh %02dm' | format(stats.duration_min // 60, stats.duration_min % 60) }}</span>
+      </div>
+    </header>
+
+    <section class="strip swap">
+
+      <div class="tally">
+        <div class="section-head">
+          <span class="eyebrow"><span class="en">The tally</span><span class="ru">Итог</span><span class="de">Die Bilanz</span></span>
+          <span class="rule-lead" aria-hidden="true"></span>
+        </div>
+        <ul class="tally-rows">
+          <li><span><span class="en">Distance</span><span class="ru">Дистанция</span><span class="de">Strecke</span></span><span class="v">{{ stats.distance_km }} km</span></li>
+          <li><span><span class="en">Climb</span><span class="ru">Подъём</span><span class="de">Anstieg</span></span><span class="v">+{{ stats.elevation_gain_m | int }} m</span></li>
+          <li><span><span class="en">Descent</span><span class="ru">Спуск</span><span class="de">Abstieg</span></span><span class="v">&minus;{{ stats.elevation_loss_m | int }} m</span></li>
+          <li><span><span class="en">Time</span><span class="ru">Время</span><span class="de">Zeit</span></span><span class="v">{{ '%dh %02dm' | format(stats.duration_min // 60, stats.duration_min % 60) }}</span></li>
+          <li><span><span class="en">High point</span><span class="ru">Вершина</span><span class="de">Gipfel</span></span><span class="v">{{ stats.summit_elev_m | int }} m</span></li>
+        </ul>
+        <div class="elev">
+          <svg class="elevation" viewBox="0 0 200 40" preserveAspectRatio="none" aria-hidden="true">
+            <path fill="oklch(0.62 0.19 35 / 0.22)" d="M 0,40{%- for x, y in elevation %} L {{ (x * 200) | round(2) }},{{ (38 - y * 32) | round(2) }}{% endfor -%} L 200,40 Z"/>
+            <polyline fill="none" stroke="oklch(0.14 0.01 70)" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" points="{% for x, y in elevation %}{{ (x * 200) | round(2) }},{{ (38 - y * 32) | round(2) }} {% endfor %}"/>
+          </svg>
+          <p class="elev-caption">{{ stats.start_elev_m | int }} m &rarr; {{ stats.summit_elev_m | int }} m</p>
+        </div>
+      </div>
+
+      {% if stats.waypoints | length >= 2 %}
+      <div class="route">
+        <div class="section-head">
+          <span class="eyebrow"><span class="en">The route, roughly</span><span class="ru">Маршрут, примерно</span><span class="de">Die Route, ungef&auml;hr</span></span>
+          <span class="rule-lead" aria-hidden="true"></span>
+        </div>
+        <div class="routebox">
+          {% set lats = stats.waypoints | map(attribute='lat') | list %}
+          {% set lons = stats.waypoints | map(attribute='lon') | list %}
+          {% set min_lat = lats | min %}{% set max_lat = lats | max %}
+          {% set min_lon = lons | min %}{% set max_lon = lons | max %}
+          {% set span_lat = (max_lat - min_lat) or 1e-6 %}
+          {% set span_lon = (max_lon - min_lon) or 1e-6 %}
+          <svg viewBox="0 0 280 200" preserveAspectRatio="xMidYMid meet" aria-hidden="true">
+            {% for i in range(1, 7) %}
+            <line x1="{{ i * 40 }}" y1="0" x2="{{ i * 40 }}" y2="200" stroke="oklch(0.14 0.01 70)" stroke-width="0.5" opacity="0.15"/>
+            {% endfor %}
+            {% for i in range(1, 5) %}
+            <line x1="0" y1="{{ i * 40 }}" x2="280" y2="{{ i * 40 }}" stroke="oklch(0.14 0.01 70)" stroke-width="0.5" opacity="0.15"/>
+            {% endfor %}
+            {# Dual-stroke track: fat terracotta under a thin ink line. #}
+            {% set pts = [] %}
+            {% for w in stats.waypoints %}
+              {% set _ = pts.append('%s,%s' % ((((w.lon - min_lon) / span_lon) * 248 + 16) | round(2), (184 - ((w.lat - min_lat) / span_lat) * 168) | round(2))) %}
+            {% endfor %}
+            <polyline fill="none" stroke="oklch(0.62 0.19 35)" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round" points="{{ pts | join(' ') }}"/>
+            <polyline fill="none" stroke="oklch(0.14 0.01 70)" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" points="{{ pts | join(' ') }}"/>
+            {% set first = stats.waypoints[0] %}
+            {% set last  = stats.waypoints[-1] %}
+            <circle cx="{{ (((first.lon - min_lon) / span_lon) * 248 + 16) | round(2) }}"
+                    cy="{{ (184 - ((first.lat - min_lat) / span_lat) * 168) | round(2) }}"
+                    r="4" fill="oklch(0.14 0.01 70)"/>
+            <circle cx="{{ (((last.lon - min_lon) / span_lon) * 248 + 16) | round(2) }}"
+                    cy="{{ (184 - ((last.lat - min_lat) / span_lat) * 168) | round(2) }}"
+                    r="4" fill="oklch(0.948 0.022 86)" stroke="oklch(0.14 0.01 70)" stroke-width="1.6"/>
+          </svg>
+          <div class="routefoot">
+            <span><span class="en">&uarr; N</span><span class="ru">&uarr; С</span><span class="de">&uarr; N</span></span>
+            <span class="v">{{ stats.distance_km }} km &middot; {{ '%dh %02dm' | format(stats.duration_min // 60, stats.duration_min % 60) }}</span>
+          </div>
+        </div>
+      </div>
+      {% endif %}
+
+      {% if meta.location or meta.date %}
+      <div class="stampcol" aria-hidden="true">
+        <div class="postmark">
+          <svg viewBox="0 0 220 220">
+            <circle cx="110" cy="110" r="100" fill="none" stroke="oklch(0.62 0.19 35)" stroke-width="2.5"/>
+            <circle cx="110" cy="110" r="86"  fill="none" stroke="oklch(0.62 0.19 35)" stroke-width="1"/>
+            <circle cx="110" cy="110" r="74"  fill="none" stroke="oklch(0.62 0.19 35)" stroke-width="2" stroke-dasharray="3 4"/>
+            {% for y in [-58, -50, -42, 42, 50, 58] %}
+            <path d="M 12 {{ 110 + y }} Q 45 {{ 102 + y }}, 78 {{ 110 + y }} T 144 {{ 110 + y }} T 210 {{ 110 + y }}"
+                  fill="none" stroke="oklch(0.62 0.19 35)" stroke-width="1.6"/>
+            {% endfor %}
+            <text x="110" y="96" text-anchor="middle"
+                  style="font-family:var(--display);font-weight:700;font-size:13px;letter-spacing:0.06em;fill:oklch(0.62 0.19 35);text-transform:uppercase">
+              <tspan class="en">Filed from</tspan><tspan class="ru">Отправлено из</tspan><tspan class="de">Abgestempelt in</tspan>
+            </text>
+            {% if meta.location %}
+            <text x="110" y="114" text-anchor="middle"
+                  style="font-family:var(--display);font-weight:700;font-size:14px;letter-spacing:0.06em;fill:oklch(0.62 0.19 35);text-transform:uppercase">{{ meta.location }}</text>
+            {% endif %}
+            {% if meta.date %}
+            <text x="110" y="132" text-anchor="middle"
+                  style="font-family:var(--display);font-weight:700;font-size:13px;letter-spacing:0.08em;fill:oklch(0.62 0.19 35)">{{ meta.date }}</text>
+            {% endif %}
+          </svg>
+        </div>
+      </div>
+      {% endif %}
+
+    </section>
+
+    {# ── chapters: one numbered riso section per paragraph ──────────
+       The handoff contract assumed per-chapter titles/times; the
+       narrative model deliberately has neither (ADR-006 — one
+       narrative, many templates), so each paragraph gets the big
+       terracotta numeral and an uneven taped-photo rhythm instead.
+       photos[0] is the cover hero; the rest interleave one per
+       chapter, overflow lands in "the rest of the roll" below. #}
+    {% set extras = photos[1:] if photos|length > 1 else [] %}
+    {% set inter = extras[:narrative.paragraphs | length] %}
+    {% set tail = extras[narrative.paragraphs | length:] %}
+    {% set quote_after = 1 if narrative.paragraphs|length >= 3 else narrative.paragraphs|length - 1 %}
+    {# side / photo width px / rotation deg / tape tint / aspect class #}
+    {% set cfgs = [
+      ('right', 360, -1.6, 't-spot', 'r45'),
+      ('left',  300,  2.2, 't-ink',  'r11'),
+      ('right', 420,  1.0, 't-spot', 'r32'),
+      ('left',  320, -2.4, 't-ink',  'r45'),
+      ('right', 300,  1.8, 't-spot', 'r11'),
+      ('left',  440, -1.2, 't-ink',  'r32'),
+    ] %}
+
+    <div class="chapters swap">
+      {% for paragraph in narrative.paragraphs %}
+      {% set cfg = cfgs[loop.index0 % 6] %}
+      <section class="chapter side-{{ cfg[0] }}">
+        {% if loop.index0 < inter|length %}
+        <div class="photo-col" style="width:min({{ cfg[1] }}px, 42vw); transform:rotate({{ cfg[2] }}deg)">
+          <figure class="zphoto {{ cfg[3] }}" style="margin:0">
+            <span class="tape l" aria-hidden="true"></span>
+            <span class="tape r" aria-hidden="true"></span>
+            <div class="ph {{ cfg[4] }}"><img src="{{ inter[loop.index0].data_uri }}" alt="" loading="lazy"></div>
+            <figcaption class="fig">
+              {% set fig_num = '%02d' % (loop.index0 + 2) %}
+              <span class="fig-num"><span class="en">FIG. {{ fig_num }} &rarr;</span><span class="ru">РИС. {{ fig_num }} &rarr;</span><span class="de">ABB. {{ fig_num }} &rarr;</span></span>
+            </figcaption>
+          </figure>
+        </div>
+        {% endif %}
+        <div class="text-col">
+          <div class="chapter-head">
+            <span class="chapter-num" aria-hidden="true">{{ '%02d' % loop.index }}</span>
+            <span class="rule-lead" aria-hidden="true"></span>
+          </div>
+          <p class="en">
+            {% for sentence in paragraph -%}
+              {{ sentence.text.en }}{% if not loop.last %} {% endif -%}
+            {% endfor %}
+          </p>
+          <p class="ru">
+            {% for sentence in paragraph -%}
+              {{ sentence.text.ru }}{% if not loop.last %} {% endif -%}
+            {% endfor %}
+          </p>
+          <p class="de">
+            {% for sentence in paragraph -%}
+              {{ sentence.text.de }}{% if not loop.last %} {% endif -%}
+            {% endfor %}
+          </p>
+        </div>
+      </section>
+      {% if loop.index0 == quote_after %}
+      <blockquote class="quote">
+        <span class="en">{{ narrative.pull_quote.en }}</span>
+        <span class="ru">{{ narrative.pull_quote.ru }}</span>
+        <span class="de">{{ narrative.pull_quote.de }}</span>
+      </blockquote>
+      {% endif %}
+      {% endfor %}
+    </div>
+
+    {% if tail|length > 0 %}
+    <section class="roll swap">
+      <div class="section-head">
+        <span class="eyebrow"><span class="en">The rest of the roll</span><span class="ru">Остальная плёнка</span><span class="de">Der Rest des Films</span></span>
+        <span class="rule-lead" aria-hidden="true"></span>
+      </div>
+      <div class="roll-grid">
+        {% for ph in tail %}
+        <div style="transform:rotate({{ '1.6' if loop.index0 % 2 == 0 else '-1.4' }}deg)">
+          <figure class="zphoto {{ 't-spot' if loop.index0 % 2 == 0 else 't-ink' }}" style="margin:0">
+            <span class="tape l" aria-hidden="true"></span>
+            <span class="tape r" aria-hidden="true"></span>
+            <div class="ph r45"><img src="{{ ph.data_uri }}" alt="" loading="lazy"></div>
+            <figcaption class="fig">
+              {% set fig_num = '%02d' % (inter|length + loop.index0 + 2) %}
+              <span class="fig-num"><span class="en">FIG. {{ fig_num }} &rarr;</span><span class="ru">РИС. {{ fig_num }} &rarr;</span><span class="de">ABB. {{ fig_num }} &rarr;</span></span>
+            </figcaption>
+          </figure>
+        </div>
+        {% endfor %}
+      </div>
+    </section>
+    {% endif %}
+
+    {% if place %}
+    <section class="place">
+      <div class="section-head">
+        <span class="eyebrow">
+          <span class="en">About {{ place.town }}</span>
+          <span class="ru">О месте: {{ place.town }}</span>
+          <span class="de">&Uuml;ber {{ place.town }}</span>
+        </span>
+        <span class="rule-lead" aria-hidden="true"></span>
+      </div>
+      <p class="place-summary">
+        <span class="en">{{ place.summary.en }}</span>
+        <span class="ru">{{ place.summary.ru }}</span>
+        <span class="de">{{ place.summary.de }}</span>
+      </p>
+      {% if place.source_url or place.named_landmarks %}
+      <p class="place-source">
+        {% if place.source_url %}
+        <a href="{{ place.source_url }}" target="_blank" rel="noopener noreferrer">
+          <span class="en">Source: {{ place.source_title or place.town }}</span>
+          <span class="ru">Источник: {{ place.source_title or place.town }}</span>
+          <span class="de">Quelle: {{ place.source_title or place.town }}</span>
+        </a>
+        {% endif %}
+        {% if place.named_landmarks %}{% if place.source_url %}<span aria-hidden="true"> · </span>{% endif %}<a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener noreferrer">© OpenStreetMap contributors</a>{% endif %}
+      </p>
+      {% endif %}
+    </section>
+    {% endif %}
+
+    <section class="share swap" aria-label="Share">
+      <span class="share-label">
+        <span class="en">Mail this &rarr;</span>
+        <span class="ru">Послать &rarr;</span>
+        <span class="de">Verschicken &rarr;</span>
+      </span>
+      <button id="pdfBtn" type="button" class="primary">
+        <span class="en">Print zine (PDF)</span>
+        <span class="ru">Печать (PDF)</span>
+        <span class="de">Zine drucken (PDF)</span>
+      </button>
+      <button id="htmlBtn" type="button">
+        <span class="en">Share page (HTML file)</span>
+        <span class="ru">Поделиться страницей (HTML)</span>
+        <span class="de">Seite teilen (HTML-Datei)</span>
+      </button>
+      <button id="igBtn" type="button" data-slug="{{ meta.slug }}">
+        <span class="en">Save for Instagram</span>
+        <span class="ru">Сохранить для Instagram</span>
+        <span class="de">F&uuml;r Instagram speichern</span>
+      </button>
+      <p id="igStatus" class="share-status" aria-live="polite"></p>
+    </section>
+
+    <footer class="colophon swap">
+      <span class="eyebrow">
+        <span class="en">Printed in a run of one</span>
+        <span class="ru">Тираж — один экземпляр</span>
+        <span class="de">Auflage: ein Exemplar</span>
+      </span>
+      <span class="slug">{{ meta.slug }}</span>
+    </footer>
+
+  </div>
+
+  <script>
+    (function () {
+      var LANGS = ['en', 'ru', 'de'];
+      var STORAGE_KEY = 'trailstory.lang';
+
+      // ── language toggle ───────────────────────────────────────────
+      var langBtns = document.querySelectorAll('.lang button');
+      var swapNodes = document.querySelectorAll('.swap');
+
+      function currentLang() {
+        for (var i = 0; i < LANGS.length; i++) {
+          if (document.body.classList.contains('lang-' + LANGS[i])) return LANGS[i];
+        }
+        return 'en';
+      }
+
+      function applyLang(next) {
+        for (var i = 0; i < LANGS.length; i++) {
+          document.body.classList.remove('lang-' + LANGS[i]);
+        }
+        document.body.classList.add('lang-' + next);
+        document.documentElement.lang = next;
+        langBtns.forEach(function (b) {
+          b.setAttribute('aria-pressed', String(b.getAttribute('data-lang') === next));
+        });
+        try { localStorage.setItem(STORAGE_KEY, next); } catch (e) {}
+      }
+
+      function setLang(next) {
+        if (next === currentLang()) return;
+        swapNodes.forEach(function (n) { n.classList.add('is-swapping'); });
+        window.setTimeout(function () {
+          applyLang(next);
+          swapNodes.forEach(function (n) { n.classList.remove('is-swapping'); });
+        }, 180);
+      }
+
+      langBtns.forEach(function (b) {
+        b.addEventListener('click', function () { setLang(b.getAttribute('data-lang')); });
+      });
+
+      // Initial language: stored value → navigator language → 'en'.
+      var stored = null;
+      try { stored = localStorage.getItem(STORAGE_KEY); } catch (e) {}
+      if (stored && LANGS.indexOf(stored) >= 0) {
+        applyLang(stored);
+      } else {
+        var nav = (navigator.language || 'en').toLowerCase();
+        if (nav.indexOf('ru') === 0) applyLang('ru');
+        else if (nav.indexOf('de') === 0) applyLang('de');
+        else applyLang('en');
+      }
+
+      // ── photo blur-up ────────────────────────────────────────────
+      document.querySelectorAll('.zphoto img').forEach(function (img) {
+        if (img.complete) { img.classList.add('loaded'); }
+        else { img.addEventListener('load', function () { img.classList.add('loaded'); }); }
+      });
+
+      // ── share row (same contract as the Letter template) ─────────
+      var titles = {
+        en: {{ narrative.title.en | tojson }},
+        ru: {{ narrative.title.ru | tojson }},
+        de: {{ narrative.title.de | tojson }}
+      };
+      var quotes = {
+        en: {{ narrative.pull_quote.en | tojson }},
+        ru: {{ narrative.pull_quote.ru | tojson }},
+        de: {{ narrative.pull_quote.de | tojson }}
+      };
+      var labels = {
+        en: { sending: 'Building carousel…', ready: 'Carousel ready. Click each slide to save.', shared: 'Saved. Open Instagram and pick the slides from your library.', error: 'Could not build carousel: ', htmlPreparing: 'Preparing page…', htmlAgain: 'Ready — tap again to share.', htmlShared: 'Shared.', htmlSaved: 'Downloaded — attach the .html file in any messenger.', htmlError: 'Could not share the page: ' },
+        ru: { sending: 'Собираем карусель…', ready: 'Карусель готова. Скачайте каждый слайд.', shared: 'Сохранено. Откройте Instagram и выберите слайды из галереи.', error: 'Не удалось собрать карусель: ', htmlPreparing: 'Готовим страницу…', htmlAgain: 'Готово — нажмите ещё раз.', htmlShared: 'Отправлено.', htmlSaved: 'Скачано — прикрепите .html-файл в любом мессенджере.', htmlError: 'Не удалось поделиться страницей: ' },
+        de: { sending: 'Karussell wird erstellt…', ready: 'Karussell fertig. Slide einzeln speichern.', shared: 'Gespeichert. Instagram öffnen und Slides aus der Galerie wählen.', error: 'Karussell fehlgeschlagen: ', htmlPreparing: 'Seite wird vorbereitet…', htmlAgain: 'Bereit — noch einmal tippen.', htmlShared: 'Geteilt.', htmlSaved: 'Heruntergeladen — die .html-Datei in einem Messenger anhängen.', htmlError: 'Seite konnte nicht geteilt werden: ' }
+      };
+
+      var pdfBtn  = document.getElementById('pdfBtn');
+      var htmlBtn = document.getElementById('htmlBtn');
+      var igBtn   = document.getElementById('igBtn');
+      var igStatus = document.getElementById('igStatus');
+
+      function shareMessage() {
+        var lg = currentLang();
+        return titles[lg] + ' — ' + quotes[lg];
+      }
+
+      if (pdfBtn) {
+        // The @media print stylesheet strips the chrome and keeps only the
+        // currently selected language, so the browser's "Save as PDF"
+        // destination produces a clean single-language zine.
+        pdfBtn.addEventListener('click', function () { window.print(); });
+      }
+
+      // The page itself is the shareable artifact (ADR-001): one
+      // self-contained .html file. Served over http(s) we re-fetch our own
+      // URL for the original bytes; opened from disk (file://), fetch is
+      // blocked, so we serialize a cleaned clone of the live DOM — photos
+      // survive as inline data URIs, and the clone drops transient UI
+      // state so a forwarded copy works for the next reader too.
+      var pageFilePromise = null;
+      function pageAsFile() {
+        if (pageFilePromise) return pageFilePromise;
+        var name = {{ meta.slug | tojson }} + '.html';
+        pageFilePromise = fetch(window.location.href)
+          .then(function (res) {
+            if (!res.ok) throw new Error('HTTP ' + res.status);
+            return res.blob();
+          })
+          .catch(function () {
+            var root = document.documentElement.cloneNode(true);
+            var btn = root.querySelector('#htmlBtn');
+            if (btn) btn.removeAttribute('disabled');
+            var status = root.querySelector('#igStatus');
+            if (status) status.textContent = '';
+            var fb = root.querySelector('#igFallback');
+            if (fb && fb.parentNode) fb.parentNode.removeChild(fb);
+            return new Blob(['<!doctype html>\n' + root.outerHTML], { type: 'text/html' });
+          })
+          .then(function (blob) { return new File([blob], name, { type: 'text/html' }); });
+        pageFilePromise.catch(function () { pageFilePromise = null; });
+        return pageFilePromise;
+      }
+
+      if (htmlBtn) {
+        htmlBtn.addEventListener('pointerenter', pageAsFile);
+        htmlBtn.addEventListener('touchstart', pageAsFile, { passive: true });
+        htmlBtn.addEventListener('click', async function () {
+          var lg = currentLang();
+          htmlBtn.disabled = true;
+          igStatus.textContent = labels[lg].htmlPreparing;
+          try {
+            var file = await pageAsFile();
+            if (navigator.canShare && navigator.canShare({ files: [file] })) {
+              try {
+                await navigator.share({ files: [file], title: titles[lg], text: shareMessage() });
+                igStatus.textContent = labels[lg].htmlShared;
+                htmlBtn.disabled = false;
+                return;
+              } catch (e) {
+                if (e && e.name === 'AbortError') { igStatus.textContent = ''; htmlBtn.disabled = false; return; }
+                if (e && e.name === 'NotAllowedError') {
+                  igStatus.textContent = labels[lg].htmlAgain;
+                  htmlBtn.disabled = false;
+                  return;
+                }
+                /* share sheet unavailable → fall through to download */
+              }
+            }
+            var url = URL.createObjectURL(file);
+            var a = document.createElement('a');
+            a.href = url; a.download = file.name;
+            document.body.appendChild(a); a.click(); a.remove();
+            window.setTimeout(function () { URL.revokeObjectURL(url); }, 60000);
+            igStatus.textContent = labels[lg].htmlSaved;
+          } catch (err) {
+            igStatus.textContent = labels[lg].htmlError + (err && err.message ? err.message : 'unknown');
+          }
+          htmlBtn.disabled = false;
+        });
+      }
+
+      function showFallbackLinks(urls) {
+        var existing = document.getElementById('igFallback');
+        if (existing) existing.remove();
+        var box = document.createElement('div');
+        box.id = 'igFallback'; box.className = 'ig-fallback';
+        urls.forEach(function (u, i) {
+          var a = document.createElement('a');
+          a.href = u; a.textContent = 'Slide ' + (i + 1); a.setAttribute('download', '');
+          box.appendChild(a);
+        });
+        igStatus.parentNode.insertBefore(box, igStatus.nextSibling);
+      }
+
+      if (igBtn) {
+        var slug = igBtn.getAttribute('data-slug');
+        igBtn.addEventListener('click', async function () {
+          var lg = currentLang();
+          igBtn.disabled = true;
+          igStatus.textContent = labels[lg].sending;
+          try {
+            var res = await fetch('/memory/' + slug + '/carousel', { method: 'POST' });
+            if (!res.ok) throw new Error('HTTP ' + res.status);
+            var data = await res.json();
+            var urls = (data && data.slides) || [];
+            if (!urls.length) throw new Error('no slides');
+
+            if (navigator.canShare) {
+              try {
+                var files = await Promise.all(urls.map(async function (u) {
+                  var fr = await fetch(u);
+                  var blob = await fr.blob();
+                  var name = u.split('/').pop() || 'slide.jpg';
+                  return new File([blob], name, { type: blob.type || 'image/jpeg' });
+                }));
+                var shareData = { files: files, title: titles[lg], text: shareMessage() };
+                if (navigator.canShare(shareData)) {
+                  await navigator.share(shareData);
+                  igStatus.textContent = labels[lg].shared;
+                  igBtn.disabled = false;
+                  return;
+                }
+              } catch (e) { /* user dismissed share sheet → fall through */ }
+            }
+            igStatus.textContent = labels[lg].ready;
+            showFallbackLinks(urls);
+          } catch (err) {
+            igStatus.textContent = labels[lg].error + (err && err.message ? err.message : 'unknown');
+          }
+          igBtn.disabled = false;
+        });
+      }
+    })();
+  </script>
+</body>
+</html>
