@@ -1,0 +1,1152 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=5">
+<meta name="color-scheme" content="light">
+<title>{{ narrative.title.en }}</title>
+<style>
+  /* ── fonts ─────────────────────────────────────────────────────────
+     Yeseva One (single weight 400) is the mid-century travel-card
+     display serif; Caveat (variable, wght 400..700) is the handwriting
+     on the message side. Both were chosen over the brief's obvious
+     Latin-only faces because they carry full Cyrillic subsets and RU
+     is a primary audience. JetBrains Mono (reused from the Letter font
+     set) is the postal small print. Subsets split latin + cyrillic so
+     the browser only activates the cyrillic file when it renders
+     Cyrillic glyphs. All payloads base64-embedded → page works
+     offline (ADR-001). */
+  @font-face {
+    font-family: 'Postcard Display';
+    font-style: normal;
+    font-weight: 400;
+    font-display: swap;
+    src: url(data:font/woff2;base64,{{ fonts.display_latin }}) format('woff2');
+    unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+  }
+  @font-face {
+    font-family: 'Postcard Display';
+    font-style: normal;
+    font-weight: 400;
+    font-display: swap;
+    src: url(data:font/woff2;base64,{{ fonts.display_cyrillic }}) format('woff2');
+    unicode-range: U+0301, U+0400-045F, U+0490-0491, U+04B0-04B1, U+2116;
+  }
+  @font-face {
+    font-family: 'Postcard Hand';
+    font-style: normal;
+    font-weight: 400 700;
+    font-display: swap;
+    src: url(data:font/woff2;base64,{{ fonts.hand_latin }}) format('woff2');
+    unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+  }
+  @font-face {
+    font-family: 'Postcard Hand';
+    font-style: normal;
+    font-weight: 400 700;
+    font-display: swap;
+    src: url(data:font/woff2;base64,{{ fonts.hand_cyrillic }}) format('woff2');
+    unicode-range: U+0301, U+0400-045F, U+0490-0491, U+04B0-04B1, U+2116;
+  }
+  @font-face {
+    font-family: 'Postcard Mono';
+    font-style: normal;
+    font-weight: 400 500;
+    font-display: swap;
+    src: url(data:font/woff2;base64,{{ fonts.mono_latin }}) format('woff2');
+    unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+  }
+  @font-face {
+    font-family: 'Postcard Mono';
+    font-style: normal;
+    font-weight: 400 500;
+    font-display: swap;
+    src: url(data:font/woff2;base64,{{ fonts.mono_cyrillic }}) format('woff2');
+    unicode-range: U+0301, U+0400-045F, U+0490-0491, U+04B0-04B1, U+2116;
+  }
+
+  /* ── design tokens (postal red + airmail blue on a kraft desk) ──── */
+  :root {
+    --pc-desk:   oklch(0.87 0.030 78);
+    --pc-card:   oklch(0.965 0.014 90);
+    --pc-card-2: oklch(0.935 0.020 88);
+    --pc-ink:    oklch(0.28 0.020 50);
+    --pc-red:    oklch(0.54 0.180 27);
+    --pc-blue:   oklch(0.46 0.085 250);
+    --pc-faint:  oklch(0.28 0.02 50 / 0.16);
+    --display: 'Postcard Display', 'Iowan Old Style', Georgia, serif;
+    --hand:    'Postcard Hand', 'Segoe Script', cursive;
+    --mono:    'Postcard Mono', ui-monospace, Menlo, monospace;
+  }
+
+  *, *::before, *::after { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+  html { scroll-behavior: smooth; }
+  body {
+    background: var(--pc-desk);
+    color: var(--pc-ink);
+    font-family: var(--mono);
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+  }
+  ::selection { background: var(--pc-red); color: var(--pc-card); }
+  :focus-visible { outline: 2px solid var(--pc-ink); outline-offset: 2px; }
+
+  .sr-only {
+    position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px;
+    overflow: hidden; clip: rect(0,0,0,0); white-space: nowrap; border: 0;
+  }
+
+  /* ── desk grain ────────────────────────────────────────────────── */
+  .grain {
+    position: fixed; inset: 0; z-index: 40;
+    pointer-events: none;
+    mix-blend-mode: multiply; opacity: 0.4;
+    background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='180' height='180'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 0.07 0'/></filter><rect width='100%25' height='100%25' filter='url(%23n)'/></svg>");
+  }
+
+  /* ── page shell ────────────────────────────────────────────────── */
+  .set {
+    position: relative;
+    max-width: 1040px; margin: 0 auto;
+    padding: clamp(24px, 5vw, 56px) clamp(16px, 4vw, 48px) clamp(48px, 7vw, 96px);
+  }
+
+  /* ── language toggle ───────────────────────────────────────────── */
+  .lang {
+    position: absolute; top: 14px; right: clamp(16px, 4vw, 48px); z-index: 50;
+    display: flex; gap: 0;
+    border: 1.5px solid var(--pc-ink); background: var(--pc-card);
+    box-shadow: 0 2px 6px -3px rgba(60,30,10,0.35);
+  }
+  .lang button {
+    background: var(--pc-card); color: var(--pc-ink);
+    border: 0; padding: 6px 12px; margin: 0;
+    font-family: var(--mono); font-weight: 500; font-size: 12px;
+    letter-spacing: 0.16em; text-transform: uppercase;
+    cursor: pointer;
+  }
+  .lang button + button { border-left: 1.5px solid var(--pc-ink); }
+  .lang button[aria-pressed="true"] { background: var(--pc-red); color: var(--pc-card); }
+  @media (max-width: 767px) { .lang button { padding: 5px 9px; font-size: 11px; } }
+
+  /* ── tri-lingual swap ──────────────────────────────────────────── */
+  body.lang-en .ru, body.lang-en .de { display: none; }
+  body.lang-ru .en, body.lang-ru .de { display: none; }
+  body.lang-de .en, body.lang-de .ru { display: none; }
+  .swap { transition: opacity 180ms ease; }
+  .swap.is-swapping { opacity: 0.4; }
+
+  /* ── shared idioms ─────────────────────────────────────────────── */
+  .eyebrow {
+    font-family: var(--mono); font-weight: 500; font-size: 11px;
+    letter-spacing: 0.18em; text-transform: uppercase;
+    color: var(--pc-ink);
+  }
+  .eyebrow.red { color: var(--pc-red); }
+  .section-head {
+    display: flex; align-items: center; gap: 10px;
+    margin: 56px 0 18px;
+  }
+  .section-head .rule-lead { flex: 1; height: 1px; background: var(--pc-ink); opacity: 0.5; }
+
+  /* ── the card: shared chrome ───────────────────────────────────── */
+  /* Classic par-avion edge: a striped mat behind a cream card. */
+  .card {
+    position: relative;
+    background:
+      repeating-linear-gradient(-45deg,
+        var(--pc-red) 0 9px, var(--pc-card) 9px 17px,
+        var(--pc-blue) 17px 26px, var(--pc-card) 26px 34px);
+    padding: 7px;
+    box-shadow: 0 10px 22px -12px rgba(60, 30, 10, 0.45);
+  }
+  .card > .card-face {
+    background: var(--pc-card);
+    height: 100%;
+  }
+  .card.plain { background: var(--pc-card); }
+
+  /* ── postcard front (photo side) ───────────────────────────────── */
+  .front .card-face { padding: 10px; }
+  .front .ph {
+    position: relative; overflow: hidden;
+    background: var(--pc-card-2);
+    aspect-ratio: 3 / 2;
+  }
+  .front .ph img {
+    display: block; width: 100%; height: 100%;
+    position: absolute; inset: 0;
+    object-fit: cover;
+    /* faded mid-century stock: warm, slightly desaturated */
+    filter: sepia(0.22) saturate(0.86) contrast(0.94) brightness(1.04);
+    opacity: 0; transition: opacity 240ms ease;
+  }
+  .front .ph img.loaded { opacity: 1; }
+  .front .ph::after {
+    /* sun-bleached vignette */
+    content: ""; position: absolute; inset: 0; pointer-events: none;
+    box-shadow: inset 0 0 60px rgba(120, 80, 30, 0.28);
+  }
+  .front .ph .locname {
+    position: absolute; left: 14px; bottom: 10px; z-index: 2;
+    font-family: var(--display);
+    font-size: clamp(22px, 4vw, 40px); line-height: 1;
+    letter-spacing: 0.04em; text-transform: uppercase;
+    color: var(--pc-card);
+    text-shadow: 0 1px 0 rgba(0,0,0,0.35), 0 3px 10px rgba(0,0,0,0.35);
+  }
+  .front .ph .cardno {
+    position: absolute; right: 10px; top: 8px; z-index: 2;
+    font-family: var(--mono); font-size: 10px; letter-spacing: 0.14em;
+    color: var(--pc-card);
+    text-shadow: 0 1px 3px rgba(0,0,0,0.5);
+  }
+  .front .caption {
+    display: flex; justify-content: space-between; align-items: baseline;
+    gap: 12px; padding: 9px 4px 2px;
+  }
+  .front .caption .t {
+    font-family: var(--display); font-size: 13px;
+    letter-spacing: 0.10em; text-transform: uppercase;
+    color: var(--pc-red);
+  }
+  .front .caption .n {
+    font-family: var(--mono); font-size: 10px; letter-spacing: 0.14em;
+    white-space: nowrap; opacity: 0.7;
+  }
+
+  /* ── postcard back (message side) ──────────────────────────────── */
+  .back .card-face {
+    display: flex; flex-direction: column;
+    padding: 14px 16px;
+    min-height: 340px;
+  }
+  .back .card-head {
+    display: flex; justify-content: space-between; align-items: baseline;
+    gap: 12px;
+    border-bottom: 1.5px solid var(--pc-red);
+    padding-bottom: 6px;
+  }
+  .back .card-head .pc-title {
+    font-family: var(--display); font-size: 15px;
+    letter-spacing: 0.14em; text-transform: uppercase;
+    color: var(--pc-red);
+  }
+  .back .card-head .pc-via {
+    font-family: var(--mono); font-size: 9px; letter-spacing: 0.22em;
+    color: var(--pc-ink); opacity: 0.7; white-space: nowrap;
+  }
+  .back .card-body {
+    display: flex; gap: 18px; flex: 1;
+    padding-top: 12px;
+  }
+  .back .msg { flex: 1 1 58%; min-width: 0; }
+  .back .msg p {
+    margin: 0;
+    font-family: var(--hand);
+    font-size: 21px; line-height: 1.4;
+    color: var(--pc-ink);
+  }
+  .back .side {
+    flex: 1 1 42%; min-width: 0;
+    display: flex; flex-direction: column; align-items: flex-end;
+    border-left: 1px solid var(--pc-faint);
+    padding-left: 18px;
+  }
+  @media (max-width: 767px) {
+    .back .card-body { flex-direction: column; }
+    .back .side {
+      border-left: 0; border-top: 1px solid var(--pc-faint);
+      padding-left: 0; padding-top: 14px;
+      align-items: flex-end;
+    }
+    .back .card-face { min-height: 0; }
+  }
+
+  /* stamp corner: postage stamp + overlapping postmark */
+  .stampzone { position: relative; padding-bottom: 8px; }
+  .stamp {
+    /* perforated edge: punched dots along the stamp rim */
+    background:
+      radial-gradient(circle 3px, transparent 2.6px, var(--pc-card) 2.7px);
+    background-size: 9px 9px;
+    background-position: 4.5px 4.5px;
+    padding: 6px;
+    background-color: var(--pc-card);
+    filter: drop-shadow(0 2px 3px rgba(60,30,10,0.25));
+  }
+  .stamp svg { display: block; width: 74px; height: 92px; }
+  .postmark {
+    position: absolute; right: 52px; top: 14px;
+    width: 108px; height: 108px;
+    pointer-events: none;
+    opacity: 0.85;
+    transform: rotate(-12deg);
+  }
+  .postmark svg { display: block; width: 100%; height: 100%; }
+
+  /* address block: TO + ruled lines */
+  .addr { width: 100%; margin-top: auto; padding-top: 14px; }
+  .addr .to {
+    font-family: var(--mono); font-size: 9px; letter-spacing: 0.22em;
+    text-transform: uppercase; opacity: 0.7;
+  }
+  .addr .line {
+    border-bottom: 1px solid var(--pc-ink);
+    opacity: 0.55;
+    height: 26px;
+  }
+  .addr .line.written {
+    font-family: var(--hand); font-size: 19px; line-height: 26px;
+    color: var(--pc-blue); opacity: 1;
+    border-color: oklch(0.28 0.02 50 / 0.55);
+    overflow: hidden; white-space: nowrap; text-overflow: ellipsis;
+  }
+
+  /* ── cover ─────────────────────────────────────────────────────── */
+  .cover { margin-top: 40px; }
+  .cover-top {
+    display: flex; justify-content: space-between; align-items: baseline;
+    gap: 16px; flex-wrap: wrap;
+    margin-bottom: 18px;
+  }
+  .cover .card { transform: rotate(-1.2deg); max-width: 760px; margin: 0 auto; }
+  .cover .titleband {
+    text-align: center; padding: 16px 12px 8px;
+  }
+  .cover h1 {
+    margin: 0;
+    font-family: var(--display); font-weight: 400;
+    font-size: clamp(28px, 5.5vw, 52px);
+    line-height: 1.05;
+    letter-spacing: 0.02em;
+    color: var(--pc-red);
+  }
+  .cover .dek {
+    margin: 10px 0 0;
+    font-family: var(--hand); font-size: 23px; line-height: 1.35;
+    color: var(--pc-ink);
+  }
+  .cover-meta {
+    margin-top: 22px;
+    display: flex; justify-content: center; align-items: baseline;
+    gap: 10px 18px; flex-wrap: wrap;
+  }
+
+  /* ── the set: one front/back pair per paragraph ────────────────── */
+  .pair {
+    display: grid; grid-template-columns: 1fr 1fr;
+    gap: 0 28px; align-items: center;
+    margin-top: 48px;
+  }
+  .pair .front { z-index: 1; }
+  .pair.side-left  .front { order: 1; transform: rotate(-2deg) translateX(12px); }
+  .pair.side-left  .back  { order: 2; transform: rotate(0.8deg); }
+  .pair.side-right .front { order: 2; transform: rotate(2deg) translateX(-12px); }
+  .pair.side-right .back  { order: 1; transform: rotate(-0.8deg); }
+  .pair.no-photo { grid-template-columns: 1fr; max-width: 720px; margin-left: auto; margin-right: auto; }
+  .pair.no-photo .back { transform: rotate(-0.6deg); }
+  @media (max-width: 767px) {
+    .pair, .pair.side-left, .pair.side-right { grid-template-columns: 1fr; gap: 22px 0; }
+    .pair .front, .pair.side-left .front, .pair.side-right .front {
+      order: 1; transform: rotate(-1.4deg); width: min(100%, 480px); margin: 0 auto;
+    }
+    .pair .back, .pair.side-left .back, .pair.side-right .back {
+      order: 2; transform: rotate(0.7deg);
+    }
+  }
+
+  /* ── pull-quote banner card ────────────────────────────────────── */
+  .quotecard { margin: 56px auto 8px; max-width: 820px; transform: rotate(-1deg); }
+  .quotecard .card-face { padding: 26px 30px; text-align: center; }
+  .quotecard blockquote {
+    margin: 0;
+    font-family: var(--display);
+    font-size: clamp(21px, 3.2vw, 34px); line-height: 1.25;
+    color: var(--pc-red);
+  }
+  .quotecard .qmarks {
+    display: block; margin-bottom: 4px;
+    font-family: var(--display); font-size: 30px; color: var(--pc-blue);
+  }
+
+  /* ── itinerary + route strip ───────────────────────────────────── */
+  .strip {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 32px; align-items: start;
+    margin-top: 20px;
+  }
+  .strip .card { transform: rotate(0.6deg); }
+  .strip .card + .card { transform: rotate(-0.8deg); }
+  .strip .card-face { padding: 16px 18px; }
+  .strip .card-title {
+    font-family: var(--display); font-size: 14px;
+    letter-spacing: 0.12em; text-transform: uppercase;
+    color: var(--pc-red);
+    border-bottom: 1.5px solid var(--pc-red);
+    padding-bottom: 6px; margin-bottom: 10px;
+    display: flex; justify-content: space-between; align-items: baseline; gap: 10px;
+  }
+  .strip .card-title .via {
+    font-family: var(--mono); font-size: 9px; letter-spacing: 0.22em;
+    color: var(--pc-ink); opacity: 0.7;
+  }
+  .tally-rows { list-style: none; margin: 0; padding: 0; font-size: 12px; line-height: 2.1; }
+  .tally-rows li {
+    display: flex; justify-content: space-between; gap: 12px;
+    border-bottom: 1px dotted var(--pc-faint);
+  }
+  .tally-rows .v { color: var(--pc-red); white-space: nowrap; }
+  .elev { margin-top: 16px; }
+  .elev svg { display: block; width: 100%; height: 44px; }
+  .elev-caption { margin: 6px 0 0; font-size: 10px; letter-spacing: 0.06em; }
+
+  .routebox svg.map { display: block; width: 100%; height: auto; background: var(--pc-card-2); }
+  .routefoot {
+    margin-top: 10px; display: flex; justify-content: space-between;
+    font-size: 10px; letter-spacing: 0.06em;
+  }
+  .routefoot .v { color: var(--pc-red); }
+
+  /* ── the rest of the set (overflow photos) ─────────────────────── */
+  .more-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    gap: 34px 28px;
+  }
+  .more-grid .card:nth-child(odd)  { transform: rotate(1.6deg); }
+  .more-grid .card:nth-child(even) { transform: rotate(-1.4deg); }
+
+  /* ── about this place (ADR-017) ────────────────────────────────── */
+  .place { max-width: 720px; margin: 0 auto; transform: rotate(0.5deg); }
+  .place .card-face { padding: 16px 18px; }
+  .place .card-title {
+    font-family: var(--display); font-size: 14px;
+    letter-spacing: 0.12em; text-transform: uppercase;
+    color: var(--pc-blue);
+    border-bottom: 1.5px solid var(--pc-blue);
+    padding-bottom: 6px; margin-bottom: 10px;
+  }
+  .place .place-summary { margin: 0; font-size: 12px; line-height: 1.8; }
+  .place .place-source { margin: 12px 0 0; font-size: 9px; letter-spacing: 0.06em; }
+  .place .place-source a {
+    color: var(--pc-ink); text-decoration: none;
+    border-bottom: 1px solid var(--pc-faint);
+  }
+  .place .place-source a:hover { color: var(--pc-red); }
+
+  /* ── share row ─────────────────────────────────────────────────── */
+  .share {
+    margin-top: 64px; padding-top: 18px;
+    border-top: 2px solid var(--pc-ink);
+    display: flex; flex-wrap: wrap; gap: 10px; align-items: center;
+  }
+  .share-label {
+    margin-right: 6px;
+    font-family: var(--display); font-size: 14px;
+    letter-spacing: 0.10em; text-transform: uppercase;
+    color: var(--pc-red);
+  }
+  .share button, .share a {
+    display: inline-block; padding: 9px 15px; margin: 0;
+    font-family: var(--mono); font-weight: 500; font-size: 11px;
+    letter-spacing: 0.12em; text-transform: uppercase;
+    background: var(--pc-card); color: var(--pc-ink);
+    border: 1.5px solid var(--pc-ink); cursor: pointer;
+    text-decoration: none;
+    box-shadow: 0 2px 6px -3px rgba(60,30,10,0.35);
+    transition: background 120ms ease, color 120ms ease, border-color 120ms ease;
+  }
+  .share button:hover, .share a:hover {
+    background: var(--pc-ink); color: var(--pc-card);
+  }
+  .share button.primary, .share a.primary {
+    background: var(--pc-red); color: var(--pc-card); border-color: var(--pc-red);
+  }
+  .share button.primary:hover, .share a.primary:hover {
+    background: var(--pc-ink); border-color: var(--pc-ink);
+  }
+  .share-status {
+    width: 100%; margin-top: 6px;
+    font-size: 10px; letter-spacing: 0.04em;
+    min-height: 1.2em;
+  }
+  .ig-fallback { display: flex; flex-wrap: wrap; gap: 6px; width: 100%; margin-top: 6px; }
+  .ig-fallback a {
+    padding: 6px 10px; font-size: 10px;
+    letter-spacing: 0.04em; text-transform: none;
+    background: var(--pc-card-2); border: 1px solid var(--pc-faint); color: var(--pc-ink);
+    box-shadow: none;
+  }
+  .ig-fallback a:hover { background: var(--pc-ink); color: var(--pc-card); border-color: var(--pc-ink); }
+
+  /* ── back nav + colophon ───────────────────────────────────────── */
+  .back-nav { margin-top: 28px; }
+  .back-nav a {
+    font-family: var(--mono); font-size: 11px; letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--pc-ink); text-decoration: none;
+    border-bottom: 1px solid var(--pc-faint);
+  }
+  .back-nav a:hover { color: var(--pc-red); border-color: var(--pc-red); }
+
+  .colophon {
+    margin-top: 48px; padding-top: 16px;
+    border-top: 1px solid var(--pc-ink);
+    display: flex; justify-content: space-between; align-items: baseline;
+    gap: 16px; flex-wrap: wrap;
+  }
+  .colophon .slug { font-size: 10px; letter-spacing: 0.04em; }
+
+  /* ── print ─────────────────────────────────────────────────────── */
+  @media print {
+    .lang, .share, .back-nav { display: none !important; }
+    html, body { background: var(--pc-card); color: var(--pc-ink); }
+    .grain { display: none; }
+    .set { padding: 24pt; max-width: none; }
+    .pair, .quotecard, .strip .card, .place { page-break-inside: avoid; }
+    .front .ph img { opacity: 1 !important; }
+    body { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  }
+</style>
+</head>
+<body class="lang-en style-postcard">
+
+  <div class="grain" aria-hidden="true"></div>
+
+  <div class="set">
+
+    <div class="lang" role="group" aria-label="Language">
+      <button type="button" data-lang="en" aria-pressed="true">EN</button>
+      <button type="button" data-lang="ru" aria-pressed="false">RU</button>
+      <button type="button" data-lang="de" aria-pressed="false">DE</button>
+    </div>
+
+    {# ── cover: the set's title card — photo front, title band ────── #}
+    <header class="cover swap">
+      <div class="cover-top">
+        <span class="eyebrow">
+          <span class="en">Trailstory / A postcard set</span>
+          <span class="ru">Trailstory / Набор открыток</span>
+          <span class="de">Trailstory / Ein Postkarten-Set</span>
+        </span>
+        <span class="eyebrow red">
+          <span class="en">{{ narrative.milestone.en }}</span>
+          <span class="ru">{{ narrative.milestone.ru }}</span>
+          <span class="de">{{ narrative.milestone.de }}</span>
+        </span>
+      </div>
+
+      <div class="card front">
+        <div class="card-face">
+          {% if photos|length > 0 %}
+          <div class="ph">
+            <img src="{{ photos[0].data_uri }}" alt="" loading="eager">
+            {% if meta.location %}
+            <span class="locname">{{ meta.location }}</span>
+            {% endif %}
+            <span class="cardno">No. 01</span>
+          </div>
+          {% endif %}
+          <div class="titleband">
+            <h1>
+              <span class="en">{{ narrative.title.en }}</span>
+              <span class="ru">{{ narrative.title.ru }}</span>
+              <span class="de">{{ narrative.title.de }}</span>
+            </h1>
+            <p class="dek">
+              <span class="en">{{ narrative.subtitle.en }}</span>
+              <span class="ru">{{ narrative.subtitle.ru }}</span>
+              <span class="de">{{ narrative.subtitle.de }}</span>
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <div class="cover-meta">
+        <span class="eyebrow">
+          {%- if meta.location %}{{ meta.location | upper }}{% endif %}{% if meta.location and meta.date %} &middot; {% endif %}{% if meta.date %}{{ meta.date }}{% endif -%}
+        </span>
+        <span class="eyebrow red">{{ stats.distance_km }} km &middot; +{{ stats.elevation_gain_m | int }} m &middot; {{ '%dh %02dm' | format(stats.duration_min // 60, stats.duration_min % 60) }}</span>
+      </div>
+    </header>
+
+    {# ── the set: one front/back postcard pair per paragraph ────────
+       The picker card promises "each chapter is a postcard, front and
+       back"; the narrative model deliberately has no chapter titles
+       (ADR-006 — one narrative, many templates), so each paragraph
+       becomes one card: the front is that chapter's photo, the back
+       carries the paragraph as the handwritten message plus stamp,
+       postmark, and address block. photos[0] is the cover; the rest
+       interleave one per pair, overflow lands in "the rest of the
+       set" below. #}
+    {% set extras = photos[1:] if photos|length > 1 else [] %}
+    {% set inter = extras[:narrative.paragraphs | length] %}
+    {% set tail = extras[narrative.paragraphs | length:] %}
+    {% set quote_after = 1 if narrative.paragraphs|length >= 3 else narrative.paragraphs|length - 1 %}
+
+    <div class="cards swap">
+      {% for paragraph in narrative.paragraphs %}
+      {% set card_no = '%02d' % (loop.index + 1) %}
+      {% set has_photo = loop.index0 < inter|length %}
+      <section class="pair {{ 'side-left' if loop.index0 % 2 == 0 else 'side-right' }}{{ ' no-photo' if not has_photo }}">
+        {% if has_photo %}
+        <div class="card front">
+          <div class="card-face">
+            <div class="ph">
+              <img src="{{ inter[loop.index0].data_uri }}" alt="" loading="lazy">
+              <span class="cardno">No. {{ card_no }}</span>
+            </div>
+            <div class="caption">
+              <span class="t">
+                {%- if meta.location %}{{ meta.location }}{% else %}<span class="en">The trail</span><span class="ru">Тропа</span><span class="de">Der Weg</span>{% endif -%}
+              </span>
+              <span class="n">
+                <span class="en">Card {{ card_no }} of the set</span>
+                <span class="ru">Открытка {{ card_no }} из набора</span>
+                <span class="de">Karte {{ card_no }} des Sets</span>
+              </span>
+            </div>
+          </div>
+        </div>
+        {% endif %}
+        <div class="card back plain">
+          <div class="card-face">
+            <div class="card-head">
+              <span class="pc-title">
+                <span class="en">Post card</span>
+                <span class="ru">Почтовая карточка</span>
+                <span class="de">Postkarte</span>
+              </span>
+              <span class="pc-via" aria-hidden="true">PAR AVION &middot; No. {{ card_no }}</span>
+            </div>
+            <div class="card-body">
+              <div class="msg">
+                <p class="en">
+                  {% for sentence in paragraph -%}
+                    {{ sentence.text.en }}{% if not loop.last %} {% endif -%}
+                  {% endfor %}
+                </p>
+                <p class="ru">
+                  {% for sentence in paragraph -%}
+                    {{ sentence.text.ru }}{% if not loop.last %} {% endif -%}
+                  {% endfor %}
+                </p>
+                <p class="de">
+                  {% for sentence in paragraph -%}
+                    {{ sentence.text.de }}{% if not loop.last %} {% endif -%}
+                  {% endfor %}
+                </p>
+              </div>
+              <div class="side">
+                <div class="stampzone">
+                  {# Postage stamp: the set's own issue — summit
+                     elevation as the denomination. Deterministic
+                     (GPX), never narrative. #}
+                  <div class="stamp" aria-hidden="true">
+                    <svg viewBox="0 0 74 92">
+                      <rect x="2" y="2" width="70" height="88" fill="oklch(0.46 0.085 250)"/>
+                      <rect x="6" y="6" width="62" height="80" fill="none" stroke="oklch(0.965 0.014 90)" stroke-width="1.2"/>
+                      <path d="M 10 62 L 26 38 L 36 50 L 48 30 L 64 62 Z" fill="oklch(0.965 0.014 90)" opacity="0.9"/>
+                      <circle cx="52" cy="22" r="6" fill="oklch(0.965 0.014 90)" opacity="0.75"/>
+                      <text x="37" y="76" text-anchor="middle"
+                            style="font-family:var(--mono);font-size:8px;letter-spacing:0.12em;fill:oklch(0.965 0.014 90)">TRAILSTORY</text>
+                      <text x="37" y="86" text-anchor="middle"
+                            style="font-family:var(--display);font-size:9px;letter-spacing:0.06em;fill:oklch(0.965 0.014 90)">{{ stats.summit_elev_m | int }} m</text>
+                    </svg>
+                  </div>
+                  <div class="postmark" aria-hidden="true">
+                    <svg viewBox="0 0 110 110">
+                      <circle cx="55" cy="55" r="50" fill="none" stroke="oklch(0.28 0.02 50)" stroke-width="1.6"/>
+                      <circle cx="55" cy="55" r="41" fill="none" stroke="oklch(0.28 0.02 50)" stroke-width="0.8" stroke-dasharray="2 2.5"/>
+                      {% for y in [-24, -17, 17, 24] %}
+                      <path d="M 8 {{ 55 + y }} Q 30 {{ 51 + y }}, 55 {{ 55 + y }} T 102 {{ 55 + y }}"
+                            fill="none" stroke="oklch(0.28 0.02 50)" stroke-width="1.1"/>
+                      {% endfor %}
+                      <text x="55" y="50" text-anchor="middle"
+                            style="font-family:var(--mono);font-size:8.5px;letter-spacing:0.10em;fill:oklch(0.28 0.02 50);text-transform:uppercase">
+                        {{- meta.location | upper if meta.location else 'TRAILSTORY' -}}
+                      </text>
+                      {% if meta.date %}
+                      <text x="55" y="64" text-anchor="middle"
+                            style="font-family:var(--mono);font-size:8px;letter-spacing:0.10em;fill:oklch(0.28 0.02 50)">{{ meta.date }}</text>
+                      {% endif %}
+                    </svg>
+                  </div>
+                </div>
+                <div class="addr">
+                  <div class="to">
+                    <span class="en">To:</span>
+                    <span class="ru">Кому:</span>
+                    <span class="de">An:</span>
+                  </div>
+                  <div class="line written">
+                    <span class="en">home</span>
+                    <span class="ru">домой</span>
+                    <span class="de">nach Hause</span>
+                  </div>
+                  <div class="line" aria-hidden="true"></div>
+                  <div class="line" aria-hidden="true"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+      {% if loop.index0 == quote_after %}
+      <div class="card quotecard">
+        <div class="card-face">
+          <blockquote>
+            <span class="qmarks" aria-hidden="true">&ldquo;</span>
+            <span class="en">{{ narrative.pull_quote.en }}</span>
+            <span class="ru">{{ narrative.pull_quote.ru }}</span>
+            <span class="de">{{ narrative.pull_quote.de }}</span>
+          </blockquote>
+        </div>
+      </div>
+      {% endif %}
+      {% endfor %}
+    </div>
+
+    {# ── itinerary + route: the set's fact cards ────────────────── #}
+    <section class="swap">
+      <div class="section-head">
+        <span class="eyebrow">
+          <span class="en">The itinerary</span>
+          <span class="ru">Маршрутный лист</span>
+          <span class="de">Das Reiseprogramm</span>
+        </span>
+        <span class="rule-lead" aria-hidden="true"></span>
+      </div>
+      <div class="strip">
+
+        <div class="card plain">
+          <div class="card-face">
+            <div class="card-title">
+              <span>
+                <span class="en">By the numbers</span>
+                <span class="ru">В цифрах</span>
+                <span class="de">In Zahlen</span>
+              </span>
+              <span class="via" aria-hidden="true">GPX</span>
+            </div>
+            <ul class="tally-rows">
+              <li><span><span class="en">Distance</span><span class="ru">Дистанция</span><span class="de">Strecke</span></span><span class="v">{{ stats.distance_km }} km</span></li>
+              <li><span><span class="en">Climb</span><span class="ru">Подъём</span><span class="de">Anstieg</span></span><span class="v">+{{ stats.elevation_gain_m | int }} m</span></li>
+              <li><span><span class="en">Descent</span><span class="ru">Спуск</span><span class="de">Abstieg</span></span><span class="v">&minus;{{ stats.elevation_loss_m | int }} m</span></li>
+              <li><span><span class="en">Time</span><span class="ru">Время</span><span class="de">Zeit</span></span><span class="v">{{ '%dh %02dm' | format(stats.duration_min // 60, stats.duration_min % 60) }}</span></li>
+              <li><span><span class="en">High point</span><span class="ru">Вершина</span><span class="de">Gipfel</span></span><span class="v">{{ stats.summit_elev_m | int }} m</span></li>
+            </ul>
+            <div class="elev">
+              <svg class="elevation" viewBox="0 0 200 44" preserveAspectRatio="none" aria-hidden="true">
+                <path fill="oklch(0.54 0.18 27 / 0.18)" d="M 0,44{%- for x, y in elevation %} L {{ (x * 200) | round(2) }},{{ (41 - y * 34) | round(2) }}{% endfor -%} L 200,44 Z"/>
+                <polyline fill="none" stroke="oklch(0.54 0.18 27)" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" points="{% for x, y in elevation %}{{ (x * 200) | round(2) }},{{ (41 - y * 34) | round(2) }} {% endfor %}"/>
+              </svg>
+              <p class="elev-caption">{{ stats.start_elev_m | int }} m &rarr; {{ stats.summit_elev_m | int }} m</p>
+            </div>
+          </div>
+        </div>
+
+        {% if stats.waypoints | length >= 2 %}
+        <div class="card plain routebox">
+          <div class="card-face">
+            <div class="card-title">
+              <span>
+                <span class="en">The route, roughly</span>
+                <span class="ru">Маршрут, примерно</span>
+                <span class="de">Die Route, ungef&auml;hr</span>
+              </span>
+              <span class="via" aria-hidden="true">&uarr; N</span>
+            </div>
+            {% set lats = stats.waypoints | map(attribute='lat') | list %}
+            {% set lons = stats.waypoints | map(attribute='lon') | list %}
+            {% set min_lat = lats | min %}{% set max_lat = lats | max %}
+            {% set min_lon = lons | min %}{% set max_lon = lons | max %}
+            {% set span_lat = (max_lat - min_lat) or 1e-6 %}
+            {% set span_lon = (max_lon - min_lon) or 1e-6 %}
+            <svg class="map" viewBox="0 0 280 190" preserveAspectRatio="xMidYMid meet" aria-hidden="true">
+              {% for i in range(1, 7) %}
+              <line x1="{{ i * 40 }}" y1="0" x2="{{ i * 40 }}" y2="190" stroke="oklch(0.28 0.02 50)" stroke-width="0.5" opacity="0.12"/>
+              {% endfor %}
+              {% for i in range(1, 5) %}
+              <line x1="0" y1="{{ i * 38 }}" x2="280" y2="{{ i * 38 }}" stroke="oklch(0.28 0.02 50)" stroke-width="0.5" opacity="0.12"/>
+              {% endfor %}
+              {# Dual-stroke track: postal-red route over a blue underline. #}
+              {% set pts = [] %}
+              {% for w in stats.waypoints %}
+                {% set _ = pts.append('%s,%s' % ((((w.lon - min_lon) / span_lon) * 248 + 16) | round(2), (174 - ((w.lat - min_lat) / span_lat) * 158) | round(2))) %}
+              {% endfor %}
+              <polyline fill="none" stroke="oklch(0.46 0.085 250)" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round" points="{{ pts | join(' ') }}"/>
+              <polyline fill="none" stroke="oklch(0.54 0.18 27)" stroke-width="1.4" stroke-dasharray="5 3" stroke-linecap="round" stroke-linejoin="round" points="{{ pts | join(' ') }}"/>
+              {% set first = stats.waypoints[0] %}
+              {% set last  = stats.waypoints[-1] %}
+              <circle cx="{{ (((first.lon - min_lon) / span_lon) * 248 + 16) | round(2) }}"
+                      cy="{{ (174 - ((first.lat - min_lat) / span_lat) * 158) | round(2) }}"
+                      r="4" fill="oklch(0.28 0.02 50)"/>
+              <circle cx="{{ (((last.lon - min_lon) / span_lon) * 248 + 16) | round(2) }}"
+                      cy="{{ (174 - ((last.lat - min_lat) / span_lat) * 158) | round(2) }}"
+                      r="4" fill="oklch(0.965 0.014 90)" stroke="oklch(0.28 0.02 50)" stroke-width="1.6"/>
+            </svg>
+            <div class="routefoot">
+              <span>
+                <span class="en">Start &rarr; summit</span>
+                <span class="ru">Старт &rarr; вершина</span>
+                <span class="de">Start &rarr; Gipfel</span>
+              </span>
+              <span class="v">{{ stats.distance_km }} km &middot; {{ '%dh %02dm' | format(stats.duration_min // 60, stats.duration_min % 60) }}</span>
+            </div>
+          </div>
+        </div>
+        {% endif %}
+
+      </div>
+    </section>
+
+    {% if tail|length > 0 %}
+    <section class="swap">
+      <div class="section-head">
+        <span class="eyebrow">
+          <span class="en">The rest of the set</span>
+          <span class="ru">Остальные открытки</span>
+          <span class="de">Der Rest des Sets</span>
+        </span>
+        <span class="rule-lead" aria-hidden="true"></span>
+      </div>
+      <div class="more-grid">
+        {% for ph in tail %}
+        {% set card_no = '%02d' % (inter|length + loop.index + 1) %}
+        <div class="card front">
+          <div class="card-face">
+            <div class="ph">
+              <img src="{{ ph.data_uri }}" alt="" loading="lazy">
+              <span class="cardno">No. {{ card_no }}</span>
+            </div>
+            <div class="caption">
+              <span class="t">
+                {%- if meta.location %}{{ meta.location }}{% else %}<span class="en">The trail</span><span class="ru">Тропа</span><span class="de">Der Weg</span>{% endif -%}
+              </span>
+              <span class="n">
+                <span class="en">Card {{ card_no }} of the set</span>
+                <span class="ru">Открытка {{ card_no }} из набора</span>
+                <span class="de">Karte {{ card_no }} des Sets</span>
+              </span>
+            </div>
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+    </section>
+    {% endif %}
+
+    {% if place %}
+    <section class="swap">
+      <div class="section-head">
+        <span class="eyebrow">
+          <span class="en">About this place</span>
+          <span class="ru">О месте</span>
+          <span class="de">&Uuml;ber diesen Ort</span>
+        </span>
+        <span class="rule-lead" aria-hidden="true"></span>
+      </div>
+      <div class="place">
+        <div class="card plain">
+        <div class="card-face">
+          <div class="card-title">
+            <span class="en">About {{ place.town }}</span>
+            <span class="ru">О месте: {{ place.town }}</span>
+            <span class="de">&Uuml;ber {{ place.town }}</span>
+          </div>
+          <p class="place-summary">
+            <span class="en">{{ place.summary.en }}</span>
+            <span class="ru">{{ place.summary.ru }}</span>
+            <span class="de">{{ place.summary.de }}</span>
+          </p>
+          {% if place.source_url or place.named_landmarks %}
+          <p class="place-source">
+            {% if place.source_url %}
+            <a href="{{ place.source_url }}" target="_blank" rel="noopener noreferrer">
+              <span class="en">Source: {{ place.source_title or place.town }}</span>
+              <span class="ru">Источник: {{ place.source_title or place.town }}</span>
+              <span class="de">Quelle: {{ place.source_title or place.town }}</span>
+            </a>
+            {% endif %}
+            {% if place.named_landmarks %}{% if place.source_url %}<span aria-hidden="true"> · </span>{% endif %}<a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener noreferrer">© OpenStreetMap contributors</a>{% endif %}
+          </p>
+          {% endif %}
+        </div>
+        </div>
+      </div>
+    </section>
+    {% endif %}
+
+    <section class="share swap" aria-label="Share">
+      <span class="share-label">
+        <span class="en">Send the set &rarr;</span>
+        <span class="ru">Отправить набор &rarr;</span>
+        <span class="de">Das Set verschicken &rarr;</span>
+      </span>
+      <button id="pdfBtn" type="button" class="primary">
+        <span class="en">Print the set (PDF)</span>
+        <span class="ru">Печать набора (PDF)</span>
+        <span class="de">Set drucken (PDF)</span>
+      </button>
+      <button id="htmlBtn" type="button">
+        <span class="en">Share page (HTML file)</span>
+        <span class="ru">Поделиться страницей (HTML)</span>
+        <span class="de">Seite teilen (HTML-Datei)</span>
+      </button>
+      <button id="igBtn" type="button" data-slug="{{ meta.slug }}">
+        <span class="en">Save for Instagram</span>
+        <span class="ru">Сохранить для Instagram</span>
+        <span class="de">F&uuml;r Instagram speichern</span>
+      </button>
+      <p id="igStatus" class="share-status" aria-live="polite"></p>
+    </section>
+
+    {# Only meaningful while the page is served by the web builder
+       (/memory/<slug>); JS unhides it there. A saved or forwarded
+       copy of the file keeps it hidden — recipients have no
+       builder to go back to. #}
+    <nav class="back-nav" id="backNav" hidden>
+      <a href="/">
+        <span class="en">&larr; Back to the main page</span>
+        <span class="ru">&larr; На главную</span>
+        <span class="de">&larr; Zur Startseite</span>
+      </a>
+    </nav>
+
+    <footer class="colophon swap">
+      <span class="eyebrow">
+        <span class="en">Posted in an edition of one</span>
+        <span class="ru">Отправлено в единственном экземпляре</span>
+        <span class="de">Verschickt als Einzelst&uuml;ck</span>
+      </span>
+      <span class="slug">{{ meta.slug }}</span>
+    </footer>
+
+  </div>
+
+  <script>
+    (function () {
+      var LANGS = ['en', 'ru', 'de'];
+      var STORAGE_KEY = 'trailstory.lang';
+
+      // ── language toggle ───────────────────────────────────────────
+      var langBtns = document.querySelectorAll('.lang button');
+      var swapNodes = document.querySelectorAll('.swap');
+
+      function currentLang() {
+        for (var i = 0; i < LANGS.length; i++) {
+          if (document.body.classList.contains('lang-' + LANGS[i])) return LANGS[i];
+        }
+        return 'en';
+      }
+
+      function applyLang(next) {
+        for (var i = 0; i < LANGS.length; i++) {
+          document.body.classList.remove('lang-' + LANGS[i]);
+        }
+        document.body.classList.add('lang-' + next);
+        document.documentElement.lang = next;
+        langBtns.forEach(function (b) {
+          b.setAttribute('aria-pressed', String(b.getAttribute('data-lang') === next));
+        });
+        try { localStorage.setItem(STORAGE_KEY, next); } catch (e) {}
+      }
+
+      function setLang(next) {
+        if (next === currentLang()) return;
+        swapNodes.forEach(function (n) { n.classList.add('is-swapping'); });
+        window.setTimeout(function () {
+          applyLang(next);
+          swapNodes.forEach(function (n) { n.classList.remove('is-swapping'); });
+        }, 180);
+      }
+
+      langBtns.forEach(function (b) {
+        b.addEventListener('click', function () { setLang(b.getAttribute('data-lang')); });
+      });
+
+      // Initial language: stored value → navigator language → 'en'.
+      var stored = null;
+      try { stored = localStorage.getItem(STORAGE_KEY); } catch (e) {}
+      if (stored && LANGS.indexOf(stored) >= 0) {
+        applyLang(stored);
+      } else {
+        var nav = (navigator.language || 'en').toLowerCase();
+        if (nav.indexOf('ru') === 0) applyLang('ru');
+        else if (nav.indexOf('de') === 0) applyLang('de');
+        else applyLang('en');
+      }
+
+      // ── photo blur-up ────────────────────────────────────────────
+      document.querySelectorAll('.front img').forEach(function (img) {
+        if (img.complete) { img.classList.add('loaded'); }
+        else { img.addEventListener('load', function () { img.classList.add('loaded'); }); }
+      });
+
+      // ── back link: only when served by the web builder ───────────
+      var backNav = document.getElementById('backNav');
+      if (backNav && /^https?:$/.test(location.protocol) && location.pathname.indexOf('/memory/') === 0) {
+        backNav.hidden = false;
+      }
+
+      // ── share row (same contract as the Letter template) ─────────
+      var titles = {
+        en: {{ narrative.title.en | tojson }},
+        ru: {{ narrative.title.ru | tojson }},
+        de: {{ narrative.title.de | tojson }}
+      };
+      var quotes = {
+        en: {{ narrative.pull_quote.en | tojson }},
+        ru: {{ narrative.pull_quote.ru | tojson }},
+        de: {{ narrative.pull_quote.de | tojson }}
+      };
+      var labels = {
+        en: { sending: 'Building carousel…', ready: 'Carousel ready. Click each slide to save.', shared: 'Saved. Open Instagram and pick the slides from your library.', error: 'Could not build carousel: ', htmlPreparing: 'Preparing page…', htmlAgain: 'Ready — tap again to share.', htmlShared: 'Shared.', htmlSaved: 'Downloaded — attach the .html file in any messenger.', htmlError: 'Could not share the page: ' },
+        ru: { sending: 'Собираем карусель…', ready: 'Карусель готова. Скачайте каждый слайд.', shared: 'Сохранено. Откройте Instagram и выберите слайды из галереи.', error: 'Не удалось собрать карусель: ', htmlPreparing: 'Готовим страницу…', htmlAgain: 'Готово — нажмите ещё раз.', htmlShared: 'Отправлено.', htmlSaved: 'Скачано — прикрепите .html-файл в любом мессенджере.', htmlError: 'Не удалось поделиться страницей: ' },
+        de: { sending: 'Karussell wird erstellt…', ready: 'Karussell fertig. Slide einzeln speichern.', shared: 'Gespeichert. Instagram öffnen und Slides aus der Galerie wählen.', error: 'Karussell fehlgeschlagen: ', htmlPreparing: 'Seite wird vorbereitet…', htmlAgain: 'Bereit — noch einmal tippen.', htmlShared: 'Geteilt.', htmlSaved: 'Heruntergeladen — die .html-Datei in einem Messenger anhängen.', htmlError: 'Seite konnte nicht geteilt werden: ' }
+      };
+
+      var pdfBtn  = document.getElementById('pdfBtn');
+      var htmlBtn = document.getElementById('htmlBtn');
+      var igBtn   = document.getElementById('igBtn');
+      var igStatus = document.getElementById('igStatus');
+
+      function shareMessage() {
+        var lg = currentLang();
+        return titles[lg] + ' — ' + quotes[lg];
+      }
+
+      if (pdfBtn) {
+        // The @media print stylesheet strips the chrome and keeps only the
+        // currently selected language, so the browser's "Save as PDF"
+        // destination produces a clean single-language card set.
+        pdfBtn.addEventListener('click', function () { window.print(); });
+      }
+
+      // The page itself is the shareable artifact (ADR-001): one
+      // self-contained .html file. Served over http(s) we re-fetch our own
+      // URL for the original bytes; opened from disk (file://), fetch is
+      // blocked, so we serialize a cleaned clone of the live DOM — photos
+      // survive as inline data URIs, and the clone drops transient UI
+      // state so a forwarded copy works for the next reader too.
+      var pageFilePromise = null;
+      function pageAsFile() {
+        if (pageFilePromise) return pageFilePromise;
+        var name = {{ meta.slug | tojson }} + '.html';
+        pageFilePromise = fetch(window.location.href)
+          .then(function (res) {
+            if (!res.ok) throw new Error('HTTP ' + res.status);
+            return res.blob();
+          })
+          .catch(function () {
+            var root = document.documentElement.cloneNode(true);
+            var btn = root.querySelector('#htmlBtn');
+            if (btn) btn.removeAttribute('disabled');
+            var status = root.querySelector('#igStatus');
+            if (status) status.textContent = '';
+            var fb = root.querySelector('#igFallback');
+            if (fb && fb.parentNode) fb.parentNode.removeChild(fb);
+            return new Blob(['<!doctype html>\n' + root.outerHTML], { type: 'text/html' });
+          })
+          .then(function (blob) { return new File([blob], name, { type: 'text/html' }); });
+        pageFilePromise.catch(function () { pageFilePromise = null; });
+        return pageFilePromise;
+      }
+
+      if (htmlBtn) {
+        htmlBtn.addEventListener('pointerenter', pageAsFile);
+        htmlBtn.addEventListener('touchstart', pageAsFile, { passive: true });
+        htmlBtn.addEventListener('click', async function () {
+          var lg = currentLang();
+          htmlBtn.disabled = true;
+          igStatus.textContent = labels[lg].htmlPreparing;
+          try {
+            var file = await pageAsFile();
+            if (navigator.canShare && navigator.canShare({ files: [file] })) {
+              try {
+                await navigator.share({ files: [file], title: titles[lg], text: shareMessage() });
+                igStatus.textContent = labels[lg].htmlShared;
+                htmlBtn.disabled = false;
+                return;
+              } catch (e) {
+                if (e && e.name === 'AbortError') { igStatus.textContent = ''; htmlBtn.disabled = false; return; }
+                if (e && e.name === 'NotAllowedError') {
+                  igStatus.textContent = labels[lg].htmlAgain;
+                  htmlBtn.disabled = false;
+                  return;
+                }
+                /* share sheet unavailable → fall through to download */
+              }
+            }
+            var url = URL.createObjectURL(file);
+            var a = document.createElement('a');
+            a.href = url; a.download = file.name;
+            document.body.appendChild(a); a.click(); a.remove();
+            window.setTimeout(function () { URL.revokeObjectURL(url); }, 60000);
+            igStatus.textContent = labels[lg].htmlSaved;
+          } catch (err) {
+            igStatus.textContent = labels[lg].htmlError + (err && err.message ? err.message : 'unknown');
+          }
+          htmlBtn.disabled = false;
+        });
+      }
+
+      function showFallbackLinks(urls) {
+        var existing = document.getElementById('igFallback');
+        if (existing) existing.remove();
+        var box = document.createElement('div');
+        box.id = 'igFallback'; box.className = 'ig-fallback';
+        urls.forEach(function (u, i) {
+          var a = document.createElement('a');
+          a.href = u; a.textContent = 'Slide ' + (i + 1); a.setAttribute('download', '');
+          box.appendChild(a);
+        });
+        igStatus.parentNode.insertBefore(box, igStatus.nextSibling);
+      }
+
+      if (igBtn) {
+        var slug = igBtn.getAttribute('data-slug');
+        igBtn.addEventListener('click', async function () {
+          var lg = currentLang();
+          igBtn.disabled = true;
+          igStatus.textContent = labels[lg].sending;
+          try {
+            var res = await fetch('/memory/' + slug + '/carousel', { method: 'POST' });
+            if (!res.ok) throw new Error('HTTP ' + res.status);
+            var data = await res.json();
+            var urls = (data && data.slides) || [];
+            if (!urls.length) throw new Error('no slides');
+
+            if (navigator.canShare) {
+              try {
+                var files = await Promise.all(urls.map(async function (u) {
+                  var fr = await fetch(u);
+                  var blob = await fr.blob();
+                  var name = u.split('/').pop() || 'slide.jpg';
+                  return new File([blob], name, { type: blob.type || 'image/jpeg' });
+                }));
+                var shareData = { files: files, title: titles[lg], text: shareMessage() };
+                if (navigator.canShare(shareData)) {
+                  await navigator.share(shareData);
+                  igStatus.textContent = labels[lg].shared;
+                  igBtn.disabled = false;
+                  return;
+                }
+              } catch (e) { /* user dismissed share sheet → fall through */ }
+            }
+            igStatus.textContent = labels[lg].ready;
+            showFallbackLinks(urls);
+          } catch (err) {
+            igStatus.textContent = labels[lg].error + (err && err.message ? err.message : 'unknown');
+          }
+          igBtn.disabled = false;
+        });
+      }
+    })();
+  </script>
+</body>
+</html>

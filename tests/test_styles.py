@@ -3,9 +3,9 @@
 The same ``Memory`` rendered under each built :class:`trailstory.models.Style`
 must produce structurally distinct HTML — but the narrative text must be
 byte-identical across styles. These tests pin both halves of that
-contract, plus the ADR-021 lineup rules: ``letter`` and ``zine`` are the
-built styles today, and the planned styles (sunday / postcard / album)
-are refused by the renderer until their templates land.
+contract, plus the ADR-021 lineup rules: ``letter``, ``zine``, and
+``postcard`` are the built styles today, and the planned styles
+(sunday / album) are refused by the renderer until their templates land.
 """
 
 from __future__ import annotations
@@ -134,17 +134,17 @@ def _render_all_styles(tmp_path: Path) -> dict[Style, str]:
 
 
 def test_built_styles_is_a_subset_of_the_lineup() -> None:
-    """Every built style must be a real enum member; ``letter`` and
-    ``zine`` are the ones built today."""
+    """Every built style must be a real enum member; ``letter``,
+    ``zine``, and ``postcard`` are the ones built today."""
     assert BUILT_STYLES <= frozenset(Style)
-    assert BUILT_STYLES == frozenset({Style.letter, Style.zine})
+    assert BUILT_STYLES == frozenset({Style.letter, Style.zine, Style.postcard})
 
 
 def test_planned_styles_are_in_the_enum_but_not_built() -> None:
-    """The three planned styles (see the web picker's SOON cards) exist
+    """The two planned styles (see the web picker's SOON cards) exist
     as enum members so the pipeline vocabulary is ready, but have no
     renderer yet."""
-    planned = {Style.sunday, Style.postcard, Style.album}
+    planned = {Style.sunday, Style.album}
     assert planned <= set(Style)
     assert planned.isdisjoint(BUILT_STYLES)
 
@@ -169,6 +169,8 @@ def test_each_style_emits_its_own_body_marker_class(tmp_path: Path) -> None:
     rendered = _render_all_styles(tmp_path)
 
     assert 'class="lang-en style-letter"' in rendered[Style.letter]
+    assert 'class="lang-en style-zine"' in rendered[Style.zine]
+    assert 'class="lang-en style-postcard"' in rendered[Style.postcard]
 
 
 def test_no_style_class_leaks_into_other_styles(tmp_path: Path) -> None:
@@ -213,6 +215,38 @@ def test_letter_style_keeps_magazine_visual_identity(tmp_path: Path) -> None:
 
     # The Letter does NOT use figcaptions; photos flow inside the prose.
     assert "<figcaption>" not in html
+
+
+def test_postcard_style_keeps_travel_card_identity(tmp_path: Path) -> None:
+    """Postcard Set is the mid-century travel-card treatment (Yeseva One
+    display + Caveat handwriting, postal red / airmail blue tokens, one
+    front/back card pair per paragraph with stamp, postmark, and address
+    block). The markers below are the load-bearing structural signals —
+    if any of them disappear the style has drifted away from the picker
+    card's promise ("front and back, with stamp, postmark, and an
+    address line")."""
+    html = _render_all_styles(tmp_path)[Style.postcard]
+
+    # Embedded WOFF2 fonts (ADR-001 self-contained guarantee).
+    assert "@font-face" in html
+    assert "Postcard Display" in html
+    assert "Postcard Hand" in html
+    assert "Postcard Mono" in html
+    assert "data:font/woff2;base64," in html
+
+    # Design tokens and the postcard anatomy.
+    assert "--pc-red:" in html and "--pc-blue:" in html
+    assert 'class="card front"' in html
+    assert 'class="card back plain"' in html
+    assert 'class="stamp"' in html
+    assert 'class="postmark"' in html
+    assert 'class="addr"' in html
+    assert "TRAILSTORY" in html  # the stamp's issue text
+
+    # Three discrete language buttons.
+    assert 'data-lang="en"' in html
+    assert 'data-lang="ru"' in html
+    assert 'data-lang="de"' in html
 
 
 # ── shared narrative invariants ─────────────────────────────────────────────

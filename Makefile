@@ -80,13 +80,13 @@ test-render:        ## Render fixtures under STYLE (default: every built style, 
 	@if [ -n "$(STYLE)" ]; then \
 		$(PY) -c "from tests.conftest import render_with_fixtures; from trailstory.models import Style; render_with_fixtures(style=Style('$(STYLE)'))"; \
 	else \
-		for s in letter zine; do \
+		for s in letter zine postcard; do \
 			$(PY) -c "from tests.conftest import render_with_fixtures; from trailstory.models import Style; render_with_fixtures(style=Style('$$s'))"; \
 		done; \
 	fi
 
 golden-update:      ## Regenerate tests/golden/test-render-<style>.html for every built style
-	@for s in letter zine; do \
+	@for s in letter zine postcard; do \
 		$(PY) -c "from tests.conftest import render_with_fixtures; from trailstory.models import Style; render_with_fixtures(style=Style('$$s'))"; \
 		cp output/test/test-render-$$s.html tests/golden/test-render-$$s.html; \
 		echo "✓ tests/golden/test-render-$$s.html refreshed"; \

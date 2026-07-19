@@ -53,6 +53,15 @@ _STYLE_FONT_FILES: Final[dict[Style, dict[str, tuple[str, str]]]] = {
         "mono_latin": ("letter", "JetBrainsMono-VF.latin.woff2"),
         "mono_cyrillic": ("letter", "JetBrainsMono-VF.cyrillic.woff2"),
     },
+    Style.postcard: {
+        "display_latin": ("postcard", "YesevaOne-Regular.latin.woff2"),
+        "display_cyrillic": ("postcard", "YesevaOne-Regular.cyrillic.woff2"),
+        "hand_latin": ("postcard", "Caveat-VF.latin.woff2"),
+        "hand_cyrillic": ("postcard", "Caveat-VF.cyrillic.woff2"),
+        # Postal small print reuses the letter mono subsets, like zine.
+        "mono_latin": ("letter", "JetBrainsMono-VF.latin.woff2"),
+        "mono_cyrillic": ("letter", "JetBrainsMono-VF.cyrillic.woff2"),
+    },
 }
 
 

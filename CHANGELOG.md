@@ -32,6 +32,23 @@ Versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   picker, and were never surfaced to a real user.
 
 ### Added
+- **The Postcard Set style (`--style postcard`).** Third built style
+  from the ADR-021 lineup: mid-century travel cards laid out on a
+  kraft desk. The cover is a photo front with the title on its caption
+  band; each paragraph becomes a front/back postcard pair — the
+  chapter photo as a bordered, sun-faded front, the paragraph as a
+  handwritten message on the back beside a Trailstory postage stamp
+  (summit elevation as the denomination), a wavy-line postmark
+  (location + date), and a "To: home" address block. Pull quote as an
+  air-mail banner card; stats as an itinerary card + vintage route-map
+  card; overflow photos in "the rest of the set". Tri-lingual
+  (EN/RU/DE) and fully self-contained (ADR-001): Yeseva One (display)
+  and Caveat (handwriting) latin+cyrillic subsets are committed under
+  `templates/fonts/postcard/` — both chosen over Latin-only
+  "Greetings from" faces because RU is a primary audience — and
+  JetBrains Mono is reused from the Letter set as the postal small
+  print. `postcard` joins `BUILT_STYLES`, the CLI `--style` choices,
+  and the web builder picker (its card loses the SOON pill).
 - **The Zine style (`--style zine`).** Second built style from the
   ADR-021 lineup: a riso-printed indie-zine treatment of the same
   narrative — ink + terracotta spot color on warm paper, real SVG
@@ -45,7 +62,7 @@ Versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   reused from the Letter set as the typewriter body. `zine` joins
   `BUILT_STYLES`, the CLI `--style` choices, and the web builder
   picker (its card loses the SOON pill).
-- **Back link on the generated memory page.** Both built styles render a
+- **Back link on the generated memory page.** All built styles render a
   tri-lingual "← Back to the main page" link below the share row. It ships
   `hidden` and is revealed by a small script only when the page is served
   by the web builder (`http(s)` + `/memory/…` path) — a saved or forwarded

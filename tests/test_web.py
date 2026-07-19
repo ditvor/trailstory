@@ -357,8 +357,10 @@ def test_landing_page_returns_form(client: TestClient) -> None:
     assert 'name="description"' in body
     assert 'name="location"' in body
     assert 'name="style"' in body
-    # The single buildable style id renders as a radio value.
+    # The buildable style ids render as radio values.
     assert 'value="letter"' in body
+    assert 'value="zine"' in body
+    assert 'value="postcard"' in body
 
 
 def test_landing_page_links_to_privacy_in_new_tab(client: TestClient) -> None:
@@ -436,13 +438,13 @@ def test_landing_page_renders_all_five_style_cards(client: TestClient) -> None:
 
 
 def test_landing_page_marks_coming_soon_cards(client: TestClient) -> None:
-    """The planned cards (Sunday, Postcard, Album) carry the
-    ``bp-stylecard--soon`` modifier and a SOON pill — The Letter and
-    The Zine are the buildable styles."""
+    """The planned cards (Sunday, Album) carry the
+    ``bp-stylecard--soon`` modifier and a SOON pill — The Letter,
+    The Zine, and Postcard Set are the buildable styles."""
     body = client.get("/").text
     assert "bp-stylecard--soon" in body
     # Each gated card has a disabled radio at its value.
-    for value in ("sunday", "postcard", "album"):
+    for value in ("sunday", "album"):
         assert f'value="{value}"' in body
     # The SOON pill appears in all three languages.
     assert ">SOON<" in body
@@ -451,7 +453,7 @@ def test_landing_page_marks_coming_soon_cards(client: TestClient) -> None:
     # The built cards' radios are not disabled.
     import re
 
-    for value in ("letter", "zine"):
+    for value in ("letter", "zine", "postcard"):
         radio = re.search(
             rf'<input[^>]*name="style"[^>]*value="{value}"[^>]*>',
             body,
@@ -468,7 +470,7 @@ def test_generate_rejects_coming_soon_style(client: TestClient) -> None:
     server-side validation (``accepted_style_values()``) rejects
     anything other than the buildable styles.
     """
-    for value in ("sunday", "postcard", "album"):
+    for value in ("sunday", "album"):
         response = client.post(
             "/generate",
             data={"description": "x", "style": value},
@@ -581,15 +583,15 @@ def test_landing_page_wires_preview_endpoints(client: TestClient) -> None:
 
 def test_accepted_style_values_only_built() -> None:
     """The :func:`accepted_style_values` helper is the source of truth
-    for which style ids the form is allowed to submit. ``letter`` and
-    ``zine`` have built renderers that match their design promises;
-    the other three cards (Sunday, Postcard, Album) are placeholders
-    until their renderers ship."""
+    for which style ids the form is allowed to submit. ``letter``,
+    ``zine``, and ``postcard`` have built renderers that match their
+    design promises; the other two cards (Sunday, Album) are
+    placeholders until their renderers ship."""
     from web.copy import accepted_style_values
 
     accepted = accepted_style_values()
-    assert accepted == frozenset({"letter", "zine"})
-    for placeholder in ("sunday", "postcard", "album"):
+    assert accepted == frozenset({"letter", "zine", "postcard"})
+    for placeholder in ("sunday", "album"):
         assert placeholder not in accepted
 
 
