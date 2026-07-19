@@ -436,29 +436,28 @@ def test_landing_page_renders_all_five_style_cards(client: TestClient) -> None:
 
 
 def test_landing_page_marks_coming_soon_cards(client: TestClient) -> None:
-    """Four of the five cards (everything except The Letter) carry the
-    ``bp-stylecard--soon`` modifier and a SOON pill — only The Letter
-    is buildable in v0."""
+    """The planned cards (Sunday, Postcard, Album) carry the
+    ``bp-stylecard--soon`` modifier and a SOON pill — The Letter and
+    The Zine are the buildable styles."""
     body = client.get("/").text
     assert "bp-stylecard--soon" in body
     # Each gated card has a disabled radio at its value.
-    for value in ("zine", "sunday", "postcard", "album"):
+    for value in ("sunday", "postcard", "album"):
         assert f'value="{value}"' in body
     # The SOON pill appears in all three languages.
     assert ">SOON<" in body
     assert ">СКОРО<" in body  # noqa: RUF001
     assert ">BALD<" in body
-    # The Letter is the only buildable card — its radio is not disabled.
-    # We look for the Letter radio's <input> line without ``disabled``.
-    # Search the body for the Letter radio markup.
+    # The built cards' radios are not disabled.
     import re
 
-    letter_radio = re.search(
-        r'<input[^>]*name="style"[^>]*value="letter"[^>]*>',
-        body,
-    )
-    assert letter_radio is not None
-    assert "disabled" not in letter_radio.group(0)
+    for value in ("letter", "zine"):
+        radio = re.search(
+            rf'<input[^>]*name="style"[^>]*value="{value}"[^>]*>',
+            body,
+        )
+        assert radio is not None, value
+        assert "disabled" not in radio.group(0), value
 
 
 def test_generate_rejects_coming_soon_style(client: TestClient) -> None:
@@ -467,9 +466,9 @@ def test_generate_rejects_coming_soon_style(client: TestClient) -> None:
     Browsers honour the ``disabled`` attribute on the radio, but an
     HTTP client (or an attacker) can still submit any value — the
     server-side validation (``accepted_style_values()``) rejects
-    anything other than the one buildable style.
+    anything other than the buildable styles.
     """
-    for value in ("zine", "sunday", "postcard", "album"):
+    for value in ("sunday", "postcard", "album"):
         response = client.post(
             "/generate",
             data={"description": "x", "style": value},
@@ -580,17 +579,17 @@ def test_landing_page_wires_preview_endpoints(client: TestClient) -> None:
     assert "bp-chip" in body
 
 
-def test_accepted_style_values_only_letter() -> None:
+def test_accepted_style_values_only_built() -> None:
     """The :func:`accepted_style_values` helper is the source of truth
-    for which style ids the form is allowed to submit. Only ``letter``
-    has a built renderer that matches its design promise (The Letter);
-    the other four cards (Zine, Sunday, Postcard, Album) are placeholders
+    for which style ids the form is allowed to submit. ``letter`` and
+    ``zine`` have built renderers that match their design promises;
+    the other three cards (Sunday, Postcard, Album) are placeholders
     until their renderers ship."""
     from web.copy import accepted_style_values
 
     accepted = accepted_style_values()
-    assert accepted == frozenset({"letter"})
-    for placeholder in ("zine", "sunday", "postcard", "album"):
+    assert accepted == frozenset({"letter", "zine"})
+    for placeholder in ("sunday", "postcard", "album"):
         assert placeholder not in accepted
 
 
