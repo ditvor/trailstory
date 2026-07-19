@@ -37,6 +37,8 @@ from enum import StrEnum
 from pathlib import Path
 from typing import Final
 
+from pydantic import ValidationError
+
 from trailstory.gpx import GpxParseError, parse_gpx
 from trailstory.llm.client import AnthropicClient
 from trailstory.llm.narrative import (
@@ -458,21 +460,27 @@ def _load_pending_state(workspace: Workspace) -> _PendingState:
     if not workspace.pending_state_path.is_file():
         raise PipelineError("workspace has no pending state to stream from")
     raw = json.loads(workspace.pending_state_path.read_text(encoding="utf-8"))
-    hike_input = HikeInput.model_validate(raw["hike_input"])
-    gpx_stats = GpxStats.model_validate(raw["gpx_stats"])
-    photos = [PhotoMeta.model_validate(p) for p in raw["photos"]]
-    hike_date_raw = raw.get("hike_date")
-    hike_date = date.fromisoformat(hike_date_raw) if hike_date_raw else None
-    style_raw = raw.get("style") or Style.default().value
-    return _PendingState(
-        hike_input,
-        gpx_stats,
-        photos,
-        hike_date,
-        raw.get("location"),
-        Style(style_raw),
-        bool(raw.get("use_place_context", False)),
-    )
+    # ValidationError/ValueError here means the persisted blob predates a
+    # schema or Style-lineup change (e.g. a pre-ADR-021 workspace storing
+    # "editorial") — surface as the same clean error as a missing state.
+    try:
+        hike_input = HikeInput.model_validate(raw["hike_input"])
+        gpx_stats = GpxStats.model_validate(raw["gpx_stats"])
+        photos = [PhotoMeta.model_validate(p) for p in raw["photos"]]
+        hike_date_raw = raw.get("hike_date")
+        hike_date = date.fromisoformat(hike_date_raw) if hike_date_raw else None
+        style_raw = raw.get("style") or Style.default().value
+        return _PendingState(
+            hike_input,
+            gpx_stats,
+            photos,
+            hike_date,
+            raw.get("location"),
+            Style(style_raw),
+            bool(raw.get("use_place_context", False)),
+        )
+    except (ValidationError, ValueError, KeyError) as exc:
+        raise PipelineError("workspace state is from an older version — start over") from exc
 
 
 def _persist_state(
@@ -503,11 +511,16 @@ def _load_state(workspace: Workspace) -> _State:
     if not workspace.state_path.is_file():
         raise PipelineError("workspace state has expired or never existed")
     raw = json.loads(workspace.state_path.read_text(encoding="utf-8"))
-    memory = Memory.model_validate(raw["memory"])
-    hike_date_raw = raw.get("hike_date")
-    hike_date = date.fromisoformat(hike_date_raw) if hike_date_raw else None
-    style_raw = raw.get("style") or Style.default().value
-    return _State(memory, hike_date, raw.get("location"), Style(style_raw))
+    # Same stale-blob guard as _load_pending_state: a workspace written
+    # before a Style-lineup or schema change must 400, not 500.
+    try:
+        memory = Memory.model_validate(raw["memory"])
+        hike_date_raw = raw.get("hike_date")
+        hike_date = date.fromisoformat(hike_date_raw) if hike_date_raw else None
+        style_raw = raw.get("style") or Style.default().value
+        return _State(memory, hike_date, raw.get("location"), Style(style_raw))
+    except (ValidationError, ValueError, KeyError) as exc:
+        raise PipelineError("workspace state is from an older version — start over") from exc
 
 
 # ── pipeline helpers ─────────────────────────────────────────────────────────

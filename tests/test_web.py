@@ -594,6 +594,48 @@ def test_accepted_style_values_only_letter() -> None:
         assert placeholder not in accepted
 
 
+def test_built_style_sources_stay_in_sync() -> None:
+    """ADR-021 invariant: the three places that know which styles are
+    buildable must agree, or a style can be submitted, paid for (LLM
+    call), and then fail at render time.
+
+    web.pipeline.Style (the form gate) == accepted_style_values() (the
+    picker's non-SOON cards) ⊆ trailstory BUILT_STYLES (the renderer
+    gate). When a new style ships, all three move together."""
+    from trailstory.models import BUILT_STYLES
+    from web.copy import accepted_style_values
+    from web.pipeline import Style as WebStyle
+
+    web_values = {s.value for s in WebStyle}
+    assert web_values == accepted_style_values()
+    assert web_values <= {s.value for s in BUILT_STYLES}
+
+
+def test_stale_workspace_state_raises_pipeline_error_not_500(tmp_path: Path) -> None:
+    """A workspace persisted before an ADR-021-style lineup change (e.g.
+    storing ``"style": "editorial"``) must surface as PipelineError — the
+    routes map that to a 400 — rather than an unhandled ValueError /
+    ValidationError that would 500 the carousel and stream endpoints for
+    the whole retention window after a deploy."""
+    from web.pipeline import PipelineError, _load_pending_state, _load_state
+    from web.storage import Workspace
+
+    ws = Workspace("stale-hike", tmp_path)
+    ws.output_dir.mkdir(parents=True)
+    ws.state_path.write_text(
+        json.dumps({"memory": {"style": "editorial"}, "style": "editorial"}),
+        encoding="utf-8",
+    )
+    ws.pending_state_path.write_text(
+        json.dumps({"hike_input": {}, "gpx_stats": {}, "photos": [], "style": "editorial"}),
+        encoding="utf-8",
+    )
+    with pytest.raises(PipelineError, match="older version"):
+        _load_state(ws)
+    with pytest.raises(PipelineError, match="older version"):
+        _load_pending_state(ws)
+
+
 def test_privacy_page_mentions_retention_and_repo(client: TestClient) -> None:
     response = client.get("/privacy")
     assert response.status_code == 200
