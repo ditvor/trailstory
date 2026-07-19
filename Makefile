@@ -76,17 +76,17 @@ generate:           ## Run generator with sample fixtures (requires .env with AP
 		--seed    "The fog cleared just as we reached the ridge." \
 		--out     output/dev
 
-test-render:        ## Render fixtures under STYLE (default: all three styles, no API call)
+test-render:        ## Render fixtures under STYLE (default: every built style, no API call)
 	@if [ -n "$(STYLE)" ]; then \
 		$(PY) -c "from tests.conftest import render_with_fixtures; from trailstory.models import Style; render_with_fixtures(style=Style('$(STYLE)'))"; \
 	else \
-		for s in editorial log encyclopedia; do \
+		for s in letter; do \
 			$(PY) -c "from tests.conftest import render_with_fixtures; from trailstory.models import Style; render_with_fixtures(style=Style('$$s'))"; \
 		done; \
 	fi
 
-golden-update:      ## Regenerate tests/golden/test-render-<style>.html for every style
-	@for s in editorial log encyclopedia; do \
+golden-update:      ## Regenerate tests/golden/test-render-<style>.html for every built style
+	@for s in letter; do \
 		$(PY) -c "from tests.conftest import render_with_fixtures; from trailstory.models import Style; render_with_fixtures(style=Style('$$s'))"; \
 		cp output/test/test-render-$$s.html tests/golden/test-render-$$s.html; \
 		echo "✓ tests/golden/test-render-$$s.html refreshed"; \

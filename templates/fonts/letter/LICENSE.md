@@ -1,4 +1,4 @@
-# Editorial style font licenses
+# Letter style font licenses
 
 Both font families bundled in this directory ship under the
 **SIL Open Font License 1.1**. Copying the WOFF2 files into the

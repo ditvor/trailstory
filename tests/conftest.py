@@ -153,13 +153,13 @@ def sample_narrative() -> NarrativeOutput:
 def render_with_fixtures(
     output_dir: Path | None = None,
     *,
-    style: Style = Style.editorial,
+    style: Style = Style.letter,
 ) -> Path:
     """Render the HTML template against bundled fixtures (no LLM call).
 
     Used by ``make test-render`` to iterate on the style templates or
     their embedded CSS without making a paid LLM call. The output file is
-    named ``test-render-<style>.html`` so all three styles can land in
+    named ``test-render-<style>.html`` so every built style can land in
     the same directory side by side. Returns the absolute path of the
     file that was written.
     """

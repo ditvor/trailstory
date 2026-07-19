@@ -1,12 +1,12 @@
 """Tests for the "Save for Instagram" button on the rendered memory page.
 
-The button is part of every style template (editorial / log /
-encyclopedia). On click, the page POSTs to ``/memory/{slug}/carousel``,
+The button is part of every built style template (currently The
+Letter). On click, the page POSTs to ``/memory/{slug}/carousel``,
 fetches each slide URL as a Blob, and either calls ``navigator.share``
 with the files (iOS Safari path) or renders fallback download links
 (desktop). The Python-side contract these tests exercise:
 
-* The button renders into all three style templates.
+* The button renders into every built style template.
 * The button carries the slug as ``data-slug`` so the JS can build the
   POST URL without templating it inline.
 * ``POST /memory/{slug}/carousel`` returns exactly N+2 slides for N
@@ -211,7 +211,7 @@ def app_factory_4_photos(tmp_path: Path) -> Iterator[FastAPI]:
 
 
 def _generate_and_render(
-    app: FastAPI, n_photos: int = 5, style: str = "editorial"
+    app: FastAPI, n_photos: int = 5, style: str = "letter"
 ) -> tuple[TestClient, str]:
     """Run the prep + SSE + render flow, return the (client, slug)."""
     client = TestClient(app)
@@ -230,7 +230,7 @@ def _generate_and_render(
 # ── button rendering ─────────────────────────────────────────────────────────
 
 
-@pytest.mark.parametrize("style", ["editorial", "log", "encyclopedia"])
+@pytest.mark.parametrize("style", ["letter"])
 def test_save_for_instagram_button_renders_in_every_style(tmp_path: Path, style: str) -> None:
     """All three style templates ship the button so the user gets it
     whichever visual treatment they pick."""

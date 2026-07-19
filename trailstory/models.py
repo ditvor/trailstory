@@ -8,16 +8,26 @@ from pydantic import BaseModel, ConfigDict, Field
 
 
 class Style(StrEnum):
-    """Visual treatment for the rendered memory page (see ADR-006).
+    """Visual treatment for the rendered memory page (see ADR-006, ADR-021).
 
     The same ``NarrativeOutput`` renders under any style — only the Jinja
-    template and CSS bundle differ. Adding a fourth style is a templates-
-    and-CSS PR plus one new enum value; no prompt or eval changes.
+    template and CSS bundle differ. The enum lists the full product
+    lineup; only members in :data:`BUILT_STYLES` have a template under
+    ``templates/styles/`` today. Building a planned style is a
+    templates-and-CSS PR plus adding the member to ``BUILT_STYLES``; no
+    prompt or eval changes.
     """
 
-    editorial = "editorial"
-    log = "log"
-    encyclopedia = "encyclopedia"
+    letter = "letter"
+    zine = "zine"
+    sunday = "sunday"
+    postcard = "postcard"
+    album = "album"
+
+
+# Styles whose renderer template exists. The renderer refuses the rest,
+# the CLI only offers these, and the web picker shows the rest as SOON.
+BUILT_STYLES: frozenset[Style] = frozenset({Style.letter})
 
 
 class Waypoint(BaseModel):
@@ -534,7 +544,7 @@ class Memory(BaseModel):
     gpx_stats: GpxStats
     narrative: NarrativeOutput
     selected_photos: list[PhotoMeta]
-    style: Style = Style.editorial
+    style: Style = Style.letter
     # ADR-017: optional "about this place" block. ``None`` (the default)
     # when the feature is off (no ``--place`` flag) or when geocoding /
     # the stitch soft-failed. Never required to render.

@@ -1,7 +1,12 @@
 # ADR 006 — Three visual styles share one narrative
 
 **Date:** 2026-04
-**Status:** Accepted
+**Status:** Accepted — the concrete style lineup is superseded by
+[ADR-021](021-style-lineup-letter-and-planned-styles.md) (2026-07):
+`editorial` was renamed to `letter` ("The Letter"), `log` and
+`encyclopedia` were removed, and four planned styles (zine, sunday,
+postcard, album) reserve their slots. The core decision here — one
+narrative prompt, many visual templates — stands unchanged.
 **Decided by:** v0 product owner
 
 ---

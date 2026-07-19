@@ -1,4 +1,4 @@
-"""One-off demo: render the editorial template with the Bad Tölz example.
+"""One-off demo: render The Letter template with the Bad Tölz example.
 
 Pulls the 8 base64 photos out of the source HTML provided by the user,
 saves them as JPEGs under ``examples/wax_saints/photos/``, builds a
@@ -150,7 +150,7 @@ def build_paragraphs() -> list[Paragraph]:
     """ADR-014 sentence-level paragraphs with per-sentence provenance.
 
     The provenance tags are hand-assigned to mirror what the writer would
-    self-report, so the rendered page demonstrates the editorial template's
+    self-report, so the rendered page demonstrates The Letter template's
     hover tooltip and INFERRED tint.
     """
     return [
@@ -285,7 +285,7 @@ def main() -> None:
         gpx_stats=stats,
         narrative=narrative,
         selected_photos=photo_metas,
-        style=Style.editorial,
+        style=Style.letter,
     )
 
     OUTPUT_DIR.mkdir(parents=True, exist_ok=True)

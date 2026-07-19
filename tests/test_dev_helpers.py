@@ -11,7 +11,7 @@ from pathlib import Path
 import pytest
 
 from tests.conftest import render_with_fixtures, sample_narrative
-from trailstory.models import Style
+from trailstory.models import BUILT_STYLES, Style
 
 GOLDEN_DIR = Path(__file__).parent / "golden"
 
@@ -37,7 +37,7 @@ def test_render_with_fixtures_writes_html(tmp_path: Path) -> None:
     assert "data:image/jpeg;base64," in text
 
 
-@pytest.mark.parametrize("style", list(Style))
+@pytest.mark.parametrize("style", sorted(BUILT_STYLES))
 def test_render_with_fixtures_matches_golden(tmp_path: Path, style: Style) -> None:
     """Catch any silent change to a style template, the elevation SVG,
     photo encoding pipeline, or fixture data. The render is deterministic

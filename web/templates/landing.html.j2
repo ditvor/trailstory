@@ -584,13 +584,13 @@
 
       // ──────────────────────────────────────────────────────────────
       // Chameleon — warm the chrome toward the chosen style's palette.
-      // Mirrors the editorial/per-style colours; only buildable styles
-      // wire @change to this, so in v0 it resolves to The Letter. The
+      // Mirrors the per-style colours; only buildable styles wire
+      // @change to this, so in v0 it resolves to The Letter. The
       // map is ready for the moment more styles unlock.
       // ──────────────────────────────────────────────────────────────
       applyChameleon(styleId) {
         const P = {
-          editorial: {
+          letter: {
             paper: 'oklch(0.972 0.008 80)', paper2: 'oklch(0.945 0.012 80)',
             ink: 'oklch(0.18 0.01 80)', ink2: 'oklch(0.34 0.01 80)', ink3: 'oklch(0.55 0.01 80)',
             accent: 'oklch(0.30 0.01 80)', accentSoft: 'oklch(0.18 0.01 80 / 0.07)',
@@ -621,7 +621,7 @@
             rule: 'oklch(0.20 0.01 60 / 0.18)', hairline: 'oklch(0.20 0.01 60 / 0.09)',
           },
         };
-        const p = P[styleId] || P.editorial;
+        const p = P[styleId] || P.letter;
         const root = document.documentElement.style;
         root.setProperty('--c-paper', p.paper);
         root.setProperty('--c-paper-2', p.paper2);

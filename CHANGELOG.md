@@ -9,13 +9,43 @@ Versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+### Changed
+- **Style lineup renamed and pruned (ADR-021).** The `editorial` style is
+  now `letter` ("The Letter") end-to-end: enum value, template
+  (`templates/styles/letter.html.j2`), fonts directory and embedded
+  font-family names (`Letter Serif` / `Letter Mono`), body marker class
+  (`style-letter`), web form value, and goldens. The `Style` enum now
+  carries the full five-style product lineup from the Claude Design
+  proposal (`letter`, `zine`, `sunday`, `postcard`, `album`); a new
+  `BUILT_STYLES` set (currently `{letter}`) gates the renderer, the CLI
+  `--style` choices, and — via the narrower `web.pipeline.Style` enum —
+  the builder form, so the four planned styles stay visible as SOON
+  cards but cannot be submitted or rendered until their templates land.
+- **Web favicon.** Replaced the boot-emoji tab icon with an ink elevation-line
+  mark on warm paper, matching the builder's "Letter" palette. Pure inline SVG
+  data URI in both base templates — no asset files.
+
+### Removed
+- **`log` and `encyclopedia` styles (ADR-021).** Templates, enum values,
+  goldens, and style-specific tests deleted. They matched none of the
+  five picker cards' visual promises, were already hidden from the web
+  picker, and were never surfaced to a real user.
+
 ### Added
-- **Back link on the generated memory page.** All three styles render a
+- **Back link on the generated memory page.** The letter style renders a
   tri-lingual "← Back to the main page" link below the share row. It ships
   `hidden` and is revealed by a small script only when the page is served
   by the web builder (`http(s)` + `/memory/…` path) — a saved or forwarded
   copy of the file never shows it, keeping the shareable HTML clean for
-  recipients. Excluded from print in the editorial style.
+  recipients. Excluded from print.
+- **"Save as PDF" and "Share page (HTML file)" on the memory page.** The
+  share row in all three styles now offers a PDF export (the browser's
+  print dialog against a cleaned-up print stylesheet — chrome hidden,
+  current language only) and an explicit way to share the page as the
+  self-contained `.html` file it is: the native share sheet on phones
+  (WhatsApp, Telegram, email — recipient's choice), a plain download
+  elsewhere. Log and encyclopedia gain the print stylesheet rules that
+  editorial already had.
 - **POI name resolution (ADR-019).** Opt-in (`--poi`, implies `--place`)
   resolution of a hiker's generic landmark beat ("the wax-figure church") to
   a real named OpenStreetMap feature ("Mühlfeldkirche"), fed into the place
@@ -43,6 +73,26 @@ Versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   "the kind of" construction and over-editorialising with ungrounded
   filler, so the place-stitch model default moves to
   `claude-sonnet-4-6` (override via `PLACE_MODEL`).
+
+### Removed
+- **`examples/memory-herzogstand.html`.** A hand-crafted design mockup from
+  the initial scaffold, never produced by the pipeline: EN/RU toggle only
+  (no German, predates ADR-005), Google Fonts loaded from CDN (breaking the
+  self-contained rule), no embedded photos, and the pre-#73 "Copy link" /
+  WhatsApp share row. Its source inputs were never committed, so it could
+  not be re-rendered; nothing referenced it. Current-design fixture renders
+  live in `tests/golden/test-render-<style>.html`.
+- **"Copy link" and WhatsApp buttons on the memory page.** Both shared
+  only a title-plus-quote text snippet — there is no link to copy on a
+  self-contained page, and the WhatsApp button never carried the memory
+  itself. Superseded by the HTML-file share above.
+- **"Notes" audit UI on the memory page (ADR-020).** The per-sentence
+  provenance underlines, tints, hover tooltips, and the Notes toggle
+  button are gone from all three styles — the page now reads as plain
+  prose with no audit chrome. Rendering-only: sentence-level provenance
+  stays in the data model (`schema_version` unchanged) and keeps feeding
+  the ADR-011 verifier and the rubric's inferred-ratio gate. Partially
+  supersedes ADR-014's HTML layer.
 
 ### Changed
 - **Builder docket now says "family abroad, friends elsewhere"** (was

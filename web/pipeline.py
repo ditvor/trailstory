@@ -8,9 +8,11 @@ keeps the *pipeline* logic in one place so the route handlers stay thin.
 
 Public surface:
 
-* :class:`Style` — three-value enum mirroring the form's radio buttons
-  (editorial / log / encyclopedia). Per ADR-006 the style chooses the
-  visual template only — the narrative text is identical across styles.
+* :class:`Style` — enum of the *buildable* styles the form accepts
+  (currently only ``letter``; the picker's SOON cards are placeholder
+  ids outside this enum, see ``web.copy``). Per ADR-006 the style
+  chooses the visual template only — the narrative text is identical
+  across styles.
 * :func:`prepare_pipeline` — runs the deterministic prep phase (parse +
   load_photos) and persists the inputs as ``pending.json`` so the SSE
   endpoint can resume with a streaming LLM call.
@@ -34,6 +36,8 @@ from datetime import date, datetime
 from enum import StrEnum
 from pathlib import Path
 from typing import Final
+
+from pydantic import ValidationError
 
 from trailstory.gpx import GpxParseError, parse_gpx
 from trailstory.llm.client import AnthropicClient
@@ -79,18 +83,20 @@ CAROUSEL_QUALITY: Final[int] = 90
 class Style(StrEnum):
     """Visual style picked by the user on the builder form.
 
-    The narrative is identical across styles (one prompt, one
-    NarrativeOutput); only the rendering template differs. See
+    Deliberately narrower than :class:`trailstory.models.Style`: this
+    enum doubles as the form's server-side gate, so it lists only the
+    styles with a built renderer (ADR-021). Planned styles (zine,
+    sunday, postcard, album) join as their templates land. The narrative
+    is identical across styles (one prompt, one NarrativeOutput); only
+    the rendering template differs. See
     `docs/adr/006-three-visual-styles-share-one-narrative.md`.
     """
 
-    editorial = "editorial"
-    log = "log"
-    encyclopedia = "encyclopedia"
+    letter = "letter"
 
     @classmethod
     def default(cls) -> Style:
-        return cls.editorial
+        return cls.letter
 
 
 class PipelineError(Exception):
@@ -454,21 +460,27 @@ def _load_pending_state(workspace: Workspace) -> _PendingState:
     if not workspace.pending_state_path.is_file():
         raise PipelineError("workspace has no pending state to stream from")
     raw = json.loads(workspace.pending_state_path.read_text(encoding="utf-8"))
-    hike_input = HikeInput.model_validate(raw["hike_input"])
-    gpx_stats = GpxStats.model_validate(raw["gpx_stats"])
-    photos = [PhotoMeta.model_validate(p) for p in raw["photos"]]
-    hike_date_raw = raw.get("hike_date")
-    hike_date = date.fromisoformat(hike_date_raw) if hike_date_raw else None
-    style_raw = raw.get("style") or Style.default().value
-    return _PendingState(
-        hike_input,
-        gpx_stats,
-        photos,
-        hike_date,
-        raw.get("location"),
-        Style(style_raw),
-        bool(raw.get("use_place_context", False)),
-    )
+    # ValidationError/ValueError here means the persisted blob predates a
+    # schema or Style-lineup change (e.g. a pre-ADR-021 workspace storing
+    # "editorial") — surface as the same clean error as a missing state.
+    try:
+        hike_input = HikeInput.model_validate(raw["hike_input"])
+        gpx_stats = GpxStats.model_validate(raw["gpx_stats"])
+        photos = [PhotoMeta.model_validate(p) for p in raw["photos"]]
+        hike_date_raw = raw.get("hike_date")
+        hike_date = date.fromisoformat(hike_date_raw) if hike_date_raw else None
+        style_raw = raw.get("style") or Style.default().value
+        return _PendingState(
+            hike_input,
+            gpx_stats,
+            photos,
+            hike_date,
+            raw.get("location"),
+            Style(style_raw),
+            bool(raw.get("use_place_context", False)),
+        )
+    except (ValidationError, ValueError, KeyError) as exc:
+        raise PipelineError("workspace state is from an older version — start over") from exc
 
 
 def _persist_state(
@@ -499,11 +511,16 @@ def _load_state(workspace: Workspace) -> _State:
     if not workspace.state_path.is_file():
         raise PipelineError("workspace state has expired or never existed")
     raw = json.loads(workspace.state_path.read_text(encoding="utf-8"))
-    memory = Memory.model_validate(raw["memory"])
-    hike_date_raw = raw.get("hike_date")
-    hike_date = date.fromisoformat(hike_date_raw) if hike_date_raw else None
-    style_raw = raw.get("style") or Style.default().value
-    return _State(memory, hike_date, raw.get("location"), Style(style_raw))
+    # Same stale-blob guard as _load_pending_state: a workspace written
+    # before a Style-lineup or schema change must 400, not 500.
+    try:
+        memory = Memory.model_validate(raw["memory"])
+        hike_date_raw = raw.get("hike_date")
+        hike_date = date.fromisoformat(hike_date_raw) if hike_date_raw else None
+        style_raw = raw.get("style") or Style.default().value
+        return _State(memory, hike_date, raw.get("location"), Style(style_raw))
+    except (ValidationError, ValueError, KeyError) as exc:
+        raise PipelineError("workspace state is from an older version — start over") from exc
 
 
 # ── pipeline helpers ─────────────────────────────────────────────────────────

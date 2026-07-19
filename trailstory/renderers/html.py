@@ -21,7 +21,7 @@ from typing import Final
 from jinja2 import Environment, FileSystemLoader, select_autoescape
 
 from trailstory.gpx import elevation_profile
-from trailstory.models import Memory, PhotoMeta, Style
+from trailstory.models import BUILT_STYLES, Memory, PhotoMeta, Style
 
 logger = logging.getLogger(__name__)
 
@@ -29,11 +29,11 @@ TEMPLATE_DIR: Final[Path] = Path(__file__).resolve().parents[2] / "templates"
 TEMPLATE_NAME: Final[str] = "memory.html.j2"
 ELEVATION_POINTS: Final[int] = 40
 
-# Editorial-style WOFF2 subsets — committed under templates/fonts/editorial/
+# Letter-style WOFF2 subsets — committed under templates/fonts/letter/
 # and embedded as base64 data URIs so the rendered HTML works offline (ADR-001).
 # Source Serif 4 stands in for Newsreader because the latter has no Cyrillic
-# subset on Google Fonts; see templates/fonts/editorial/LICENSE.md.
-_EDITORIAL_FONT_FILES: Final[dict[str, str]] = {
+# subset on Google Fonts; see templates/fonts/letter/LICENSE.md.
+_LETTER_FONT_FILES: Final[dict[str, str]] = {
     "serif_italic_latin": "SourceSerif4-Italic-VF.latin.woff2",
     "serif_italic_cyrillic": "SourceSerif4-Italic-VF.cyrillic.woff2",
     "serif_roman_latin": "SourceSerif4-Roman-VF.latin.woff2",
@@ -83,16 +83,20 @@ def render_html(
         raise HtmlRenderError("at least one photo is required to render the memory page")
     if not slug:
         raise HtmlRenderError("slug must be a non-empty string")
+    if memory.style not in BUILT_STYLES:
+        raise HtmlRenderError(
+            f"style {memory.style.value!r} has no renderer template yet (ADR-021); "
+            f"built styles: {', '.join(sorted(s.value for s in BUILT_STYLES))}"
+        )
 
     env = _environment()
     template = env.get_template(TEMPLATE_NAME)
 
     # ADR-014 / Phase 4: paragraphs is now list[Paragraph] with per-sentence
-    # provenance. The editorial template walks the structure to render
-    # <span data-prov> per sentence; the other templates use the flat shape
-    # exposed by ``paragraphs_as_localized`` so they keep working without
-    # provenance UI until Phase 4.1 ports them too. Pass both into the
-    # template context so each style picks the shape it needs.
+    # provenance. Provenance is not rendered (ADR-020 removed the Notes
+    # audit UI); templates walk the structure for sentence text only.
+    # ``paragraphs_as_localized`` stays available for templates that
+    # prefer the flat shape. Pass both into the template context.
     flat_paragraphs = memory.narrative.paragraphs_as_localized()
 
     rendered = template.render(
@@ -110,7 +114,7 @@ def render_html(
             "location": location or "",
             "style": memory.style.value,
         },
-        fonts=_editorial_fonts() if memory.style == Style.editorial else {},
+        fonts=_letter_fonts() if memory.style == Style.letter else {},
     )
 
     output_dir.mkdir(parents=True, exist_ok=True)
@@ -135,23 +139,23 @@ def _environment() -> Environment:
 
 
 @lru_cache(maxsize=1)
-def _editorial_fonts() -> dict[str, str]:
-    """Return editorial WOFF2 fonts as base64 data URIs, keyed by role.
+def _letter_fonts() -> dict[str, str]:
+    """Return Letter WOFF2 fonts as base64 data URIs, keyed by role.
 
     Read once per process. The returned mapping is what
-    ``templates/styles/editorial.html.j2`` uses inside its ``@font-face``
+    ``templates/styles/letter.html.j2`` uses inside its ``@font-face``
     declarations — each value is the base64 payload only (no
     ``data:font/woff2;base64,`` prefix), so the template can construct
     full ``src: url(...)`` expressions.
     """
-    fonts_dir = TEMPLATE_DIR / "fonts" / "editorial"
+    fonts_dir = TEMPLATE_DIR / "fonts" / "letter"
     encoded: dict[str, str] = {}
-    for role, filename in _EDITORIAL_FONT_FILES.items():
+    for role, filename in _LETTER_FONT_FILES.items():
         path = fonts_dir / filename
         try:
             encoded[role] = base64.b64encode(path.read_bytes()).decode("ascii")
         except OSError as exc:
-            raise HtmlRenderError(f"unable to read editorial font {path}: {exc}") from exc
+            raise HtmlRenderError(f"unable to read Letter font {path}: {exc}") from exc
     return encoded
 
 
