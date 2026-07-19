@@ -9,6 +9,11 @@ Versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+### Changed
+- **Web favicon.** Replaced the boot-emoji tab icon with an ink elevation-line
+  mark on warm paper, matching the builder's "Letter" palette. Pure inline SVG
+  data URI in both base templates — no asset files.
+
 ### Added
 - **POI name resolution (ADR-019).** Opt-in (`--poi`, implies `--place`)
   resolution of a hiker's generic landmark beat ("the wax-figure church") to
