@@ -88,11 +88,10 @@ def render_html(
     template = env.get_template(TEMPLATE_NAME)
 
     # ADR-014 / Phase 4: paragraphs is now list[Paragraph] with per-sentence
-    # provenance. The editorial template walks the structure to render
-    # <span data-prov> per sentence; the other templates use the flat shape
-    # exposed by ``paragraphs_as_localized`` so they keep working without
-    # provenance UI until Phase 4.1 ports them too. Pass both into the
-    # template context so each style picks the shape it needs.
+    # provenance. Provenance is not rendered (ADR-020 removed the Notes
+    # audit UI); templates walk the structure for sentence text only.
+    # ``paragraphs_as_localized`` stays available for templates that
+    # prefer the flat shape. Pass both into the template context.
     flat_paragraphs = memory.narrative.paragraphs_as_localized()
 
     rendered = template.render(
