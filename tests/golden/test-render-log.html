@@ -150,6 +150,7 @@
   }
   @media print {
     body.audit .sent[data-prov] { background: transparent; box-shadow: none; }
+    .lang-toggle, .share, .article-tools { display: none !important; }
   }
 
   /* ── notes (audit) toggle ──────────────────────────────────────── */
@@ -428,8 +429,8 @@
     </section>
 
     <section class="share" aria-label="share">
-      <a id="waLink" href="#" target="_blank" rel="noopener noreferrer">WhatsApp</a>
-      <button id="copyBtn" type="button">Copy text</button>
+      <button id="pdfBtn" type="button">Save as PDF</button>
+      <button id="htmlBtn" type="button">Share page (HTML file)</button>
       <button id="igBtn" type="button" data-slug="test-render-log">Save for Instagram</button>
       <p id="igStatus" class="ig-status" aria-live="polite"></p>
     </section>
@@ -512,13 +513,57 @@
       var quoteEn = "The fog cleared just as we reached the ridge.";
       var msg = titleEn + ' — ' + quoteEn;
 
-      document.getElementById('waLink').href =
-        'https://wa.me/?text=' + encodeURIComponent(msg);
+      // The @media print stylesheet strips the chrome and keeps only the
+      // active language, so the browser's "Save as PDF" destination
+      // produces a clean single-language document.
+      document.getElementById('pdfBtn').addEventListener('click', function () {
+        window.print();
+      });
 
-      document.getElementById('copyBtn').addEventListener('click', function () {
-        if (navigator.clipboard && navigator.clipboard.writeText) {
-          navigator.clipboard.writeText(msg);
+      // The page itself is the shareable artifact (ADR-001): one
+      // self-contained .html file. Served over http(s) we re-fetch our own
+      // URL for the original bytes; opened from disk (file://), fetch is
+      // blocked, so we serialize the live DOM — photos survive because
+      // they are inline data URIs.
+      async function pageAsFile() {
+        var name = "test-render-log" + '.html';
+        var blob;
+        try {
+          var res = await fetch(window.location.href);
+          if (!res.ok) throw new Error('HTTP ' + res.status);
+          blob = await res.blob();
+        } catch (e) {
+          blob = new Blob(['<!doctype html>\n' + document.documentElement.outerHTML], { type: 'text/html' });
         }
+        return new File([blob], name, { type: 'text/html' });
+      }
+
+      var htmlBtn = document.getElementById('htmlBtn');
+      htmlBtn.addEventListener('click', async function () {
+        htmlBtn.disabled = true;
+        try {
+          var file = await pageAsFile();
+          if (navigator.canShare && navigator.canShare({ files: [file] })) {
+            try {
+              await navigator.share({ files: [file], title: titleEn, text: msg });
+              setStatus('Shared.');
+              htmlBtn.disabled = false;
+              return;
+            } catch (e) {
+              if (e && e.name === 'AbortError') { htmlBtn.disabled = false; return; }
+              // Share sheet unavailable; fall through to download.
+            }
+          }
+          var url = URL.createObjectURL(file);
+          var a = document.createElement('a');
+          a.href = url; a.download = file.name;
+          document.body.appendChild(a); a.click(); a.remove();
+          window.setTimeout(function () { URL.revokeObjectURL(url); }, 10000);
+          setStatus('Downloaded — attach the .html file in any messenger.');
+        } catch (err) {
+          setStatus('Could not share the page: ' + (err && err.message ? err.message : 'unknown'));
+        }
+        htmlBtn.disabled = false;
       });
 
       // ── Instagram carousel ────────────────────────────────────────

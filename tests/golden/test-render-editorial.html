@@ -656,12 +656,16 @@
             <span class="ru">ПОДЕЛИТЬСЯ &rarr;</span>
             <span class="de">TEILEN &rarr;</span>
           </span>
-          <button id="copyBtn" type="button" class="primary">
-            <span class="en">Copy link</span>
-            <span class="ru">Копировать</span>
-            <span class="de">Link kopieren</span>
+          <button id="pdfBtn" type="button" class="primary">
+            <span class="en">Save as PDF</span>
+            <span class="ru">Сохранить в PDF</span>
+            <span class="de">Als PDF speichern</span>
           </button>
-          <a id="waLink" href="#" target="_blank" rel="noopener noreferrer">WhatsApp</a>
+          <button id="htmlBtn" type="button">
+            <span class="en">Share page (HTML file)</span>
+            <span class="ru">Поделиться страницей (HTML)</span>
+            <span class="de">Seite teilen (HTML-Datei)</span>
+          </button>
           <button id="igBtn" type="button" data-slug="test-render-editorial">
             <span class="en">Save for Instagram</span>
             <span class="ru">Сохранить для Instagram</span>
@@ -800,7 +804,6 @@
           b.setAttribute('aria-pressed', String(b.getAttribute('data-lang') === next));
         });
         try { localStorage.setItem(STORAGE_KEY, next); } catch (e) {}
-        updateShareUrls();
       }
 
       function setLang(next) {
@@ -970,13 +973,13 @@
         de: "Der Nebel lichtete sich, gerade als wir den Grat erreichten."
       };
       var labels = {
-        en: { copied: 'Copied', sending: 'Building carousel…', ready: 'Carousel ready. Click each slide to save.', shared: 'Saved. Open Instagram and pick the slides from your library.', error: 'Could not build carousel: ' },
-        ru: { copied: 'Скопировано', sending: 'Собираем карусель…', ready: 'Карусель готова. Скачайте каждый слайд.', shared: 'Сохранено. Откройте Instagram и выберите слайды из галереи.', error: 'Не удалось собрать карусель: ' },
-        de: { copied: 'Kopiert', sending: 'Karussell wird erstellt…', ready: 'Karussell fertig. Slide einzeln speichern.', shared: 'Gespeichert. Instagram öffnen und Slides aus der Galerie wählen.', error: 'Karussell fehlgeschlagen: ' }
+        en: { sending: 'Building carousel…', ready: 'Carousel ready. Click each slide to save.', shared: 'Saved. Open Instagram and pick the slides from your library.', error: 'Could not build carousel: ', htmlShared: 'Shared.', htmlSaved: 'Downloaded — attach the .html file in any messenger.', htmlError: 'Could not share the page: ' },
+        ru: { sending: 'Собираем карусель…', ready: 'Карусель готова. Скачайте каждый слайд.', shared: 'Сохранено. Откройте Instagram и выберите слайды из галереи.', error: 'Не удалось собрать карусель: ', htmlShared: 'Отправлено.', htmlSaved: 'Скачано — прикрепите .html-файл в любом мессенджере.', htmlError: 'Не удалось поделиться страницей: ' },
+        de: { sending: 'Karussell wird erstellt…', ready: 'Karussell fertig. Slide einzeln speichern.', shared: 'Gespeichert. Instagram öffnen und Slides aus der Galerie wählen.', error: 'Karussell fehlgeschlagen: ', htmlShared: 'Geteilt.', htmlSaved: 'Heruntergeladen — die .html-Datei in einem Messenger anhängen.', htmlError: 'Seite konnte nicht geteilt werden: ' }
       };
 
-      var copyBtn = document.getElementById('copyBtn');
-      var waLink  = document.getElementById('waLink');
+      var pdfBtn  = document.getElementById('pdfBtn');
+      var htmlBtn = document.getElementById('htmlBtn');
       var igBtn   = document.getElementById('igBtn');
       var igStatus = document.getElementById('igStatus');
 
@@ -985,23 +988,58 @@
         return titles[lg] + ' — ' + quotes[lg];
       }
 
-      function updateShareUrls() {
-        if (waLink) {
-          waLink.href = 'https://wa.me/?text=' + encodeURIComponent(shareMessage());
-        }
+      if (pdfBtn) {
+        // The @media print stylesheet strips the chrome and keeps only the
+        // currently selected language, so the browser's "Save as PDF"
+        // destination produces a clean single-language document.
+        pdfBtn.addEventListener('click', function () { window.print(); });
       }
 
-      if (copyBtn) {
-        copyBtn.addEventListener('click', function () {
-          var msg = shareMessage();
-          var done = function () {
-            var original = copyBtn.innerHTML;
-            copyBtn.innerHTML = '✓ ' + labels[currentLang()].copied;
-            window.setTimeout(function () { copyBtn.innerHTML = original; }, 1400);
-          };
-          if (navigator.clipboard && navigator.clipboard.writeText) {
-            navigator.clipboard.writeText(msg).then(done, done);
-          } else { done(); }
+      // The page itself is the shareable artifact (ADR-001): one
+      // self-contained .html file. Served over http(s) we re-fetch our own
+      // URL to get the original bytes; opened from disk (file://), fetch is
+      // blocked, so we serialize the live DOM instead — photos survive
+      // because they are inline data URIs.
+      async function pageAsFile() {
+        var name = "test-render-editorial" + '.html';
+        var blob;
+        try {
+          var res = await fetch(window.location.href);
+          if (!res.ok) throw new Error('HTTP ' + res.status);
+          blob = await res.blob();
+        } catch (e) {
+          blob = new Blob(['<!doctype html>\n' + document.documentElement.outerHTML], { type: 'text/html' });
+        }
+        return new File([blob], name, { type: 'text/html' });
+      }
+
+      if (htmlBtn) {
+        htmlBtn.addEventListener('click', async function () {
+          var lg = currentLang();
+          htmlBtn.disabled = true;
+          try {
+            var file = await pageAsFile();
+            if (navigator.canShare && navigator.canShare({ files: [file] })) {
+              try {
+                await navigator.share({ files: [file], title: titles[lg], text: shareMessage() });
+                igStatus.textContent = labels[lg].htmlShared;
+                htmlBtn.disabled = false;
+                return;
+              } catch (e) {
+                if (e && e.name === 'AbortError') { htmlBtn.disabled = false; return; }
+                /* share sheet unavailable → fall through to download */
+              }
+            }
+            var url = URL.createObjectURL(file);
+            var a = document.createElement('a');
+            a.href = url; a.download = file.name;
+            document.body.appendChild(a); a.click(); a.remove();
+            window.setTimeout(function () { URL.revokeObjectURL(url); }, 10000);
+            igStatus.textContent = labels[lg].htmlSaved;
+          } catch (err) {
+            igStatus.textContent = labels[lg].htmlError + (err && err.message ? err.message : 'unknown');
+          }
+          htmlBtn.disabled = false;
         });
       }
 
@@ -1089,8 +1127,6 @@
           e.preventDefault();
         }
       });
-
-      updateShareUrls();
     })();
   </script>
 </body>
