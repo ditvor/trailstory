@@ -85,7 +85,7 @@ def render_html(
         raise HtmlRenderError("slug must be a non-empty string")
     if memory.style not in BUILT_STYLES:
         raise HtmlRenderError(
-            f"style {memory.style.value!r} has no renderer template yet (ADR-020); "
+            f"style {memory.style.value!r} has no renderer template yet (ADR-021); "
             f"built styles: {', '.join(sorted(s.value for s in BUILT_STYLES))}"
         )
 
@@ -93,9 +93,10 @@ def render_html(
     template = env.get_template(TEMPLATE_NAME)
 
     # ADR-014 / Phase 4: paragraphs is now list[Paragraph] with per-sentence
-    # provenance. The Letter template walks the structure to render
-    # <span data-prov> per sentence; the flat shape stays in the context so
-    # future style templates can start from it before porting provenance UI.
+    # provenance. Provenance is not rendered (ADR-020 removed the Notes
+    # audit UI); templates walk the structure for sentence text only.
+    # ``paragraphs_as_localized`` stays available for templates that
+    # prefer the flat shape. Pass both into the template context.
     flat_paragraphs = memory.narrative.paragraphs_as_localized()
 
     rendered = template.render(

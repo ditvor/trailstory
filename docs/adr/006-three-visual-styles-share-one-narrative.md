@@ -2,7 +2,7 @@
 
 **Date:** 2026-04
 **Status:** Accepted — the concrete style lineup is superseded by
-[ADR-020](020-style-lineup-letter-and-planned-styles.md) (2026-07):
+[ADR-021](021-style-lineup-letter-and-planned-styles.md) (2026-07):
 `editorial` was renamed to `letter` ("The Letter"), `log` and
 `encyclopedia` were removed, and four planned styles (zine, sunday,
 postcard, album) reserve their slots. The core decision here — one

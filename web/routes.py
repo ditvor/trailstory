@@ -287,7 +287,7 @@ async def generate(
 
     # ``Style(style)`` rejects anything outside the enum, which already
     # covers the SOON placeholders (``zine``/``sunday``/``postcard``/
-    # ``album``) — the web enum lists only built styles (ADR-020). The
+    # ``album``) — the web enum lists only built styles (ADR-021). The
     # picker's ``coming_soon`` flag is a UX-layer concern (disabled
     # radio, ``accepted_style_values()`` for tests) and doesn't need a
     # second server-side gate.

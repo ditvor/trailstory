@@ -10,7 +10,7 @@ Versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 ## [Unreleased]
 
 ### Changed
-- **Style lineup renamed and pruned (ADR-020).** The `editorial` style is
+- **Style lineup renamed and pruned (ADR-021).** The `editorial` style is
   now `letter` ("The Letter") end-to-end: enum value, template
   (`templates/styles/letter.html.j2`), fonts directory and embedded
   font-family names (`Letter Serif` / `Letter Mono`), body marker class
@@ -21,9 +21,12 @@ Versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   `--style` choices, and — via the narrower `web.pipeline.Style` enum —
   the builder form, so the four planned styles stay visible as SOON
   cards but cannot be submitted or rendered until their templates land.
+- **Web favicon.** Replaced the boot-emoji tab icon with an ink elevation-line
+  mark on warm paper, matching the builder's "Letter" palette. Pure inline SVG
+  data URI in both base templates — no asset files.
 
 ### Removed
-- **`log` and `encyclopedia` styles (ADR-020).** Templates, enum values,
+- **`log` and `encyclopedia` styles (ADR-021).** Templates, enum values,
   goldens, and style-specific tests deleted. They matched none of the
   five picker cards' visual promises, were already hidden from the web
   picker, and were never surfaced to a real user.
@@ -56,6 +59,15 @@ Versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   "the kind of" construction and over-editorialising with ungrounded
   filler, so the place-stitch model default moves to
   `claude-sonnet-4-6` (override via `PLACE_MODEL`).
+
+### Removed
+- **"Notes" audit UI on the memory page (ADR-020).** The per-sentence
+  provenance underlines, tints, hover tooltips, and the Notes toggle
+  button are gone from all three styles — the page now reads as plain
+  prose with no audit chrome. Rendering-only: sentence-level provenance
+  stays in the data model (`schema_version` unchanged) and keeps feeding
+  the ADR-011 verifier and the rubric's inferred-ratio gate. Partially
+  supersedes ADR-014's HTML layer.
 
 ### Changed
 - **`Settings.place_model` default is now `claude-sonnet-4-6`** (was

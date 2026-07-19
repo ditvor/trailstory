@@ -8,7 +8,7 @@ from pydantic import BaseModel, ConfigDict, Field
 
 
 class Style(StrEnum):
-    """Visual treatment for the rendered memory page (see ADR-006, ADR-020).
+    """Visual treatment for the rendered memory page (see ADR-006, ADR-021).
 
     The same ``NarrativeOutput`` renders under any style — only the Jinja
     template and CSS bundle differ. The enum lists the full product

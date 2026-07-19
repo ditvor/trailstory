@@ -83,7 +83,7 @@ class Style(StrEnum):
 
     Deliberately narrower than :class:`trailstory.models.Style`: this
     enum doubles as the form's server-side gate, so it lists only the
-    styles with a built renderer (ADR-020). Planned styles (zine,
+    styles with a built renderer (ADR-021). Planned styles (zine,
     sunday, postcard, album) join as their templates land. The narrative
     is identical across styles (one prompt, one NarrativeOutput); only
     the rendering template differs. See

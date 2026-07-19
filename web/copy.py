@@ -14,7 +14,7 @@ This module owns:
   visible but ``coming_soon=True`` (rendered with a SOON pill, the
   radio is ``disabled``, and ``accepted_style_values()`` excludes
   them). The card ids mirror :class:`trailstory.models.Style`
-  (the full lineup, ADR-020); the legacy ``log`` and
+  (the full lineup, ADR-021); the legacy ``log`` and
   ``encyclopedia`` renderers were removed in the same ADR.
 * :data:`SUPPORTED_LANGS` — the three language codes the toggle exposes,
   in display order.

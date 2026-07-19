@@ -1,9 +1,9 @@
-"""Tests for the visual-style switch (ADR-006, ADR-020).
+"""Tests for the visual-style switch (ADR-006, ADR-021).
 
 The same ``Memory`` rendered under each built :class:`trailstory.models.Style`
 must produce structurally distinct HTML — but the narrative text must be
 byte-identical across styles. These tests pin both halves of that
-contract, plus the ADR-020 lineup rules: ``letter`` is the only built
+contract, plus the ADR-021 lineup rules: ``letter`` is the only built
 style today, and the planned styles (zine / sunday / postcard / album)
 are refused by the renderer until their templates land.
 """
@@ -130,7 +130,7 @@ def _render_all_styles(tmp_path: Path) -> dict[Style, str]:
     return rendered
 
 
-# ── ADR-020 lineup rules ─────────────────────────────────────────────────────
+# ── ADR-021 lineup rules ─────────────────────────────────────────────────────
 
 
 def test_built_styles_is_a_subset_of_the_lineup() -> None:

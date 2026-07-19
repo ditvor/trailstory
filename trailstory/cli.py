@@ -129,7 +129,7 @@ def cli() -> None:
     type=click.Choice(sorted(s.value for s in BUILT_STYLES), case_sensitive=False),
     default=Style.letter.value,
     show_default=True,
-    help="Visual treatment of the rendered memory page (see ADR-006, ADR-020). "
+    help="Visual treatment of the rendered memory page (see ADR-006, ADR-021). "
     "All styles share one narrative; only layout and CSS differ. Planned "
     "styles (zine, sunday, postcard, album) appear here once built.",
 )

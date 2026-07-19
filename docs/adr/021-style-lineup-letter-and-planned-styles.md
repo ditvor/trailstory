@@ -1,4 +1,4 @@
-# ADR 020 — Style lineup: The Letter shipped, four styles planned, log and encyclopedia removed
+# ADR 021 — Style lineup: The Letter shipped, four styles planned, log and encyclopedia removed
 
 **Date:** 2026-07
 **Status:** Accepted
