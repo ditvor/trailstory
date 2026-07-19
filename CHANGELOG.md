@@ -10,6 +10,12 @@ Versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 ## [Unreleased]
 
 ### Added
+- **Back link on the generated memory page.** All three styles render a
+  tri-lingual "← Back to the main page" link below the share row. It ships
+  `hidden` and is revealed by a small script only when the page is served
+  by the web builder (`http(s)` + `/memory/…` path) — a saved or forwarded
+  copy of the file never shows it, keeping the shareable HTML clean for
+  recipients. Excluded from print in the editorial style.
 - **POI name resolution (ADR-019).** Opt-in (`--poi`, implies `--place`)
   resolution of a hiker's generic landmark beat ("the wax-figure church") to
   a real named OpenStreetMap feature ("Mühlfeldkirche"), fed into the place
@@ -39,6 +45,9 @@ Versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   `claude-sonnet-4-6` (override via `PLACE_MODEL`).
 
 ### Changed
+- **Builder docket now says "family abroad, friends elsewhere"** (was
+  "family in Russia, friends elsewhere") in all three languages — the
+  audience framing is broader than one country.
 - **`Settings.place_model` default is now `claude-sonnet-4-6`** (was
   `claude-haiku-4-5`). See the eval-net entry above — Haiku failed the
   place voice + grounding gates; Sonnet passes them. Same reasoning as the

@@ -396,9 +396,9 @@ def test_landing_page_renders_all_three_languages(client: TestClient) -> None:
     assert "Сохрани день." in body
     assert "Bewahre den Tag." in body
     # The to/from docket carries tri-lingual copy too.
-    assert "family in Russia, friends elsewhere" in body
-    assert "семье в России, друзьям повсюду" in body
-    assert "Familie in Russland, Freunde anderswo" in body
+    assert "family abroad, friends elsewhere" in body
+    assert "семье за границей, друзьям повсюду" in body
+    assert "Familie im Ausland, Freunde anderswo" in body
 
 
 def test_landing_page_includes_three_lang_toggle_buttons(client: TestClient) -> None:

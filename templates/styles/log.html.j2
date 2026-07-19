@@ -285,6 +285,17 @@
     cursor: pointer;
   }
 
+  .back-nav { margin-top: 1rem; }
+  .back-nav a {
+    font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+    font-size: 0.75rem;
+    letter-spacing: 0.04em;
+    color: #57606a;
+    text-decoration: none;
+    border-bottom: 1px solid #d0d7de;
+  }
+  .back-nav a:hover { color: #1f2328; border-color: #1f2328; }
+
   footer {
     font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
     color: #8c959f;
@@ -431,6 +442,17 @@
       <button id="igBtn" type="button" data-slug="{{ meta.slug }}">Save for Instagram</button>
       <p id="igStatus" class="ig-status" aria-live="polite"></p>
     </section>
+
+    {# Only meaningful while the page is served by the web builder
+       (/memory/<slug>); JS unhides it there. A saved or forwarded copy
+       of the file keeps it hidden. #}
+    <nav class="back-nav" id="backNav" hidden>
+      <a href="/">
+        <span class="en">&larr; Back to the main page</span>
+        <span class="ru">&larr; На главную</span>
+        <span class="de">&larr; Zur Startseite</span>
+      </a>
+    </nav>
 
     <footer>{{ meta.slug }}</footer>
   </main>
@@ -585,6 +607,13 @@
       }
 
       igBtn.addEventListener('click', saveForInstagram);
+
+      // Back-to-builder link: visible only when served by the web
+      // builder; a saved or forwarded copy keeps it hidden.
+      var backNav = document.getElementById('backNav');
+      if (backNav && /^https?:$/.test(location.protocol) && location.pathname.indexOf('/memory/') === 0) {
+        backNav.hidden = false;
+      }
     })();
   </script>
 </body>
