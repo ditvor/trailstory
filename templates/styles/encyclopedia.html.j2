@@ -120,6 +120,8 @@
 
   @media print {
     .lang-toggle, .share { display: none !important; }
+    body { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    figure { page-break-inside: avoid; }
   }
   /* stats — labelled vignette */
   .stats {
@@ -466,24 +468,43 @@
       // The page itself is the shareable artifact (ADR-001): one
       // self-contained .html file. Served over http(s) we re-fetch our own
       // URL for the original bytes; opened from disk (file://), fetch is
-      // blocked, so we serialize the live DOM — photos survive because
-      // they are inline data URIs.
-      async function pageAsFile() {
+      // blocked, so we serialize a cleaned clone of the live DOM — photos
+      // survive as inline data URIs, and the clone drops transient UI
+      // state (disabled buttons, status text) so a forwarded copy works
+      // for the next reader too. The result is cached: pages carry
+      // multi-MB of photos, and navigator.share() must run inside the
+      // tap's transient-activation window.
+      var pageFilePromise = null;
+      function pageAsFile() {
+        if (pageFilePromise) return pageFilePromise;
         var name = {{ meta.slug | tojson }} + '.html';
-        var blob;
-        try {
-          var res = await fetch(window.location.href);
-          if (!res.ok) throw new Error('HTTP ' + res.status);
-          blob = await res.blob();
-        } catch (e) {
-          blob = new Blob(['<!doctype html>\n' + document.documentElement.outerHTML], { type: 'text/html' });
-        }
-        return new File([blob], name, { type: 'text/html' });
+        pageFilePromise = fetch(window.location.href)
+          .then(function (res) {
+            if (!res.ok) throw new Error('HTTP ' + res.status);
+            return res.blob();
+          })
+          .catch(function () {
+            var root = document.documentElement.cloneNode(true);
+            var btn = root.querySelector('#htmlBtn');
+            if (btn) btn.removeAttribute('disabled');
+            var status = root.querySelector('#igStatus');
+            if (status) status.textContent = '';
+            var fb = root.querySelector('#igFallback');
+            if (fb && fb.parentNode) fb.parentNode.removeChild(fb);
+            return new Blob(['<!doctype html>\n' + root.outerHTML], { type: 'text/html' });
+          })
+          .then(function (blob) { return new File([blob], name, { type: 'text/html' }); });
+        pageFilePromise.catch(function () { pageFilePromise = null; });
+        return pageFilePromise;
       }
 
       var htmlBtn = document.getElementById('htmlBtn');
+      // Warm the page bytes before the click lands.
+      htmlBtn.addEventListener('pointerenter', pageAsFile);
+      htmlBtn.addEventListener('touchstart', pageAsFile, { passive: true });
       htmlBtn.addEventListener('click', async function () {
         htmlBtn.disabled = true;
+        setStatus('Preparing page…');
         try {
           var file = await pageAsFile();
           if (navigator.canShare && navigator.canShare({ files: [file] })) {
@@ -493,7 +514,14 @@
               htmlBtn.disabled = false;
               return;
             } catch (e) {
-              if (e && e.name === 'AbortError') { htmlBtn.disabled = false; return; }
+              if (e && e.name === 'AbortError') { setStatus(''); htmlBtn.disabled = false; return; }
+              if (e && e.name === 'NotAllowedError') {
+                // Activation expired during the first fetch; the file is
+                // cached now, so the next tap shares instantly.
+                setStatus('Ready — tap again to share.');
+                htmlBtn.disabled = false;
+                return;
+              }
               // Share sheet unavailable; fall through to download.
             }
           }
@@ -501,7 +529,7 @@
           var a = document.createElement('a');
           a.href = url; a.download = file.name;
           document.body.appendChild(a); a.click(); a.remove();
-          window.setTimeout(function () { URL.revokeObjectURL(url); }, 10000);
+          window.setTimeout(function () { URL.revokeObjectURL(url); }, 60000);
           setStatus('Downloaded — attach the .html file in any messenger.');
         } catch (err) {
           setStatus('Could not share the page: ' + (err && err.message ? err.message : 'unknown'));

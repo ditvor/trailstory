@@ -449,7 +449,7 @@
     .grid { grid-template-columns: 1fr; gap: 0; }
     .margin { position: static; margin-top: 24pt; page-break-inside: avoid; }
     .figure img { opacity: 1 !important; }
-    -webkit-print-color-adjust: exact; print-color-adjust: exact;
+    body { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
   }
 
 </style>
@@ -867,9 +867,9 @@ Mia schlief den ganzen Aufstieg, die Wange warm an der Trage.            </p>   
         de: "Der Nebel lichtete sich, gerade als wir den Grat erreichten."
       };
       var labels = {
-        en: { sending: 'Building carousel…', ready: 'Carousel ready. Click each slide to save.', shared: 'Saved. Open Instagram and pick the slides from your library.', error: 'Could not build carousel: ', htmlShared: 'Shared.', htmlSaved: 'Downloaded — attach the .html file in any messenger.', htmlError: 'Could not share the page: ' },
-        ru: { sending: 'Собираем карусель…', ready: 'Карусель готова. Скачайте каждый слайд.', shared: 'Сохранено. Откройте Instagram и выберите слайды из галереи.', error: 'Не удалось собрать карусель: ', htmlShared: 'Отправлено.', htmlSaved: 'Скачано — прикрепите .html-файл в любом мессенджере.', htmlError: 'Не удалось поделиться страницей: ' },
-        de: { sending: 'Karussell wird erstellt…', ready: 'Karussell fertig. Slide einzeln speichern.', shared: 'Gespeichert. Instagram öffnen und Slides aus der Galerie wählen.', error: 'Karussell fehlgeschlagen: ', htmlShared: 'Geteilt.', htmlSaved: 'Heruntergeladen — die .html-Datei in einem Messenger anhängen.', htmlError: 'Seite konnte nicht geteilt werden: ' }
+        en: { sending: 'Building carousel…', ready: 'Carousel ready. Click each slide to save.', shared: 'Saved. Open Instagram and pick the slides from your library.', error: 'Could not build carousel: ', htmlPreparing: 'Preparing page…', htmlAgain: 'Ready — tap again to share.', htmlShared: 'Shared.', htmlSaved: 'Downloaded — attach the .html file in any messenger.', htmlError: 'Could not share the page: ' },
+        ru: { sending: 'Собираем карусель…', ready: 'Карусель готова. Скачайте каждый слайд.', shared: 'Сохранено. Откройте Instagram и выберите слайды из галереи.', error: 'Не удалось собрать карусель: ', htmlPreparing: 'Готовим страницу…', htmlAgain: 'Готово — нажмите ещё раз.', htmlShared: 'Отправлено.', htmlSaved: 'Скачано — прикрепите .html-файл в любом мессенджере.', htmlError: 'Не удалось поделиться страницей: ' },
+        de: { sending: 'Karussell wird erstellt…', ready: 'Karussell fertig. Slide einzeln speichern.', shared: 'Gespeichert. Instagram öffnen und Slides aus der Galerie wählen.', error: 'Karussell fehlgeschlagen: ', htmlPreparing: 'Seite wird vorbereitet…', htmlAgain: 'Bereit — noch einmal tippen.', htmlShared: 'Geteilt.', htmlSaved: 'Heruntergeladen — die .html-Datei in einem Messenger anhängen.', htmlError: 'Seite konnte nicht geteilt werden: ' }
       };
 
       var pdfBtn  = document.getElementById('pdfBtn');
@@ -891,26 +891,45 @@ Mia schlief den ganzen Aufstieg, die Wange warm an der Trage.            </p>   
 
       // The page itself is the shareable artifact (ADR-001): one
       // self-contained .html file. Served over http(s) we re-fetch our own
-      // URL to get the original bytes; opened from disk (file://), fetch is
-      // blocked, so we serialize the live DOM instead — photos survive
-      // because they are inline data URIs.
-      async function pageAsFile() {
+      // URL for the original bytes; opened from disk (file://), fetch is
+      // blocked, so we serialize a cleaned clone of the live DOM — photos
+      // survive as inline data URIs, and the clone drops transient UI
+      // state (disabled buttons, status text) so a forwarded copy works
+      // for the next reader too. The result is cached: pages carry
+      // multi-MB of photos, and navigator.share() must run inside the
+      // tap's transient-activation window.
+      var pageFilePromise = null;
+      function pageAsFile() {
+        if (pageFilePromise) return pageFilePromise;
         var name = "test-render-editorial" + '.html';
-        var blob;
-        try {
-          var res = await fetch(window.location.href);
-          if (!res.ok) throw new Error('HTTP ' + res.status);
-          blob = await res.blob();
-        } catch (e) {
-          blob = new Blob(['<!doctype html>\n' + document.documentElement.outerHTML], { type: 'text/html' });
-        }
-        return new File([blob], name, { type: 'text/html' });
+        pageFilePromise = fetch(window.location.href)
+          .then(function (res) {
+            if (!res.ok) throw new Error('HTTP ' + res.status);
+            return res.blob();
+          })
+          .catch(function () {
+            var root = document.documentElement.cloneNode(true);
+            var btn = root.querySelector('#htmlBtn');
+            if (btn) btn.removeAttribute('disabled');
+            var status = root.querySelector('#igStatus');
+            if (status) status.textContent = '';
+            var fb = root.querySelector('#igFallback');
+            if (fb && fb.parentNode) fb.parentNode.removeChild(fb);
+            return new Blob(['<!doctype html>\n' + root.outerHTML], { type: 'text/html' });
+          })
+          .then(function (blob) { return new File([blob], name, { type: 'text/html' }); });
+        pageFilePromise.catch(function () { pageFilePromise = null; });
+        return pageFilePromise;
       }
 
       if (htmlBtn) {
+        // Warm the page bytes before the click lands.
+        htmlBtn.addEventListener('pointerenter', pageAsFile);
+        htmlBtn.addEventListener('touchstart', pageAsFile, { passive: true });
         htmlBtn.addEventListener('click', async function () {
           var lg = currentLang();
           htmlBtn.disabled = true;
+          igStatus.textContent = labels[lg].htmlPreparing;
           try {
             var file = await pageAsFile();
             if (navigator.canShare && navigator.canShare({ files: [file] })) {
@@ -920,7 +939,14 @@ Mia schlief den ganzen Aufstieg, die Wange warm an der Trage.            </p>   
                 htmlBtn.disabled = false;
                 return;
               } catch (e) {
-                if (e && e.name === 'AbortError') { htmlBtn.disabled = false; return; }
+                if (e && e.name === 'AbortError') { igStatus.textContent = ''; htmlBtn.disabled = false; return; }
+                if (e && e.name === 'NotAllowedError') {
+                  // Activation expired during the first fetch; the file is
+                  // cached now, so the next tap shares instantly.
+                  igStatus.textContent = labels[lg].htmlAgain;
+                  htmlBtn.disabled = false;
+                  return;
+                }
                 /* share sheet unavailable → fall through to download */
               }
             }
@@ -928,7 +954,7 @@ Mia schlief den ganzen Aufstieg, die Wange warm an der Trage.            </p>   
             var a = document.createElement('a');
             a.href = url; a.download = file.name;
             document.body.appendChild(a); a.click(); a.remove();
-            window.setTimeout(function () { URL.revokeObjectURL(url); }, 10000);
+            window.setTimeout(function () { URL.revokeObjectURL(url); }, 60000);
             igStatus.textContent = labels[lg].htmlSaved;
           } catch (err) {
             igStatus.textContent = labels[lg].htmlError + (err && err.message ? err.message : 'unknown');
