@@ -49,12 +49,6 @@ Versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   JetBrains Mono is reused from the Letter set as the postal small
   print. `postcard` joins `BUILT_STYLES`, the CLI `--style` choices,
   and the web builder picker (its card loses the SOON pill).
-- **Back link on the generated memory page.** The letter style renders a
-  tri-lingual "← Back to the main page" link below the share row. It ships
-  `hidden` and is revealed by a small script only when the page is served
-  by the web builder (`http(s)` + `/memory/…` path) — a saved or forwarded
-  copy of the file never shows it, keeping the shareable HTML clean for
-  recipients. Excluded from print.
 - **The Zine style (`--style zine`).** Second built style from the
   ADR-021 lineup: a riso-printed indie-zine treatment of the same
   narrative — ink + terracotta spot color on warm paper, real SVG
@@ -68,6 +62,12 @@ Versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   reused from the Letter set as the typewriter body. `zine` joins
   `BUILT_STYLES`, the CLI `--style` choices, and the web builder
   picker (its card loses the SOON pill).
+- **Back link on the generated memory page.** All built styles render a
+  tri-lingual "← Back to the main page" link below the share row. It ships
+  `hidden` and is revealed by a small script only when the page is served
+  by the web builder (`http(s)` + `/memory/…` path) — a saved or forwarded
+  copy of the file never shows it, keeping the shareable HTML clean for
+  recipients. Excluded from print.
 - **"Save as PDF" and "Share page (HTML file)" on the memory page.** The
   share row in all three styles now offers a PDF export (the browser's
   print dialog against a cleaned-up print stylesheet — chrome hidden,
