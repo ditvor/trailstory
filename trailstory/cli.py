@@ -131,7 +131,7 @@ def cli() -> None:
     show_default=True,
     help="Visual treatment of the rendered memory page (see ADR-006, ADR-021). "
     "All styles share one narrative; only layout and CSS differ. Planned "
-    "styles (sunday, postcard, album) appear here once built.",
+    "styles (sunday, album) appear here once built.",
 )
 def generate(
     photos_path: Path,

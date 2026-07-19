@@ -10,7 +10,8 @@ This module owns:
 * :data:`STYLE_CARDS` — display metadata for each style the picker
   surfaces, in the order they render. Names match the Claude Design
   proposal: The Letter / The Zine / Sunday / Postcard Set / Album.
-  Only The Letter has a built renderer in v0; the other four are
+  The Letter, The Zine, and Postcard Set have built renderers; the
+  other two are
   visible but ``coming_soon=True`` (rendered with a SOON pill, the
   radio is ``disabled``, and ``accepted_style_values()`` excludes
   them). The card ids mirror :class:`trailstory.models.Style`
@@ -40,7 +41,7 @@ class StyleCard:
     """Display metadata for one card in the style picker.
 
     ``value`` matches a :class:`web.pipeline.Style` member for the
-    buildable card (currently only ``letter`` for "The Letter"), or
+    buildable card (``letter``, ``zine``, or ``postcard``), or
     is a placeholder id for ``coming_soon=True`` cards whose renderer
     has not been built yet. The form refuses to accept a placeholder
     value — see :func:`accepted_style_values`.
@@ -100,17 +101,16 @@ STYLE_CARDS: Final[tuple[StyleCard, ...]] = (
         coming_soon=True,
     ),
     StyleCard(
-        value="postcard",
+        value=Style.postcard.value,
         name_en="Postcard Set",
         name_ru="Набор открыток",
         name_de="Postkarten-Set",
-        sub_en="Vintage travel · seven cards",
-        sub_ru="Винтаж · семь открыток",
-        sub_de="Vintage · sieben Karten",
+        sub_en="Vintage travel · front & back",
+        sub_ru="Винтаж · две стороны",
+        sub_de="Vintage · Vorder- & Rückseite",
         desc_en="Mid-century travel cards. Each chapter is a postcard, front and back, with stamp, postmark, and an address line.",
         desc_ru="Винтажные открытки середины века. Каждая глава — открытка с двух сторон: марка, штемпель, строка адреса.",
         desc_de="Reisekarten der Mitte des Jahrhunderts. Jedes Kapitel als Postkarte vorn und hinten — Briefmarke, Stempel und Adresszeile.",
-        coming_soon=True,
     ),
     StyleCard(
         value="album",
