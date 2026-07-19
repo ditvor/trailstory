@@ -52,6 +52,13 @@ Versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   `claude-sonnet-4-6` (override via `PLACE_MODEL`).
 
 ### Removed
+- **`examples/memory-herzogstand.html`.** A hand-crafted design mockup from
+  the initial scaffold, never produced by the pipeline: EN/RU toggle only
+  (no German, predates ADR-005), Google Fonts loaded from CDN (breaking the
+  self-contained rule), no embedded photos, and the pre-#73 "Copy link" /
+  WhatsApp share row. Its source inputs were never committed, so it could
+  not be re-rendered; nothing referenced it. Current-design fixture renders
+  live in `tests/golden/test-render-<style>.html`.
 - **"Copy link" and WhatsApp buttons on the memory page.** Both shared
   only a title-plus-quote text snippet — there is no link to copy on a
   self-contained page, and the WhatsApp button never carried the memory
