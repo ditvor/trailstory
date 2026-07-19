@@ -118,75 +118,6 @@
   body.lang-ru .en, body.lang-ru .de { display: none; }
   body.lang-de .en, body.lang-de .ru { display: none; }
 
-  /* ADR-014 / Phase 4: sentence-level provenance, opt-in.
-     The encyclopedia register asks for restraint — the engraving
-     tradition this style draws on doesn't have a vocabulary for
-     "I am inferring." So default off. The Notes toggle flips
-     body.audit (same vocabulary as editorial + log) to reveal a
-     restrained sepia-keyed treatment: INFERRED sentences gain a sepia
-     ground; per-source underlines mark photo / seed / gpx; hover
-     surfaces a custom ::after tooltip reading data-tip. */
-  .sent {
-    transition: background-color 120ms ease, box-shadow 120ms ease;
-  }
-  body.audit .sent { position: relative; }
-  body.audit .sent[data-prov="inferred"] {
-    background: rgba(107, 90, 55, 0.10);
-    border-radius: 2px;
-    padding: 0 2px;
-  }
-  body.audit .sent[data-prov="photo"]  { box-shadow: inset 0 -2px 0 rgba(60, 100, 140, 0.45); }
-  body.audit .sent[data-prov="seed"]   { box-shadow: inset 0 -2px 0 rgba(80, 120, 70, 0.45); }
-  body.audit .sent[data-prov="gpx"]    { box-shadow: inset 0 -2px 0 rgba(140, 100, 50, 0.45); }
-  body.audit .sent:hover {
-    background: rgba(107, 90, 55, 0.22);
-    cursor: help;
-  }
-  body.audit .sent:hover::after {
-    content: attr(data-tip);
-    position: absolute;
-    bottom: calc(100% + 4px); left: 0;
-    background: #2a2520; color: #ede4d3;
-    padding: 6px 8px;
-    font-family: "Didot", Garamond, ui-serif, serif;
-    font-size: 11px;
-    letter-spacing: 0.04em; line-height: 1.4;
-    max-width: 280px; white-space: normal;
-    z-index: 30; pointer-events: none;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.22);
-  }
-  @media print {
-    body.audit .sent[data-prov] { background: transparent; box-shadow: none; }
-  }
-
-  /* ── notes (audit) toggle ──────────────────────────────────────── */
-  .article-tools {
-    column-span: all;
-    display: flex;
-    justify-content: flex-end;
-    margin: 0 0 1rem;
-  }
-  .article-tools button {
-    font-family: "Didot", Garamond, ui-serif, serif;
-    font-size: 0.7rem;
-    letter-spacing: 0.18em;
-    text-transform: uppercase;
-    background: transparent;
-    color: #6b5a37;
-    border: 1px solid #6b5a37;
-    padding: 0.35rem 0.8rem;
-    cursor: pointer;
-  }
-  .article-tools button:hover {
-    background: rgba(107, 90, 55, 0.08);
-    color: #2a2520;
-  }
-  .article-tools button[aria-pressed="true"] {
-    background: #2a2520;
-    color: #ede4d3;
-    border-color: #2a2520;
-  }
-
   /* stats — labelled vignette */
   .stats {
     display: grid;
@@ -404,28 +335,14 @@
     {% endif %}
 
     <article>
-      {# Reading tools — Notes (audit) toggle. column-span: all keeps
-         the row above the two-column body rather than getting trapped
-         inside the left column. Vocabulary mirrors editorial.html.j2. #}
-      <div class="article-tools" role="group" aria-label="Show writing notes">
-        <button
-          type="button"
-          id="notesBtn"
-          aria-pressed="false"
-          aria-label="Show or hide per-sentence writing notes"
-        >Notes</button>
-      </div>
-
-      {# ADR-014 / Phase 4: sentence-level provenance, opt-in.
-         Each sentence becomes a <span data-prov> so the rendered HTML
-         carries the grounding info. Off by default — `body.audit`
-         opts in (see the article-tools button above). Tooltips render
-         via the custom ::after data-tip pattern. #}
+      {# ADR-014 (Phase 4): paragraphs is a list of Paragraph, each a
+         list of Sentence with tri-lingual text. Provenance stays in
+         the data model for the quality gates but is not rendered. #}
       <div class="en">
         {% for paragraph in narrative.paragraphs %}
           <p>
             {% for sentence in paragraph -%}
-              <span class="sent" data-prov="{{ sentence.provenance.source }}" data-tip="{{ sentence.provenance.source }}: {{ sentence.provenance.reference }}">{{ sentence.text.en }}</span>{% if not loop.last %} {% endif -%}
+              {{ sentence.text.en }}{% if not loop.last %} {% endif -%}
             {% endfor %}
           </p>
         {% endfor %}
@@ -434,7 +351,7 @@
         {% for paragraph in narrative.paragraphs %}
           <p>
             {% for sentence in paragraph -%}
-              <span class="sent" data-prov="{{ sentence.provenance.source }}" data-tip="{{ sentence.provenance.source }}: {{ sentence.provenance.reference }}">{{ sentence.text.ru }}</span>{% if not loop.last %} {% endif -%}
+              {{ sentence.text.ru }}{% if not loop.last %} {% endif -%}
             {% endfor %}
           </p>
         {% endfor %}
@@ -443,7 +360,7 @@
         {% for paragraph in narrative.paragraphs %}
           <p>
             {% for sentence in paragraph -%}
-              <span class="sent" data-prov="{{ sentence.provenance.source }}" data-tip="{{ sentence.provenance.source }}: {{ sentence.provenance.reference }}">{{ sentence.text.de }}</span>{% if not loop.last %} {% endif -%}
+              {{ sentence.text.de }}{% if not loop.last %} {% endif -%}
             {% endfor %}
           </p>
         {% endfor %}
@@ -531,26 +448,6 @@
         var idx = langs.indexOf(currentLang());
         setLang(langs[(idx + 1) % langs.length]);
       });
-
-      // ── Notes (audit) toggle (ADR-014 sentence-level provenance) ──
-      // Mirrors the editorial template's toggle vocabulary so a creator
-      // who flips notes on in one style sees the audit UI everywhere.
-      // Preference persists in localStorage.
-      var NOTES_KEY = 'trailstory.notes';
-      var notesBtn = document.getElementById('notesBtn');
-      function setNotes(on) {
-        document.body.classList.toggle('audit', !!on);
-        if (notesBtn) notesBtn.setAttribute('aria-pressed', on ? 'true' : 'false');
-        try { localStorage.setItem(NOTES_KEY, on ? '1' : '0'); } catch (e) {}
-      }
-      if (notesBtn) {
-        var notesStored = null;
-        try { notesStored = localStorage.getItem(NOTES_KEY); } catch (e) {}
-        if (notesStored === '1') setNotes(true);
-        notesBtn.addEventListener('click', function () {
-          setNotes(!document.body.classList.contains('audit'));
-        });
-      }
 
       var titleEn = {{ narrative.title.en | tojson }};
       var quoteEn = {{ narrative.pull_quote.en | tojson }};
