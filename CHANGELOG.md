@@ -38,6 +38,15 @@ Versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   filler, so the place-stitch model default moves to
   `claude-sonnet-4-6` (override via `PLACE_MODEL`).
 
+### Removed
+- **"Notes" audit UI on the memory page (ADR-020).** The per-sentence
+  provenance underlines, tints, hover tooltips, and the Notes toggle
+  button are gone from all three styles — the page now reads as plain
+  prose with no audit chrome. Rendering-only: sentence-level provenance
+  stays in the data model (`schema_version` unchanged) and keeps feeding
+  the ADR-011 verifier and the rubric's inferred-ratio gate. Partially
+  supersedes ADR-014's HTML layer.
+
 ### Changed
 - **`Settings.place_model` default is now `claude-sonnet-4-6`** (was
   `claude-haiku-4-5`). See the eval-net entry above — Haiku failed the

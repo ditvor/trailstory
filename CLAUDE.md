@@ -620,6 +620,22 @@ don't relitigate them.
     carrier a "dog"). `PhotoDescription` is not part of
     `NarrativeOutput`, so `schema_version` is unchanged. A `certainty`
     field and a spatial-claim verifier were evaluated and rejected.
+19. [ADR-019 — POI name resolution for the place block](docs/adr/019-poi-name-resolution.md):
+    opt-in (`--poi`, implies `--place`) resolution of a hiker's generic
+    landmark beat ("the wax-figure church") to a real named
+    OpenStreetMap feature ("Mühlfeldkirche") via Overpass. Deterministic
+    — the name comes from OSM, never the LLM — and fails closed: a beat
+    is matched **only when exactly one** named feature of its category
+    is near the route, because a wrong name is worse than a generic one.
+20. [ADR-020 — Notes audit UI removed from the memory page](docs/adr/020-remove-notes-audit-ui.md):
+    the per-sentence provenance underlines, tints, tooltips, and the
+    Notes toggle are gone from all three styles — the shared page is a
+    gift and reads as plain prose. Rendering-only: sentence-level
+    provenance stays in the data model (`schema_version` unchanged) and
+    keeps feeding the ADR-011 verifier and the rubric's inferred-ratio
+    gate. Partially supersedes ADR-014's HTML layer; don't reintroduce
+    audit chrome into the shared page — an author-facing audit view
+    belongs in the builder, not the artifact.
 
 If you're about to do something that touches an area covered by an existing
 ADR, **read the ADR first**. If the change is incompatible with the recorded
