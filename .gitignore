@@ -66,3 +66,4 @@ Desktop.ini
 
 # Jupyter
 .ipynb_checkpoints/
+.gstack/
