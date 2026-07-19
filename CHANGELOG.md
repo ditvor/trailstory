@@ -45,6 +45,12 @@ Versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   reused from the Letter set as the typewriter body. `zine` joins
   `BUILT_STYLES`, the CLI `--style` choices, and the web builder
   picker (its card loses the SOON pill).
+- **Back link on the generated memory page.** Both built styles render a
+  tri-lingual "← Back to the main page" link below the share row. It ships
+  `hidden` and is revealed by a small script only when the page is served
+  by the web builder (`http(s)` + `/memory/…` path) — a saved or forwarded
+  copy of the file never shows it, keeping the shareable HTML clean for
+  recipients. Excluded from print.
 - **"Save as PDF" and "Share page (HTML file)" on the memory page.** The
   share row in all three styles now offers a PDF export (the browser's
   print dialog against a cleaned-up print stylesheet — chrome hidden,
@@ -102,6 +108,9 @@ Versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   supersedes ADR-014's HTML layer.
 
 ### Changed
+- **Builder docket now says "family abroad, friends elsewhere"** (was
+  "family in Russia, friends elsewhere") in all three languages — the
+  audience framing is broader than one country.
 - **`Settings.place_model` default is now `claude-sonnet-4-6`** (was
   `claude-haiku-4-5`). See the eval-net entry above — Haiku failed the
   place voice + grounding gates; Sonnet passes them. Same reasoning as the

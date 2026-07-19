@@ -364,6 +364,15 @@
     font-size: 10px; letter-spacing: 0.04em;
     min-height: 1.2em;
   }
+  .back-nav { margin-top: 22px; }
+  .back-nav a {
+    font-family: var(--display); font-weight: 700; font-size: 12px;
+    letter-spacing: 0.12em; text-transform: uppercase;
+    color: var(--zine-ink); text-decoration: none;
+    border-bottom: 2px solid var(--zine-hairline);
+    padding-bottom: 2px;
+  }
+  .back-nav a:hover { color: var(--zine-spot); border-color: var(--zine-spot); }
   .ig-fallback { display: flex; flex-wrap: wrap; gap: 6px; width: 100%; margin-top: 6px; }
   .ig-fallback a {
     padding: 6px 10px; font-size: 10px;
@@ -383,7 +392,7 @@
 
   /* ── print ─────────────────────────────────────────────────────── */
   @media print {
-    .lang, .share { display: none !important; }
+    .lang, .share, .back-nav { display: none !important; }
     html, body { background: var(--zine-paper); color: var(--zine-ink); }
     .zine { padding: 24pt; max-width: none; }
     .chapter { page-break-inside: avoid; }
@@ -739,6 +748,18 @@
       <p id="igStatus" class="share-status" aria-live="polite"></p>
     </section>
 
+    {# Only meaningful while the page is served by the web builder
+       (/memory/<slug>); JS unhides it there. A saved or forwarded
+       copy of the file keeps it hidden — recipients have no
+       builder to go back to. #}
+    <nav class="back-nav" id="backNav" hidden>
+      <a href="/">
+        <span class="en">&larr; Back to the main page</span>
+        <span class="ru">&larr; На главную</span>
+        <span class="de">&larr; Zur Startseite</span>
+      </a>
+    </nav>
+
     <footer class="colophon swap">
       <span class="eyebrow">
         <span class="en">Printed in a run of one</span>
@@ -961,6 +982,14 @@
           }
           igBtn.disabled = false;
         });
+      }
+
+      // ── back-to-builder link ─────────────────────────────────────
+      // Visible only when served by the web builder; a saved or
+      // forwarded copy (file://, other hosts' paths) keeps it hidden.
+      var backNav = document.getElementById('backNav');
+      if (backNav && /^https?:$/.test(location.protocol) && location.pathname.indexOf('/memory/') === 0) {
+        backNav.hidden = false;
       }
     })();
   </script>
