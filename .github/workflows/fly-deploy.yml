@@ -4,7 +4,7 @@ name: Fly Deploy
 on:
   push:
     branches:
-      - main
+      - develop
 jobs:
   deploy:
     name: Deploy app
@@ -13,6 +13,7 @@ jobs:
     steps:
       - uses: actions/checkout@v6
       - uses: superfly/flyctl-actions/setup-flyctl@master
-      - run: flyctl deploy --remote-only
+      # Match `make deploy`: stamp the short git SHA into the image so /version reports it
+      - run: flyctl deploy --remote-only --build-arg GIT_SHA=${GITHUB_SHA::7}
         env:
           FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}
