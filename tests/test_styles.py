@@ -1,9 +1,11 @@
-"""Tests for the visual-style switch (ADR-006).
+"""Tests for the visual-style switch (ADR-006, ADR-021).
 
-The same ``Memory`` rendered under each :class:`trailstory.models.Style`
+The same ``Memory`` rendered under each built :class:`trailstory.models.Style`
 must produce structurally distinct HTML — but the narrative text must be
-byte-identical across all three. These tests pin both halves of that
-contract.
+byte-identical across styles. These tests pin both halves of that
+contract, plus the ADR-021 lineup rules: ``letter`` is the only built
+style today, and the planned styles (zine / sunday / postcard / album)
+are refused by the renderer until their templates land.
 """
 
 from __future__ import annotations
@@ -12,10 +14,12 @@ import re
 from datetime import datetime
 from pathlib import Path
 
+import pytest
 from PIL import Image
 
 from tests.conftest import paragraphs_from_strings
 from trailstory.models import (
+    BUILT_STYLES,
     GpxStats,
     HikeInput,
     LocalizedString,
@@ -25,9 +29,9 @@ from trailstory.models import (
     Style,
     Waypoint,
 )
-from trailstory.renderers.html import render_html
+from trailstory.renderers.html import HtmlRenderError, render_html
 
-ALL_STYLES: tuple[Style, ...] = (Style.editorial, Style.log, Style.encyclopedia)
+ALL_BUILT_STYLES: tuple[Style, ...] = tuple(sorted(BUILT_STYLES))
 
 # ── fixtures ─────────────────────────────────────────────────────────────────
 
@@ -116,7 +120,7 @@ def _memory(photos: list[PhotoMeta], *, style: Style) -> Memory:
 def _render_all_styles(tmp_path: Path) -> dict[Style, str]:
     photos = [_make_photo(tmp_path, i, (i * 40, 100, 100)) for i in range(3)]
     rendered: dict[Style, str] = {}
-    for style in ALL_STYLES:
+    for style in ALL_BUILT_STYLES:
         out_path = render_html(
             memory=_memory(photos, style=style),
             output_dir=tmp_path / style.value,
@@ -124,6 +128,36 @@ def _render_all_styles(tmp_path: Path) -> dict[Style, str]:
         )
         rendered[style] = out_path.read_text(encoding="utf-8")
     return rendered
+
+
+# ── ADR-021 lineup rules ─────────────────────────────────────────────────────
+
+
+def test_built_styles_is_a_subset_of_the_lineup() -> None:
+    """Every built style must be a real enum member, and ``letter`` is
+    the only one built today."""
+    assert BUILT_STYLES <= frozenset(Style)
+    assert BUILT_STYLES == frozenset({Style.letter})
+
+
+def test_planned_styles_are_in_the_enum_but_not_built() -> None:
+    """The four planned styles (see the web picker's SOON cards) exist as
+    enum members so the pipeline vocabulary is ready, but have no
+    renderer yet."""
+    planned = {Style.zine, Style.sunday, Style.postcard, Style.album}
+    assert planned <= set(Style)
+    assert planned.isdisjoint(BUILT_STYLES)
+
+
+@pytest.mark.parametrize("style", sorted(set(Style) - BUILT_STYLES))
+def test_rendering_an_unbuilt_style_raises_a_clear_error(tmp_path: Path, style: Style) -> None:
+    photos = [_make_photo(tmp_path, i, (i * 40, 100, 100)) for i in range(3)]
+    with pytest.raises(HtmlRenderError, match="no renderer template yet"):
+        render_html(
+            memory=_memory(photos, style=style),
+            output_dir=tmp_path,
+            slug="hike-unbuilt",
+        )
 
 
 # ── style markers ────────────────────────────────────────────────────────────
@@ -134,9 +168,7 @@ def test_each_style_emits_its_own_body_marker_class(tmp_path: Path) -> None:
     downstream consumers (and these tests) can tell them apart."""
     rendered = _render_all_styles(tmp_path)
 
-    assert 'class="lang-en style-editorial"' in rendered[Style.editorial]
-    assert 'class="lang-en style-log"' in rendered[Style.log]
-    assert 'class="lang-en style-encyclopedia"' in rendered[Style.encyclopedia]
+    assert 'class="lang-en style-letter"' in rendered[Style.letter]
 
 
 def test_no_style_class_leaks_into_other_styles(tmp_path: Path) -> None:
@@ -144,7 +176,7 @@ def test_no_style_class_leaks_into_other_styles(tmp_path: Path) -> None:
     otherwise tests above would pass even if the include path was wrong."""
     rendered = _render_all_styles(tmp_path)
     for style, html in rendered.items():
-        for other in ALL_STYLES:
+        for other in Style:
             if other is style:
                 continue
             assert f"style-{other.value}" not in html, (
@@ -152,41 +184,18 @@ def test_no_style_class_leaks_into_other_styles(tmp_path: Path) -> None:
             )
 
 
-def test_log_style_is_list_driven_with_figcaptions(tmp_path: Path) -> None:
-    """Log style ships photos as ``<figure>`` entries with captions and uses
-    a ``<ul class="stats">`` rather than a CSS grid."""
-    html = _render_all_styles(tmp_path)[Style.log]
-
-    assert "<figcaption>" in html
-    assert '<ul class="stats"' in html
-    assert "Log entry" in html
-
-
-def test_encyclopedia_style_uses_two_column_body_with_drop_cap(
-    tmp_path: Path,
-) -> None:
-    """Encyclopedia style sets up the kunstbuch register: two-column flow,
-    figure captions, and a labelled plate frontispiece."""
-    html = _render_all_styles(tmp_path)[Style.encyclopedia]
-
-    assert "column-count: 2" in html
-    assert "::first-letter" in html
-    assert "Plate" in html  # frontispiece label
-    assert "<figcaption>" in html
-
-
-def test_editorial_style_keeps_magazine_visual_identity(tmp_path: Path) -> None:
-    """Editorial is the magazine treatment (Source Serif 4 + JetBrains Mono,
-    oklch paper/ink tokens, italic-top / roman-bottom display title, drop
-    cap, marginalia sidebar, reading-progress bar). The markers below
-    are the load-bearing structural signals — if any of them disappear the
-    style has drifted away from the intended design."""
-    html = _render_all_styles(tmp_path)[Style.editorial]
+def test_letter_style_keeps_magazine_visual_identity(tmp_path: Path) -> None:
+    """The Letter is the editorial magazine treatment (Source Serif 4 +
+    JetBrains Mono, oklch paper/ink tokens, italic-top / roman-bottom
+    display title, drop cap, marginalia sidebar, reading-progress bar).
+    The markers below are the load-bearing structural signals — if any of
+    them disappear the style has drifted away from the intended design."""
+    html = _render_all_styles(tmp_path)[Style.letter]
 
     # Embedded WOFF2 fonts (ADR-001 self-contained guarantee).
     assert "@font-face" in html
-    assert "Editorial Serif" in html
-    assert "Editorial Mono" in html
+    assert "Letter Serif" in html
+    assert "Letter Mono" in html
     assert "data:font/woff2;base64," in html
 
     # Design tokens and layout primitives.
@@ -202,7 +211,7 @@ def test_editorial_style_keeps_magazine_visual_identity(tmp_path: Path) -> None:
     assert 'data-lang="ru"' in html
     assert 'data-lang="de"' in html
 
-    # Editorial does NOT use figcaptions; that is a log/encyclopedia marker.
+    # The Letter does NOT use figcaptions; photos flow inside the prose.
     assert "<figcaption>" not in html
 
 
@@ -210,8 +219,8 @@ def test_editorial_style_keeps_magazine_visual_identity(tmp_path: Path) -> None:
 
 
 def test_narrative_text_is_identical_across_all_styles(tmp_path: Path) -> None:
-    """ADR-006: one prompt, three visual treatments. Every user-facing
-    narrative string must appear verbatim in each of the three renders."""
+    """ADR-006: one prompt, N visual treatments. Every user-facing
+    narrative string must appear verbatim in each built style's render."""
     rendered = _render_all_styles(tmp_path)
     narrative = _narrative()
 
@@ -243,8 +252,8 @@ def test_narrative_text_is_identical_across_all_styles(tmp_path: Path) -> None:
 def test_every_style_is_self_contained_no_external_resources(
     tmp_path: Path,
 ) -> None:
-    """The base64-embedding contract (ADR-001) must hold across all styles —
-    not just the original editorial one."""
+    """The base64-embedding contract (ADR-001) must hold across all built
+    styles — not just The Letter."""
     rendered = _render_all_styles(tmp_path)
     for style, html in rendered.items():
         assert not re.search(r"<script\s+[^>]*src=", html, flags=re.IGNORECASE), style
@@ -263,8 +272,8 @@ def test_every_style_embeds_every_selected_photo(tmp_path: Path) -> None:
 
 
 def test_every_style_includes_gpx_stats(tmp_path: Path) -> None:
-    """Stats land in different markup per style (grid vs list), but every
-    headline number must show up somewhere in the body."""
+    """Stats land in different markup per style, but every headline
+    number must show up somewhere in the body."""
     rendered = _render_all_styles(tmp_path)
     for style, html in rendered.items():
         assert "6.2" in html, style  # distance_km

@@ -19,6 +19,7 @@ from PIL.TiffImagePlugin import IFDRational
 
 from tests.conftest import paragraphs_from_strings
 from trailstory.models import (
+    BUILT_STYLES,
     GpxStats,
     HikeInput,
     LocalizedString,
@@ -113,7 +114,7 @@ def _memory(
     narrative: NarrativeOutput | None = None,
     gpx_stats: GpxStats | None = None,
     place_context: PlaceContext | None = None,
-    style: Style = Style.editorial,
+    style: Style = Style.letter,
 ) -> Memory:
     """Build a ``Memory`` from a photo list plus optional narrative / stats overrides."""
     return Memory(
@@ -427,7 +428,7 @@ def test_render_does_not_embed_gps_exif_after_load_photos(tmp_path: Path) -> Non
 # ── ADR-017: "about this place" block ────────────────────────────────────────
 
 
-@pytest.mark.parametrize("style", list(Style))
+@pytest.mark.parametrize("style", sorted(BUILT_STYLES))
 def test_render_includes_place_block(tmp_path: Path, style: Style) -> None:
     """Every style renders the block, its tri-lingual summary, and the source link."""
     photos = [_make_photo(tmp_path, 0, (200, 80, 80))]
@@ -449,7 +450,7 @@ def test_render_includes_place_block(tmp_path: Path, style: Style) -> None:
     assert 'href="https://en.wikipedia.org/wiki/Bad_T' in html
 
 
-@pytest.mark.parametrize("style", list(Style))
+@pytest.mark.parametrize("style", sorted(BUILT_STYLES))
 def test_render_omits_place_block_when_absent(tmp_path: Path, style: Style) -> None:
     """Default render (no place context) carries no place markup in any style."""
     photos = [_make_photo(tmp_path, 0, (200, 80, 80))]
@@ -466,7 +467,7 @@ def test_render_omits_place_block_when_absent(tmp_path: Path, style: Style) -> N
 # ── ADR-019: named landmarks → OpenStreetMap credit ──────────────────────────
 
 
-@pytest.mark.parametrize("style", list(Style))
+@pytest.mark.parametrize("style", sorted(BUILT_STYLES))
 def test_render_credits_osm_when_landmarks_named(tmp_path: Path, style: Style) -> None:
     """A place block with named_landmarks renders an OpenStreetMap credit."""
     photos = [_make_photo(tmp_path, 0, (200, 80, 80))]

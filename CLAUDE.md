@@ -498,10 +498,11 @@ don't relitigate them.
    of two flat `_en` / `_ru` strings. EN, RU, and DE are produced in a
    single LLM call. Adding a fourth language is one Pydantic field +
    prompt-skeleton edit + template arm + golden refresh.
-6. [ADR-006 — three visual styles share one narrative](docs/adr/006-three-visual-styles-share-one-narrative.md):
-   `editorial`, `log`, and `encyclopedia` are three rendering treatments
-   of one prompt's output, not three prompt families. The eval suite
-   stays calibrated against the editorial register.
+6. [ADR-006 — visual styles share one narrative](docs/adr/006-three-visual-styles-share-one-narrative.md):
+   styles are rendering treatments of one prompt's output, not prompt
+   families. The eval suite stays calibrated against the single
+   narrative register (The Letter's voice). The original three-style
+   lineup is superseded by ADR-020.
 7. [ADR-007 — faithfulness eval axis](docs/adr/007-faithfulness-eval-axis.md):
    the paid LLM judge now extracts every concrete claim from the
    narrative and labels it `SUPPORTED` / `INFERRED` / `UNSUPPORTED`. A
@@ -559,11 +560,11 @@ don't relitigate them.
     Phase 4. `NarrativeOutput.paragraphs` becomes
     `list[Paragraph] = list[list[Sentence]]`; each sentence has
     tri-lingual text + one `Provenance` (source: SEED / PHOTO / GPX /
-    INFERRED). Editorial template wraps each sentence in
+    INFERRED). The Letter template wraps each sentence in
     `<span class="sent" data-prov="...">` with hover tooltip + tint
-    on INFERRED. Log and Encyclopedia templates use the
-    `paragraphs_as_localized()` flat fallback until Phase 4.1 ports
-    them. `schema_version=3`.
+    on INFERRED. The `paragraphs_as_localized()` flat fallback stays
+    available for future style templates to start from.
+    `schema_version=3`.
 15. [ADR-015 — richer deterministic ledger fields](docs/adr/015-richer-deterministic-ledger.md):
     Per-photo EXIF GPS read into `PhotoMeta` *before* the strip-on-save
     step (output JPEG still has GPS stripped); pause detection via
@@ -629,13 +630,23 @@ don't relitigate them.
     is near the route, because a wrong name is worse than a generic one.
 20. [ADR-020 — Notes audit UI removed from the memory page](docs/adr/020-remove-notes-audit-ui.md):
     the per-sentence provenance underlines, tints, tooltips, and the
-    Notes toggle are gone from all three styles — the shared page is a
-    gift and reads as plain prose. Rendering-only: sentence-level
-    provenance stays in the data model (`schema_version` unchanged) and
-    keeps feeding the ADR-011 verifier and the rubric's inferred-ratio
-    gate. Partially supersedes ADR-014's HTML layer; don't reintroduce
-    audit chrome into the shared page — an author-facing audit view
-    belongs in the builder, not the artifact.
+    Notes toggle are gone — the shared page is a gift and reads as
+    plain prose. Rendering-only: sentence-level provenance stays in the
+    data model (`schema_version` unchanged) and keeps feeding the
+    ADR-011 verifier and the rubric's inferred-ratio gate. Partially
+    supersedes ADR-014's HTML layer; don't reintroduce audit chrome
+    into the shared page — an author-facing audit view belongs in the
+    builder, not the artifact.
+21. [ADR-021 — style lineup: The Letter + four planned styles](docs/adr/021-style-lineup-letter-and-planned-styles.md):
+    `editorial` renamed to `letter` ("The Letter"); `log` and
+    `encyclopedia` renderers deleted. The `Style` enum carries the full
+    five-style lineup from the Claude Design proposal (`letter`,
+    `zine`, `sunday`, `postcard`, `album`); `BUILT_STYLES` (currently
+    `{letter}`) gates the renderer, CLI choices, and — via the narrower
+    `web.pipeline.Style` — the builder form. Planned styles show as
+    SOON cards in the picker but cannot be submitted or rendered until
+    their templates land. ADR-006's one-narrative-many-templates
+    decision is unchanged.
 
 If you're about to do something that touches an area covered by an existing
 ADR, **read the ADR first**. If the change is incompatible with the recorded

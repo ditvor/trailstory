@@ -10,9 +10,26 @@ Versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 ## [Unreleased]
 
 ### Changed
+- **Style lineup renamed and pruned (ADR-021).** The `editorial` style is
+  now `letter` ("The Letter") end-to-end: enum value, template
+  (`templates/styles/letter.html.j2`), fonts directory and embedded
+  font-family names (`Letter Serif` / `Letter Mono`), body marker class
+  (`style-letter`), web form value, and goldens. The `Style` enum now
+  carries the full five-style product lineup from the Claude Design
+  proposal (`letter`, `zine`, `sunday`, `postcard`, `album`); a new
+  `BUILT_STYLES` set (currently `{letter}`) gates the renderer, the CLI
+  `--style` choices, and — via the narrower `web.pipeline.Style` enum —
+  the builder form, so the four planned styles stay visible as SOON
+  cards but cannot be submitted or rendered until their templates land.
 - **Web favicon.** Replaced the boot-emoji tab icon with an ink elevation-line
   mark on warm paper, matching the builder's "Letter" palette. Pure inline SVG
   data URI in both base templates — no asset files.
+
+### Removed
+- **`log` and `encyclopedia` styles (ADR-021).** Templates, enum values,
+  goldens, and style-specific tests deleted. They matched none of the
+  five picker cards' visual promises, were already hidden from the web
+  picker, and were never surfaced to a real user.
 
 ### Added
 - **"Save as PDF" and "Share page (HTML file)" on the memory page.** The
