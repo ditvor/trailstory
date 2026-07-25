@@ -52,6 +52,10 @@ web = ["templates/*.html.j2", "static/*"]
 [tool.ruff]
 line-length = 100
 target-version = "py312"
+# Ruff ≥0.16 formats fenced code blocks inside Markdown. Our docs
+# (CLAUDE.md, ADRs) hand-align comments in illustrative snippets that
+# are not meant to be valid formatted Python — keep .md out of scope.
+extend-exclude = ["*.md"]
 
 [tool.ruff.lint]
 select = [
