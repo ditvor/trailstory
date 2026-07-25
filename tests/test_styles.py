@@ -168,9 +168,9 @@ def test_each_style_emits_its_own_body_marker_class(tmp_path: Path) -> None:
     downstream consumers (and these tests) can tell them apart."""
     rendered = _render_all_styles(tmp_path)
 
-    assert 'class="lang-en style-letter"' in rendered[Style.letter]
-    assert 'class="lang-en style-zine"' in rendered[Style.zine]
-    assert 'class="lang-en style-postcard"' in rendered[Style.postcard]
+    assert 'class="style-letter"' in rendered[Style.letter]
+    assert 'class="style-zine"' in rendered[Style.zine]
+    assert 'class="style-postcard"' in rendered[Style.postcard]
 
 
 def test_no_style_class_leaks_into_other_styles(tmp_path: Path) -> None:
@@ -208,10 +208,14 @@ def test_letter_style_keeps_magazine_visual_identity(tmp_path: Path) -> None:
     assert 'class="quote' in html  # the pull-quote callout (may carry extra classes)
     assert 'class="elevation"' in html
 
-    # Three discrete language buttons (replaces the older single EN·RU·DE label).
-    assert 'data-lang="en"' in html
-    assert 'data-lang="ru"' in html
-    assert 'data-lang="de"' in html
+    # Tri-lingual toggle: hidden radios (CSS-only switching, works in
+    # no-JS previews like Telegram iOS) plus one label per language.
+    assert 'id="lang-en"' in html
+    assert 'id="lang-ru"' in html
+    assert 'id="lang-de"' in html
+    assert 'for="lang-en"' in html
+    assert 'for="lang-ru"' in html
+    assert 'for="lang-de"' in html
 
     # The Letter does NOT use figcaptions; photos flow inside the prose.
     assert "<figcaption>" not in html
@@ -243,10 +247,14 @@ def test_postcard_style_keeps_travel_card_identity(tmp_path: Path) -> None:
     assert 'class="addr"' in html
     assert "TRAILSTORY" in html  # the stamp's issue text
 
-    # Three discrete language buttons.
-    assert 'data-lang="en"' in html
-    assert 'data-lang="ru"' in html
-    assert 'data-lang="de"' in html
+    # Tri-lingual toggle: hidden radios (CSS-only switching, works in
+    # no-JS previews like Telegram iOS) plus one label per language.
+    assert 'id="lang-en"' in html
+    assert 'id="lang-ru"' in html
+    assert 'id="lang-de"' in html
+    assert 'for="lang-en"' in html
+    assert 'for="lang-ru"' in html
+    assert 'for="lang-de"' in html
 
 
 # ── shared narrative invariants ─────────────────────────────────────────────
