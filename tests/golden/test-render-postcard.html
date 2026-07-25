@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=5">
 <meta name="color-scheme" content="light">
 <title>Above the fog line</title>
+<script>document.documentElement.classList.add('js');</script>
 <style>
   /* ── fonts ─────────────────────────────────────────────────────────
      Yeseva One (single weight 400) is the mid-century travel-card
@@ -119,21 +120,38 @@
     border: 1.5px solid var(--pc-ink); background: var(--pc-card);
     box-shadow: 0 2px 6px -3px rgba(60,30,10,0.35);
   }
-  .lang button {
+  .lang label {
     background: var(--pc-card); color: var(--pc-ink);
     border: 0; padding: 6px 12px; margin: 0;
     font-family: var(--mono); font-weight: 500; font-size: 12px;
     letter-spacing: 0.16em; text-transform: uppercase;
     cursor: pointer;
   }
-  .lang button + button { border-left: 1.5px solid var(--pc-ink); }
-  .lang button[aria-pressed="true"] { background: var(--pc-red); color: var(--pc-card); }
-  @media (max-width: 767px) { .lang button { padding: 5px 9px; font-size: 11px; } }
+  .lang label + label { border-left: 1.5px solid var(--pc-ink); }
+  @media (max-width: 767px) { .lang label { padding: 5px 9px; font-size: 11px; } }
 
-  /* ── tri-lingual swap ──────────────────────────────────────────── */
-  body.lang-en .ru, body.lang-en .de { display: none; }
-  body.lang-ru .en, body.lang-ru .de { display: none; }
-  body.lang-de .en, body.lang-de .ru { display: none; }
+  /* ── tri-lingual swap ──────────────────────────────────────────────
+     Driven by three hidden radios that are the first children of
+     <body>, so the toggle works with JavaScript disabled (Telegram's
+     iOS preview, Mail, Quick Look). JS only adds the swap animation
+     and persistence on top. */
+  .lang-radio {
+    position: absolute; width: 1px; height: 1px; margin: -1px; padding: 0;
+    border: 0; overflow: hidden; clip: rect(0,0,0,0); white-space: nowrap;
+  }
+  #lang-en:checked ~ * .lang label[for="lang-en"],
+  #lang-ru:checked ~ * .lang label[for="lang-ru"],
+  #lang-de:checked ~ * .lang label[for="lang-de"] {
+    background: var(--pc-red); color: var(--pc-card);
+  }
+  #lang-en:focus-visible ~ * .lang label[for="lang-en"],
+  #lang-ru:focus-visible ~ * .lang label[for="lang-ru"],
+  #lang-de:focus-visible ~ * .lang label[for="lang-de"] {
+    outline: 2px solid var(--pc-ink); outline-offset: 2px;
+  }
+  #lang-en:checked ~ * .ru, #lang-en:checked ~ * .de { display: none; }
+  #lang-ru:checked ~ * .en, #lang-ru:checked ~ * .de { display: none; }
+  #lang-de:checked ~ * .en, #lang-de:checked ~ * .ru { display: none; }
   .swap { transition: opacity 180ms ease; }
   .swap.is-swapping { opacity: 0.4; }
 
@@ -180,9 +198,11 @@
     object-fit: cover;
     /* faded mid-century stock: warm, slightly desaturated */
     filter: sepia(0.22) saturate(0.86) contrast(0.94) brightness(1.04);
-    opacity: 0; transition: opacity 240ms ease;
   }
-  .front .ph img.loaded { opacity: 1; }
+  /* Blur-up is a JS-only enhancement: without it photos must render
+     immediately (no-JS previews never fire the load handler). */
+  .js .front .ph img { opacity: 0; transition: opacity 240ms ease; }
+  .js .front .ph img.loaded { opacity: 1; }
   .front .ph::after {
     /* sun-bleached vignette */
     content: ""; position: absolute; inset: 0; pointer-events: none;
@@ -512,16 +532,20 @@
   }
 </style>
 </head>
-<body class="lang-en style-postcard">
+<body class="style-postcard">
+
+  <input type="radio" name="lang" id="lang-en" class="lang-radio" value="en" checked>
+  <input type="radio" name="lang" id="lang-ru" class="lang-radio" value="ru">
+  <input type="radio" name="lang" id="lang-de" class="lang-radio" value="de">
 
   <div class="grain" aria-hidden="true"></div>
 
   <div class="set">
 
     <div class="lang" role="group" aria-label="Language">
-      <button type="button" data-lang="en" aria-pressed="true">EN</button>
-      <button type="button" data-lang="ru" aria-pressed="false">RU</button>
-      <button type="button" data-lang="de" aria-pressed="false">DE</button>
+      <label for="lang-en">EN</label>
+      <label for="lang-ru">RU</label>
+      <label for="lang-de">DE</label>
     </div>
 
     <header class="cover swap">
@@ -1117,39 +1141,31 @@ Mia schlief den ganzen Aufstieg, die Wange warm an der Trage.                </p
       var STORAGE_KEY = 'trailstory.lang';
 
       // ── language toggle ───────────────────────────────────────────
-      var langBtns = document.querySelectorAll('.lang button');
+      // The switch itself is pure CSS (hidden radios + :checked); JS
+      // adds the swap pulse, <html lang>, and persistence on top.
+      var langRadios = document.querySelectorAll('.lang-radio');
       var swapNodes = document.querySelectorAll('.swap');
 
       function currentLang() {
-        for (var i = 0; i < LANGS.length; i++) {
-          if (document.body.classList.contains('lang-' + LANGS[i])) return LANGS[i];
-        }
-        return 'en';
+        var checked = document.querySelector('.lang-radio:checked');
+        return checked ? checked.value : 'en';
       }
 
       function applyLang(next) {
-        for (var i = 0; i < LANGS.length; i++) {
-          document.body.classList.remove('lang-' + LANGS[i]);
-        }
-        document.body.classList.add('lang-' + next);
+        var radio = document.getElementById('lang-' + next);
+        if (radio) radio.checked = true;
         document.documentElement.lang = next;
-        langBtns.forEach(function (b) {
-          b.setAttribute('aria-pressed', String(b.getAttribute('data-lang') === next));
-        });
         try { localStorage.setItem(STORAGE_KEY, next); } catch (e) {}
       }
 
-      function setLang(next) {
-        if (next === currentLang()) return;
-        swapNodes.forEach(function (n) { n.classList.add('is-swapping'); });
-        window.setTimeout(function () {
-          applyLang(next);
-          swapNodes.forEach(function (n) { n.classList.remove('is-swapping'); });
-        }, 180);
-      }
-
-      langBtns.forEach(function (b) {
-        b.addEventListener('click', function () { setLang(b.getAttribute('data-lang')); });
+      langRadios.forEach(function (r) {
+        r.addEventListener('change', function () {
+          swapNodes.forEach(function (n) { n.classList.add('is-swapping'); });
+          window.setTimeout(function () {
+            swapNodes.forEach(function (n) { n.classList.remove('is-swapping'); });
+          }, 180);
+          applyLang(r.value);
+        });
       });
 
       // Initial language: stored value → navigator language → 'en'.
@@ -1211,31 +1227,40 @@ Mia schlief den ganzen Aufstieg, die Wange warm an der Trage.                </p
       }
 
       // The page itself is the shareable artifact (ADR-001): one
-      // self-contained .html file. Served over http(s) we re-fetch our own
-      // URL for the original bytes; opened from disk (file://), fetch is
-      // blocked, so we serialize a cleaned clone of the live DOM — photos
-      // survive as inline data URIs, and the clone drops transient UI
-      // state so a forwarded copy works for the next reader too.
+      // self-contained .html file. We always serialize a cleaned clone
+      // of the live DOM — photos survive as inline data URIs, the
+      // clone drops transient UI state, the `js` marker class comes
+      // off (a forwarded copy must render in no-JS previews), and the
+      // reader's current language is baked in as the copy's default.
       var pageFilePromise = null;
+      var pageFileLang = null;
       function pageAsFile() {
-        if (pageFilePromise) return pageFilePromise;
+        if (pageFilePromise && pageFileLang === currentLang()) return pageFilePromise;
         var name = "test-render-postcard" + '.html';
-        pageFilePromise = fetch(window.location.href)
-          .then(function (res) {
-            if (!res.ok) throw new Error('HTTP ' + res.status);
-            return res.blob();
-          })
-          .catch(function () {
-            var root = document.documentElement.cloneNode(true);
-            var btn = root.querySelector('#htmlBtn');
-            if (btn) btn.removeAttribute('disabled');
-            var status = root.querySelector('#igStatus');
-            if (status) status.textContent = '';
-            var fb = root.querySelector('#igFallback');
-            if (fb && fb.parentNode) fb.parentNode.removeChild(fb);
-            return new Blob(['<!doctype html>\n' + root.outerHTML], { type: 'text/html' });
-          })
-          .then(function (blob) { return new File([blob], name, { type: 'text/html' }); });
+        pageFileLang = currentLang();
+        pageFilePromise = Promise.resolve().then(function () {
+          var root = document.documentElement.cloneNode(true);
+          root.classList.remove('js');
+          var lg = currentLang();
+          root.querySelectorAll('.lang-radio').forEach(function (r) {
+            if (r.value === lg) r.setAttribute('checked', '');
+            else r.removeAttribute('checked');
+          });
+          root.querySelectorAll('img.loaded').forEach(function (img) {
+            img.classList.remove('loaded');
+          });
+          root.querySelectorAll('.is-swapping').forEach(function (n) {
+            n.classList.remove('is-swapping');
+          });
+          var btn = root.querySelector('#htmlBtn');
+          if (btn) btn.removeAttribute('disabled');
+          var status = root.querySelector('#igStatus');
+          if (status) status.textContent = '';
+          var fb = root.querySelector('#igFallback');
+          if (fb && fb.parentNode) fb.parentNode.removeChild(fb);
+          var blob = new Blob(['<!doctype html>\n' + root.outerHTML], { type: 'text/html' });
+          return new File([blob], name, { type: 'text/html' });
+        });
         pageFilePromise.catch(function () { pageFilePromise = null; });
         return pageFilePromise;
       }

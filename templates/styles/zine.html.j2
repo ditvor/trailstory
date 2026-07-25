@@ -5,6 +5,9 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=5">
 <meta name="color-scheme" content="light">
 <title>{{ narrative.title.en }}</title>
+{# No-JS viewers (Telegram/Mail/Files previews never run scripts) must
+   get a fully visible page; JS-only effects are scoped under `.js`. #}
+<script>document.documentElement.classList.add('js');</script>
 <style>
   /* ── fonts ─────────────────────────────────────────────────────────
      Oswald (variable, wght 200..700) stands in for Big Shoulders
@@ -99,21 +102,38 @@
     border: 2px solid var(--zine-ink); background: var(--zine-paper);
     font-family: var(--display);
   }
-  .lang button {
+  .lang label {
     background: var(--zine-paper); color: var(--zine-ink);
     border: 0; padding: 6px 12px; margin: 0;
     font-family: var(--display); font-weight: 700; font-size: 12px;
     letter-spacing: 0.18em; text-transform: uppercase;
     cursor: pointer;
   }
-  .lang button + button { border-left: 2px solid var(--zine-ink); }
-  .lang button[aria-pressed="true"] { background: var(--zine-spot); color: var(--zine-paper); }
-  @media (max-width: 767px) { .lang button { padding: 5px 9px; font-size: 11px; } }
+  .lang label + label { border-left: 2px solid var(--zine-ink); }
+  @media (max-width: 767px) { .lang label { padding: 5px 9px; font-size: 11px; } }
 
-  /* ── tri-lingual swap ──────────────────────────────────────────── */
-  body.lang-en .ru, body.lang-en .de { display: none; }
-  body.lang-ru .en, body.lang-ru .de { display: none; }
-  body.lang-de .en, body.lang-de .ru { display: none; }
+  /* ── tri-lingual swap ──────────────────────────────────────────────
+     Driven by three hidden radios that are the first children of
+     <body>, so the toggle works with JavaScript disabled (Telegram's
+     iOS preview, Mail, Quick Look). JS only adds the swap animation
+     and persistence on top. */
+  .lang-radio {
+    position: absolute; width: 1px; height: 1px; margin: -1px; padding: 0;
+    border: 0; overflow: hidden; clip: rect(0,0,0,0); white-space: nowrap;
+  }
+  #lang-en:checked ~ * .lang label[for="lang-en"],
+  #lang-ru:checked ~ * .lang label[for="lang-ru"],
+  #lang-de:checked ~ * .lang label[for="lang-de"] {
+    background: var(--zine-spot); color: var(--zine-paper);
+  }
+  #lang-en:focus-visible ~ * .lang label[for="lang-en"],
+  #lang-ru:focus-visible ~ * .lang label[for="lang-ru"],
+  #lang-de:focus-visible ~ * .lang label[for="lang-de"] {
+    outline: 2px solid var(--zine-ink); outline-offset: 2px;
+  }
+  #lang-en:checked ~ * .ru, #lang-en:checked ~ * .de { display: none; }
+  #lang-ru:checked ~ * .en, #lang-ru:checked ~ * .de { display: none; }
+  #lang-de:checked ~ * .en, #lang-de:checked ~ * .ru { display: none; }
   .swap { transition: opacity 180ms ease; }
   .swap.is-swapping { opacity: 0.4; }
 
@@ -207,9 +227,11 @@
     position: absolute; inset: 0;
     object-fit: cover;
     filter: url(#zine-duotone);
-    opacity: 0; transition: opacity 240ms ease;
   }
-  .zphoto .ph img.loaded { opacity: 1; }
+  /* Blur-up is a JS-only enhancement: without it photos must render
+     immediately (no-JS previews never fire the load handler). */
+  .js .zphoto .ph img { opacity: 0; transition: opacity 240ms ease; }
+  .js .zphoto .ph img.loaded { opacity: 1; }
   .zphoto .ph.r45 { aspect-ratio: 4 / 5; }
   .zphoto .ph.r11 { aspect-ratio: 1 / 1; }
   .zphoto .ph.r32 { aspect-ratio: 3 / 2; }
@@ -401,7 +423,14 @@
   }
 </style>
 </head>
-<body class="lang-en style-zine">
+<body class="style-zine">
+
+  {# Language state lives in these radios (first children of <body> so
+     the `:checked ~` CSS can reach every language span). Works without
+     JavaScript; `checked` below is the default for no-JS viewers. #}
+  <input type="radio" name="lang" id="lang-en" class="lang-radio" value="en" checked>
+  <input type="radio" name="lang" id="lang-ru" class="lang-radio" value="ru">
+  <input type="radio" name="lang" id="lang-de" class="lang-radio" value="de">
 
   {# Duotone filter: luma collapse then a two-color transfer — terracotta
      highlights into ink shadows. The design handoff is explicit that
@@ -432,9 +461,9 @@
   <div class="zine">
 
     <div class="lang" role="group" aria-label="Language">
-      <button type="button" data-lang="en" aria-pressed="true">EN</button>
-      <button type="button" data-lang="ru" aria-pressed="false">RU</button>
-      <button type="button" data-lang="de" aria-pressed="false">DE</button>
+      <label for="lang-en">EN</label>
+      <label for="lang-ru">RU</label>
+      <label for="lang-de">DE</label>
     </div>
 
     <header class="cover swap">
@@ -781,39 +810,31 @@
       var STORAGE_KEY = 'trailstory.lang';
 
       // ── language toggle ───────────────────────────────────────────
-      var langBtns = document.querySelectorAll('.lang button');
+      // The switch itself is pure CSS (hidden radios + :checked); JS
+      // adds the swap pulse, <html lang>, and persistence on top.
+      var langRadios = document.querySelectorAll('.lang-radio');
       var swapNodes = document.querySelectorAll('.swap');
 
       function currentLang() {
-        for (var i = 0; i < LANGS.length; i++) {
-          if (document.body.classList.contains('lang-' + LANGS[i])) return LANGS[i];
-        }
-        return 'en';
+        var checked = document.querySelector('.lang-radio:checked');
+        return checked ? checked.value : 'en';
       }
 
       function applyLang(next) {
-        for (var i = 0; i < LANGS.length; i++) {
-          document.body.classList.remove('lang-' + LANGS[i]);
-        }
-        document.body.classList.add('lang-' + next);
+        var radio = document.getElementById('lang-' + next);
+        if (radio) radio.checked = true;
         document.documentElement.lang = next;
-        langBtns.forEach(function (b) {
-          b.setAttribute('aria-pressed', String(b.getAttribute('data-lang') === next));
-        });
         try { localStorage.setItem(STORAGE_KEY, next); } catch (e) {}
       }
 
-      function setLang(next) {
-        if (next === currentLang()) return;
-        swapNodes.forEach(function (n) { n.classList.add('is-swapping'); });
-        window.setTimeout(function () {
-          applyLang(next);
-          swapNodes.forEach(function (n) { n.classList.remove('is-swapping'); });
-        }, 180);
-      }
-
-      langBtns.forEach(function (b) {
-        b.addEventListener('click', function () { setLang(b.getAttribute('data-lang')); });
+      langRadios.forEach(function (r) {
+        r.addEventListener('change', function () {
+          swapNodes.forEach(function (n) { n.classList.add('is-swapping'); });
+          window.setTimeout(function () {
+            swapNodes.forEach(function (n) { n.classList.remove('is-swapping'); });
+          }, 180);
+          applyLang(r.value);
+        });
       });
 
       // Initial language: stored value → navigator language → 'en'.
@@ -869,31 +890,40 @@
       }
 
       // The page itself is the shareable artifact (ADR-001): one
-      // self-contained .html file. Served over http(s) we re-fetch our own
-      // URL for the original bytes; opened from disk (file://), fetch is
-      // blocked, so we serialize a cleaned clone of the live DOM — photos
-      // survive as inline data URIs, and the clone drops transient UI
-      // state so a forwarded copy works for the next reader too.
+      // self-contained .html file. We always serialize a cleaned clone
+      // of the live DOM — photos survive as inline data URIs, the
+      // clone drops transient UI state, the `js` marker class comes
+      // off (a forwarded copy must render in no-JS previews), and the
+      // reader's current language is baked in as the copy's default.
       var pageFilePromise = null;
+      var pageFileLang = null;
       function pageAsFile() {
-        if (pageFilePromise) return pageFilePromise;
+        if (pageFilePromise && pageFileLang === currentLang()) return pageFilePromise;
         var name = {{ meta.slug | tojson }} + '.html';
-        pageFilePromise = fetch(window.location.href)
-          .then(function (res) {
-            if (!res.ok) throw new Error('HTTP ' + res.status);
-            return res.blob();
-          })
-          .catch(function () {
-            var root = document.documentElement.cloneNode(true);
-            var btn = root.querySelector('#htmlBtn');
-            if (btn) btn.removeAttribute('disabled');
-            var status = root.querySelector('#igStatus');
-            if (status) status.textContent = '';
-            var fb = root.querySelector('#igFallback');
-            if (fb && fb.parentNode) fb.parentNode.removeChild(fb);
-            return new Blob(['<!doctype html>\n' + root.outerHTML], { type: 'text/html' });
-          })
-          .then(function (blob) { return new File([blob], name, { type: 'text/html' }); });
+        pageFileLang = currentLang();
+        pageFilePromise = Promise.resolve().then(function () {
+          var root = document.documentElement.cloneNode(true);
+          root.classList.remove('js');
+          var lg = currentLang();
+          root.querySelectorAll('.lang-radio').forEach(function (r) {
+            if (r.value === lg) r.setAttribute('checked', '');
+            else r.removeAttribute('checked');
+          });
+          root.querySelectorAll('img.loaded').forEach(function (img) {
+            img.classList.remove('loaded');
+          });
+          root.querySelectorAll('.is-swapping').forEach(function (n) {
+            n.classList.remove('is-swapping');
+          });
+          var btn = root.querySelector('#htmlBtn');
+          if (btn) btn.removeAttribute('disabled');
+          var status = root.querySelector('#igStatus');
+          if (status) status.textContent = '';
+          var fb = root.querySelector('#igFallback');
+          if (fb && fb.parentNode) fb.parentNode.removeChild(fb);
+          var blob = new Blob(['<!doctype html>\n' + root.outerHTML], { type: 'text/html' });
+          return new File([blob], name, { type: 'text/html' });
+        });
         pageFilePromise.catch(function () { pageFilePromise = null; });
         return pageFilePromise;
       }

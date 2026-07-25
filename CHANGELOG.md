@@ -9,6 +9,21 @@ Versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+### Fixed
+- **Photos and the language toggle now survive no-JS viewers (Telegram
+  iOS, Mail, Files/Quick Look).** Opening the shared `.html` inside
+  Telegram on iPhone showed blank photo frames: those previews never
+  run JavaScript, and all three style templates gated photo visibility
+  (and The Letter's pull quote) behind a JS-added `loaded`/`seen`
+  class for the fade-in effect. The gating is now progressive
+  enhancement — a `js` marker class scopes the fade-ins, so a no-JS
+  viewer gets a fully visible page and browsers keep the animations.
+  The EN/RU/DE toggle is rebuilt on hidden radio inputs + `:checked`
+  CSS, so switching languages also works without JavaScript. The
+  in-page "share as HTML" copy now always serializes a cleaned DOM
+  clone that strips the `js` marker and bakes the reader's currently
+  selected language in as the copy's default.
+
 ### Changed
 - **Style lineup renamed and pruned (ADR-021).** The `editorial` style is
   now `letter` ("The Letter") end-to-end: enum value, template
